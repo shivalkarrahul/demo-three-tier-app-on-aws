@@ -734,7 +734,7 @@ Since Launch Configurations are being replaced by Launch Templates, we will use 
 ### 1. Create an AMI from the Running EC2 Instance
 We first create an Amazon Machine Image (AMI) so that new instances launched by the Auto Scaling Group (ASG) will have our application pre-installed.
 
-###$ 1.1 Stop the Flask Application
+#### Stop the Flask Application
 Before creating an AMI, stop the flask-app service running on `demo-app-test-ami-builder` instance:
 ```bash
 sudo systemctl stop flask-app
@@ -749,7 +749,7 @@ sudo systemctl stop flask-app
 5. Enable **No reboot** (optional but recommended)
 6. Click **Create Image**
 
-#### 1.3 Verify AMI Creation
+#### Verify AMI Creation
 1. Navigate to **EC2 Dashboard → AMIs**
 2. Wait until the AMI status changes to "available"
 
