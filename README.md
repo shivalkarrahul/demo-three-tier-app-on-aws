@@ -636,9 +636,6 @@ if __name__ == "__main__":
    - Click **Upload** → **Add Files** → Select `index.html`.
    - Click **Upload**.
 
-
-# Deploying a Flask Application on AWS
-
 ### Step 7: Start the Flask Application
 1. SSH into your EC2 instance.
 2. Navigate to your application directory and start the Flask app:
@@ -734,16 +731,16 @@ sudo systemctl status flask-app
 
 Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
 
-## 1. Create an AMI from the Running EC2 Instance
+### 1. Create an AMI from the Running EC2 Instance
 We first create an Amazon Machine Image (AMI) so that new instances launched by the Auto Scaling Group (ASG) will have our application pre-installed.
 
-### 1.1 Stop the Flask Application
+###$ 1.1 Stop the Flask Application
 Before creating an AMI, stop the flask-app service running on `demo-app-test-ami-builder` instance:
 ```bash
 sudo systemctl stop flask-app
 ```
 
-### 1.2 Create an AMI from the Running Instance
+#### 1.2 Create an AMI from the Running Instance
 1. Go to AWS Console → EC2 Dashboard
 2. Select the running instance
 3. Click on **Actions → Image and templates → Create Image**
@@ -752,7 +749,7 @@ sudo systemctl stop flask-app
 5. Enable **No reboot** (optional but recommended)
 6. Click **Create Image**
 
-### 1.3 Verify AMI Creation
+#### 1.3 Verify AMI Creation
 1. Navigate to **EC2 Dashboard → AMIs**
 2. Wait until the AMI status changes to "available"
 
@@ -761,12 +758,12 @@ sudo systemctl stop flask-app
 ## 2. Create a Launch Template
 A Launch Template defines how instances are launched with predefined configurations.
 
-### 2.1 Open Launch Template Wizard
+#### 2.1 Open Launch Template Wizard
 1. Go to **EC2 Dashboard**
 2. Click on **Launch Templates**
 3. Click **Create Launch Template**
 
-### 2.2 Configure Launch Template
+#### 2.2 Configure Launch Template
 - **Template Name**: `demo-app-launch-template`
 - **AMI ID**: Select the AMI we just created (`demo-app-ami`)
 - **Instance Type**: `t2.micro` (or as per requirement)
@@ -790,15 +787,15 @@ sudo systemctl enable flask-app
 
 ---
 
-## 3. Create an Auto Scaling Group (ASG)
+### 3. Create an Auto Scaling Group (ASG)
 The ASG will automatically manage EC2 instances to ensure availability.
 
-### 3.1 Open ASG Wizard
+#### 3.1 Open ASG Wizard
 1. Go to **EC2 Dashboard**
 2. Click on **Auto Scaling Groups**
 3. Click **Create Auto Scaling Group**
 
-### 3.2 Configure ASG
+#### 3.2 Configure ASG
 - **Enter ASG Name**: `demo-app-asg`
 - **Choose Launch Template**: Select `demo-app-launch-template`
 - **Choose VPC and Subnets**: We will create ASG in Private Subnet
@@ -820,13 +817,13 @@ The ASG will automatically manage EC2 instances to ensure availability.
 
 ---
 
-## 4. Verify ASG Setup
+### 4. Verify ASG Setup
 
-### 4.1 Check if ASG Launches Instances
+#### 4.1 Check if ASG Launches Instances
 1. Go to **EC2 Dashboard → Instances**
 2. Confirm that new instances are being launched by ASG
 
-### 4.2 Verify New Instances
+#### 4.2 Verify New Instances
 1. Go to **EC2 Dashboard → Instances**
 2. Check the **Launch Time** of the instances to confirm they are newly created.
 3. Verify IAM Role is attached to instances.
@@ -855,6 +852,7 @@ This completes the setup for creating an AMI, Launch Template, and Auto Scaling 
 7. Click **Create target group**.
 
 ### 2. Create an Application Load Balancer (ALB)
+
 #### First, Create a Security Group (SG)
 1. Go to **EC2** → **Security Groups**.
 2. Create a Security Group:
@@ -956,10 +954,12 @@ Create a new Security Group (or use an existing one):
 ## Part 10: Connect From Bastion Host to Private Instance
 
 ### 1. Copy the Private Key to Bastion Host
+
 #### Using Terminal:
 ```bash
 scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-key.pem ubuntu@18.207.106.246:/home/ubuntu/
 ```
+
 #### From Windows:
 - Use a tool like **WinSCP** and upload the private key to `/home/ubuntu/` directory.
 
@@ -971,12 +971,15 @@ scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-ke
   - Search for `demo-app-bastion-host-sg` and select it.
 
 ### 3. Connect to the Bastion Host
+
 #### Open a terminal or Putty to connect to the Bastion Host (Instance) via SSH:
+
 #### Terminal:
 ```bash
 chmod 400 demo-app-private-key.pem
 ssh -i demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 ```
+
 #### Putty:
 - Use the `.ppk` file.
 
@@ -999,6 +1002,7 @@ ssh -i "demo-app-private-key.pem" ubuntu@<EC2_PRIVATE_IP>
 ```
 
 ### Now you are in the Private App Instance
+
 #### Install netstat command to debug anything:
 ```bash
 sudo apt install net-tools
