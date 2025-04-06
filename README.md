@@ -1,6 +1,6 @@
 # Three-Tier Application Setup on AWS
 
-## Network Setup
+## Part 1: Network Setup
 
 ### 1. Create a VPC
 Go to AWS Console → VPC Dashboard.
@@ -636,7 +636,7 @@ if __name__ == "__main__":
    - Click **Upload** → **Add Files** → Select `index.html`.
    - Click **Upload**.
 
-### Step 7: Start the Flask Application
+### 7: Start the Flask Application
 1. SSH into your EC2 instance.
 2. Navigate to your application directory and start the Flask app:
    ```bash
@@ -648,7 +648,7 @@ if __name__ == "__main__":
    ```
    This happens because the RDS Security Group (SG) allows connections on Port 3306 only from your public IP.
 
-### Step 8: Update the RDS Security Group
+### 8: Update the RDS Security Group
 1. Go to the AWS RDS Console.
 2. Select the instance **my-demo-db**.
 3. Navigate to **Connectivity & Security** → Open the **SG demo-app-db-sg**.
@@ -658,14 +658,14 @@ if __name__ == "__main__":
    - **Source:** Search for and select **demo-app-test-ami-builder-sg**.
 6. Save the changes.
 
-### Step 9: Start the Flask Application Again
+### 9: Start the Flask Application Again
 1. Try starting the Flask app again:
    ```bash
    python3 app.py
    ```
 2. If there are no errors, your backend is now connected to the database.
 
-### Step 10: Access the Application on S3 Bucket
+### 10: Access the Application on S3 Bucket
 1. Go to the **S3 Bucket** in AWS Console.
 2. Navigate to **Properties** → **Static Website Hosting**.
 3. Copy the **Bucket website endpoint**.
@@ -673,7 +673,7 @@ if __name__ == "__main__":
 
 This setup ensures your Flask backend runs on EC2, the frontend is hosted on S3, and all components interact correctly.
 
-### Step 11: Configure Flask as a Systemd Service
+### 11: Configure Flask as a Systemd Service
 To ensure the Flask application runs in the background and starts automatically on system reboots, we will create a systemd service.
 
 #### 1. Create a Systemd Service File
@@ -740,7 +740,7 @@ Before creating an AMI, stop the flask-app service running on `demo-app-test-ami
 sudo systemctl stop flask-app
 ```
 
-#### 1.2 Create an AMI from the Running Instance
+#### Create an AMI from the Running Instance
 1. Go to AWS Console → EC2 Dashboard
 2. Select the running instance
 3. Click on **Actions → Image and templates → Create Image**
@@ -758,12 +758,12 @@ sudo systemctl stop flask-app
 ## 2. Create a Launch Template
 A Launch Template defines how instances are launched with predefined configurations.
 
-#### 2.1 Open Launch Template Wizard
+#### Open Launch Template Wizard
 1. Go to **EC2 Dashboard**
 2. Click on **Launch Templates**
 3. Click **Create Launch Template**
 
-#### 2.2 Configure Launch Template
+#### Configure Launch Template
 - **Template Name**: `demo-app-launch-template`
 - **AMI ID**: Select the AMI we just created (`demo-app-ami`)
 - **Instance Type**: `t2.micro` (or as per requirement)
@@ -790,12 +790,12 @@ sudo systemctl enable flask-app
 ### 3. Create an Auto Scaling Group (ASG)
 The ASG will automatically manage EC2 instances to ensure availability.
 
-#### 3.1 Open ASG Wizard
+#### Open ASG Wizard
 1. Go to **EC2 Dashboard**
 2. Click on **Auto Scaling Groups**
 3. Click **Create Auto Scaling Group**
 
-#### 3.2 Configure ASG
+#### Configure ASG
 - **Enter ASG Name**: `demo-app-asg`
 - **Choose Launch Template**: Select `demo-app-launch-template`
 - **Choose VPC and Subnets**: We will create ASG in Private Subnet
@@ -819,11 +819,11 @@ The ASG will automatically manage EC2 instances to ensure availability.
 
 ### 4. Verify ASG Setup
 
-#### 4.1 Check if ASG Launches Instances
+#### Check if ASG Launches Instances
 1. Go to **EC2 Dashboard → Instances**
 2. Confirm that new instances are being launched by ASG
 
-#### 4.2 Verify New Instances
+#### Verify New Instances
 1. Go to **EC2 Dashboard → Instances**
 2. Check the **Launch Time** of the instances to confirm they are newly created.
 3. Verify IAM Role is attached to instances.
@@ -1021,4 +1021,3 @@ sudo systemctl status flask-app
 ```bash
 sudo journalctl -u flask-app.service -n 50 --no-pager
 ```
-
