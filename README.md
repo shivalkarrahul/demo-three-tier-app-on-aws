@@ -1001,7 +1001,7 @@ ls -l
 ssh -i "demo-app-private-key.pem" ubuntu@<EC2_PRIVATE_IP>
 ```
 
-### Now you are in the Private App Instance
+**Note**: Now you are in the Private App Instance
 
 #### Install netstat command to debug anything:
 ```bash
