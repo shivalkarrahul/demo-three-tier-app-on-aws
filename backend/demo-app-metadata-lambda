@@ -1,0 +1,52 @@
+import boto3
+import json
+import os
+
+# Set the AWS Region (Update with your actual region)
+AWS_REGION = "us-east-1"
+
+# Initialize DynamoDB with the region
+dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
+
+TABLE_NAME = "demo-app-file-metadata-dynamodb"
+
+def lambda_handler(event, context):
+   try:
+       print("✅ Event received:", json.dumps(event, indent=2))  # Debugging log
+
+       for record in event.get("Records", []):
+           # Extract SNS message (which contains the actual S3 event)
+           sns_message = record["Sns"]["Message"]
+           print("✅ Extracted SNS Message:", sns_message)
+
+           # Parse the SNS message as JSON (contains the actual S3 event)
+           s3_event = json.loads(sns_message)
+
+           # Process each S3 record inside the SNS message
+           for s3_record in s3_event.get("Records", []):
+               s3_info = s3_record.get("s3", {})
+               bucket_name = s3_info.get("bucket", {}).get("name")
+               file_name = s3_info.get("object", {}).get("key")
+
+               if not bucket_name or not file_name:
+                   print("❌ Missing bucket name or file name, skipping record.")
+                   continue 
+
+               print(f"✅ Extracted File: {file_name} from Bucket: {bucket_name}")
+
+               # Store in DynamoDB
+               table = dynamodb.Table(TABLE_NAME)  # Get the table object
+
+               table.put_item(
+                   Item={
+                       "file_name": file_name,
+                       "bucket_name": bucket_name,
+                       "timestamp": s3_record["eventTime"]
+                   }
+               )
+
+       return {"statusCode": 200, "body": "File metadata stored successfully"}
+
+   except Exception as e:
+       print("❌ Error:", str(e))
+       return {"statusCode": 500, "body": f"Error: {str(e)}"}

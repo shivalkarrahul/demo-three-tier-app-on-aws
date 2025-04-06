@@ -128,33 +128,33 @@ Go to **Route Tables** → Click **Create Route Table**.
 ## Part 2: Set Up RDS
 
 ### 1. Create an RDS Instance
-Open the AWS Management Console → Navigate to RDS.
-Click on Create database.
-Choose Standard create.
-Select MySQL as the database engine.
-Select Free tier to avoid charges.
+1. Open the AWS Management Console → Navigate to **RDS**. → Click on **Create database**.
+2. Choose **Standard create**.
+3. Select **MySQL** as the **database engine**.
+4. Select **Free tier** to avoid charges.
 
 ### 2. Configure Database Settings
-Set DB instance identifier: my-demo-db.
-Set Master username: admin.
-Set Master password: Choose a strong password and note it down.
+1. Set DB instance identifier: `my-demo-db`.
+2. Set Master username: `admin`.
+3. Set Master password: Choose a strong password and note it down.
 
 ### 3. Configure Storage
-Storage type: Select General Purpose (SSD).
-Allocated storage: Set to 20 GiB.
-Keep storage auto-scaling enabled in Additional storage configuration.
+1. Storage type: **Select General Purpose (SSD)**.
+2. Allocated storage: Set to **20 GiB**.
+3. Keep **storage auto-scaling enabled** in Additional storage configuration.
 
 ### 4. Configure Connectivity
-VPC: Select the VPC created earlier.
-Subnet group:
-Select Create new DB subnet group.
-Public access: Select No (RDS should not be publicly accessible).
-VPC security groups:
-Click Create new security group.
-Name: demo-app-db-sg
+1. VPC: Select the VPC `demo-app-vpc` created earlier.
+2. Subnet group:
+   - Select Create new DB subnet group.
+4. Public access: Select **No** (RDS should not be publicly accessible).
+5. VPC security groups:
+6. Click Create new security group.
+   - Name: `demo-app-db-sg`
 
 ### 5. Create the RDS Instance
-Click Create database.
+1. Click **Create database**.
+
 Wait for the instance to be available before proceeding further.
 
 
@@ -242,48 +242,44 @@ By default, SNS only allows the topic owner to publish messages. To allow S3 to 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
 ### 1. Create a DynamoDB Table
-Go to AWS Console → DynamoDB → Tables → Create Table  
-Table name: demo-app-file-metadata-dynamodb  
-Partition Key:  
-- Name: file_name  
-- Type: String  
-Leave all other settings as default  
-Click **Create Table**  
-
-🚨 **Important:**  
-You don’t need to manually define other attributes (like upload_time, file_size).  
-These attributes will be dynamically inserted by the Lambda function when writing data.  
-After Lambda writes data, you can see these attributes under **Explore Items** in DynamoDB.  
+1. Go to AWS Console → **DynamoDB** → **Tables** → **Create Table**  
+   - Table name: `demo-app-file-metadata-dynamodb`  
+2. Partition Key:  
+   - Name: file_name  
+   - Type: String  
+3. Leave all other settings as default  
+4. Click **Create Table**   
 
 ### 2. Create an IAM Role for Lambda
-Go to the IAM Console → Roles → Create role  
-Select **AWS Service** → **Lambda** → **Next**  
-Attach the following policies:  
-- **AmazonS3ReadOnlyAccess** (To read files from S3)  
-- **AmazonDynamoDBFullAccess** (To write metadata to DynamoDB)  
-- **AWSLambdaBasicExecutionRole** (For CloudWatch logging)  
-Create the role and note down the **Role ARN**  
-Name: **demo-app-lambda-iam-role**  
+1. Go to the IAM Console → **Roles** → **Create role**
+2. Select **AWS Service** → **Lambda** → **Next**  
+3. Attach the following policies:  
+   - **AmazonS3ReadOnlyAccess** (To read files from S3)  
+   - **AmazonDynamoDBFullAccess** (To write metadata to DynamoDB)  
+   - **AWSLambdaBasicExecutionRole** (For CloudWatch logging)  
+4. Create the role and note down the **Role ARN**  
+   - Name: **demo-app-lambda-iam-role**  
 
 ### 3. Create a Lambda Function
-Go to the Lambda Console → **Create function**  
-Choose **Author from Scratch**  
-- Enter **Function Name**: demo-app-metadata-lambda  
-- Select **Python 3.x** as Runtime  
-- Choose **Use an existing role** (demo-app-lambda-iam-role) and select the IAM role created earlier  
-Click **Create Function**  
+1. Go to the Lambda Console → **Create function**  
+2. Choose **Author from Scratch**  
+   - Enter **Function Name**: `demo-app-metadata-lambda`  
+   - Select **Python 3.x** as Runtime  
+   - Choose **Use an existing role** (demo-app-lambda-iam-role) and select the IAM role created earlier  
+3. Click **Create Function**  
 
 ### 4. Subscribe Lambda to Existing SNS Topic
-Go to the SNS Console → Your SNS Topic (**demo-app-sns-topic**)  
-Click **Create Subscription**  
-- Choose **Protocol**: AWS Lambda  
-- Select the Lambda Function you created (**demo-app-metadata-lambda**)  
-Click **Create Subscription**  
-Confirm the subscription in **Lambda Permissions** (IAM might require adding SNS invoke permissions).  
+1. Go to the SNS Console → Your SNS Topic (**demo-app-sns-topic**)  
+2. Click **Create Subscription**  
+   - Choose **Protocol**: AWS Lambda  
+   - Select the Lambda Function you created (**demo-app-metadata-lambda**)  
+3. Click **Create Subscription**  
+4. Confirm the subscription in **Lambda Permissions** (IAM might require adding SNS invoke permissions).  
 
 ### 5. Update Lambda Code to Process SNS Events
 Modify the Lambda function to extract bucket name, file name, and timestamp from the SNS event and store it in the DynamoDB table.  
-Go to **Lambda demo-app-metadata-lambda** → **Code** → Paste the following code in it → Click on **Deploy**  
+
+1. Go to **Lambda demo-app-metadata-lambda** → **Code** → Paste the following code in it → Click on **Deploy**  
 
 ```python
 import boto3
@@ -359,24 +355,25 @@ This confirms that:
 - **Lambda writes metadata to the DynamoDB table**. ✅
 
 
-
 ## Part 6: Step-by-Step Guide to Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 
 1. Go to the AWS IAM Console
-2. Click Roles in the left menu
-3. Click Create Role
+2. Click **Roles** in the left menu
+3. Click **Create Role**
 4. **Attach Policies**
    - Select AWS service → EC2 → Next.
    - Attach `AmazonS3FullAccess` and `AmazonDynamoDBReadOnlyAccess` policy.
-5. Name the role (e.g., `demo-app-s3-dynamo-iam-role`) and create it.
+5. Name the role and create it.
+   - Name: `demo-app-s3-dynamo-iam-role`
 
 ### 2. Launch a Test and AMI Builder EC2 Instance
 
 1. Go to AWS Management Console → Navigate to EC2.
 2. Click **Launch Instance**.
-3. Enter an Instance Name (e.g., `demo-app-test-ami-builder`).
+3. Enter an Instance Name  
+   - Name: `demo-app-test-ami-builder`
 4. Choose an AMI:
    - Select Ubuntu 24.04 LTS (or latest available).
 5. Choose Instance Type:
@@ -386,7 +383,7 @@ This confirms that:
    - Name: `demo-app-private-key`
    - Download `.ppk` for Putty and `.pem` for Terminal.
 7. **Network Settings**:
-   - Select the VPC where the Test AMI Builder instance should be deployed.
+   - Select the VPC `demo-app-vpc` where the Test AMI Builder instance should be deployed.
    - Subnet: Choose a **Public Subnet** (e.g., `demo-app-public-subnet-1`).
    - Enable **Auto-Assign Public IP**.
 8. **Create a Security Group**:
@@ -407,8 +404,6 @@ ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 ```
 #### Putty:
 - Use the `.ppk` file.
-
-Replace `my-key.pem` with your actual key and `<BASTION_PUBLIC_IP>` with the copied IP.
 
 ### 4. Install Dependencies
 
@@ -513,12 +508,14 @@ if __name__ == "__main__":
 #### Create an S3 Bucket for Frontend
 1. Go to **AWS S3 Console** → **Create a bucket** (e.g., `demo-app-frontend-s3-bucket-6789`).
 2. **Disable Block public access**.
-3. **Enable Static Website Hosting**:
-   - Go to **Properties** → **Static website hosting** → **Edit** → **Enable**.
-   - Set **Index document** to `index.html`.
-   - **Save changes**.
-4. **Set Bucket Policy to Allow Public Read Access**:
-   - Go to **Permissions** → **Bucket Policy** → **Edit** → Paste the following policy (change bucket name) → **Save**.
+
+#### Enable Static Website Hosting
+1. Go to **Properties** → **Static website hosting** → **Edit** → **Enable**.
+2. Set **Index document** to `index.html`.
+3. **Save changes**.
+
+#### Set Bucket Policy to Allow Public Read Access
+1. Go to **Permissions** → **Bucket Policy** → **Edit** → Paste the following policy (you may have to change the bucket name in the policy to match with your bucket name) → **Save**.
 
 ```json
 {
@@ -533,6 +530,112 @@ if __name__ == "__main__":
     ]
 }
 ```
+
+#### Upload Code to the S3 Bucket
+
+1. **Create the `index.html` File**
+   - Create a new file named `index.html` on your local machine.
+   - Copy and paste the following code into it
+
+```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <title>Flask 3-Tier App</title>
+   </head>
+   <body>
+      <h2>Insert User in RDS</h2>
+      <input type="text" id="username" placeholder="Enter Name">
+      <button onclick="insertUser()">Insert</button>
+
+      <h2>Fetch Users from RDS</h2>
+      <button onclick="fetchUsers()">Load Users</button>
+      <ul id="users-list"></ul>
+
+      <h2>Upload File to S3</h2>
+      <input type="file" id="file">
+      <button onclick="uploadFile()">Upload</button>
+
+      <h2>List Files in S3</h2>
+      <button onclick="listFiles()">List Files</button>
+      <ul id="files-list"></ul>
+
+      <h2>Fetch File Metadata from DynamoDB</h2>
+      <button onclick="fetchMetadata()">Fetch Metadata</button>
+      <ul id="metadata-list"></ul>
+
+      <script>
+          const API_BASE = "http://<EC2-IP>:5000";
+
+          async function insertUser() {
+              let name = document.getElementById("username").value;
+              await fetch(API_BASE + "/insert", {
+                  method: "POST",
+                  headers: {"Content-Type": "application/json"},
+                  body: JSON.stringify({name: name})
+              });
+              alert("User inserted!");
+          }
+
+          async function fetchUsers() {
+              let response = await fetch(API_BASE + "/fetch");
+              let data = await response.json();
+              let list = document.getElementById("users-list");
+              list.innerHTML = "";
+              data.users.forEach(user => {
+                  let li = document.createElement("li");
+                  li.textContent = user[1];
+                  list.appendChild(li);
+              });
+          }
+
+          async function uploadFile() {
+              let file = document.getElementById("file").files[0];
+              let formData = new FormData();
+              formData.append("file", file);
+              await fetch(API_BASE + "/upload", { method: "POST", body: formData });
+              alert("File uploaded!");
+          }
+
+          async function listFiles() {
+              let response = await fetch(API_BASE + "/list_files");
+              let data = await response.json();
+              let list = document.getElementById("files-list");
+              list.innerHTML = "";
+              data.files.forEach(file => {
+                  let li = document.createElement("li");
+                  li.textContent = file;
+                  list.appendChild(li);
+              });
+          }
+
+          async function fetchMetadata() {
+              let response = await fetch(API_BASE + "/get_file_metadata");
+              let data = await response.json();
+              let list = document.getElementById("metadata-list");
+              list.innerHTML = "";
+              data.files_metadata.forEach(file => {
+                  let li = document.createElement("li");
+                  li.textContent = `File: ${file.file_name}, Bucket: ${file.bucket_name}, Uploaded: ${file.timestamp}`;
+                  list.appendChild(li);
+              });
+          }
+      </script>
+   </body>
+   </html>
+   ```   
+
+2. **Modify API Base URL**
+   - Replace `<EC2-IP>:5000` in the `API_BASE` constant in the above code with your actual EC2 instance's public IP and port.
+
+3. **Upload `index.html` to S3**
+   - Open the AWS Management Console.
+   - Navigate to **S3**.
+   - Select your bucket (e.g., `demo-app-frontend-s3-bucket-6789`)..
+   - Click **Upload** → **Add Files** → Select `index.html`.
+   - Click **Upload**.
+
 
 # Deploying a Flask Application on AWS
 
@@ -627,8 +730,7 @@ After rebooting, check if the service is running:
 sudo systemctl status flask-app
 ```
 
-
-## Part 7: Step-by-Step Guide to Create an AMI, Launch Template, and Auto Scaling Group
+## Part 7: Step-by-Step Guide to Create an AMI, Launch Template, and Auto Scaling Group for High Availability
 
 Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
 
@@ -645,7 +747,8 @@ sudo systemctl stop flask-app
 1. Go to AWS Console → EC2 Dashboard
 2. Select the running instance
 3. Click on **Actions → Image and templates → Create Image**
-4. Provide an Image Name (e.g., `demo-app-ami`)
+4. Provide an Image Name 
+   - Name: `demo-app-ami`
 5. Enable **No reboot** (optional but recommended)
 6. Click **Create Image**
 
@@ -733,8 +836,6 @@ The ASG will automatically manage EC2 instances to ensure availability.
 This completes the setup for creating an AMI, Launch Template, and Auto Scaling Group!
 
 
-
-
 ## Part 8: Step-by-Step Guide to Attach Load Balancer to Auto Scaling Group (ASG)
 
 ### 1. Create a Target Group (TG)
@@ -818,7 +919,6 @@ Now that we have created an **ASG** and **Load Balancer**, we should point our *
 2. Re-upload the updated file to the **S3 Bucket** (e.g., `demo-app-frontend-s3-bucket-6789`).
 
 
-
 ## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
 ### 1. Launch an EC2 Instance (Bastion Host)
@@ -851,7 +951,6 @@ Create a new Security Group (or use an existing one):
 ### 4. Launch the Instance
 - Click **Launch Instance** and wait for it to start.
 - Copy the **Public IP Address** of the instance.
-
 
 
 ## Part 10: Connect From Bastion Host to Private Instance
