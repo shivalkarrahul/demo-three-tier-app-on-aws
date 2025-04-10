@@ -3,22 +3,22 @@
 ## Part 1: Network Setup
 
 ### 1. Create a VPC
-Go to AWS Console → VPC Dashboard.
-1. Click **Create VPC**
-2. Enter:
+1. Go to AWS Console → VPC Dashboard.
+2. Click **Create VPC**
+3. Enter:
    - **Name:** `demo-app-vpc`
    - **IPv4 CIDR Block:** `10.0.0.0/16`
-3. Click **Create VPC**.
+4. Click **Create VPC**.
 
 ### 2. Create Public & Private Subnets
 #### Public Subnets (For Load Balancer & NAT Gateways)
-Go to **Subnets** → Click **Create Subnet**.
-1. Choose **VPC:** `demo-app-vpc`.
-2. Create three public subnets:
+1. Go to **Subnets** → Click **Create Subnet**.
+2. Choose **VPC:** `demo-app-vpc`.
+3. Create three public subnets:
    - `demo-app-public-subnet-1` (`10.0.1.0/24`) → `us-east-1a`
    - `demo-app-public-subnet-2` (`10.0.2.0/24`) → `us-east-1b`
    - `demo-app-public-subnet-3` (`10.0.3.0/24`) → `us-east-1c`
-3. Click **Create**.
+4. Click **Create**.
 
 #### Private Subnets (For App & DB Layers)
 1. Create three private subnets:
@@ -28,25 +28,25 @@ Go to **Subnets** → Click **Create Subnet**.
 2. Click **Create**.
 
 ### 3. Create & Attach Internet Gateway (IGW)
-Go to **Internet Gateways** → Click **Create Internet Gateway**.
-1. Enter:
+1. Go to **Internet Gateways** → Click **Create Internet Gateway**.
+2. Enter:
    - **Name:** `demo-app-igw`
-2. Click **Create**.
-3. Select `demo-app-igw` → Click **Actions** → **Attach to VPC** → Select `demo-app-vpc` → Click **Attach**.
+3. Click **Create**.
+4. Select `demo-app-igw` → Click **Actions** → **Attach to VPC** → Select `demo-app-vpc` → Click **Attach**.
 
 ### 4. Create & Configure Route Tables
 #### Public Route Table (For Public Subnets)
-Go to **Route Tables** → Click **Create Route Table**.
-1. Enter:
+1. Go to **Route Tables** → Click **Create Route Table**.
+2. Enter:
    - **Name:** `demo-app-public-rt`
    - **VPC:** `demo-app-vpc`
-2. Click **Create**.
-3. Select `demo-app-public-rt` → **Routes** → Click **Edit Routes**.
+3. Click **Create**.
+4. Select `demo-app-public-rt` → **Routes** → Click **Edit Routes**.
    - **Add Route:**
      - **Destination:** `0.0.0.0/0`
      - **Target:** `Internet Gateway` → `demo-app-igw`
    - Click **Save Routes**.
-4. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
+5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
    - Select:
      - ✅ `demo-app-public-subnet-1`
      - ✅ `demo-app-public-subnet-2`
@@ -55,38 +55,38 @@ Go to **Route Tables** → Click **Create Route Table**.
 
 ### 5. Create NAT Gateways (One per Private Subnet)
 #### Allocate 3 Elastic IPs
-Go to **Elastic IPs** → Click **Allocate Elastic IP** → Click **Allocate**.
+1. Go to **Elastic IPs** → Click **Allocate Elastic IP** → Click **Allocate**.
 - Repeat 2 more times (Total: **3 Elastic IPs**).
 
 #### Create 3 NAT Gateways (One in Each Public Subnet)
-Go to **NAT Gateways** → Click **Create NAT Gateway**.
-1. `demo-app-nat-gateway-1`:
+1. Go to **NAT Gateways** → Click **Create NAT Gateway**.
+2. `demo-app-nat-gateway-1`:
    - **Name:** `demo-app-nat-gateway-1`
    - **Subnet:** `demo-app-public-subnet-1`
    - **Elastic IP:** (Select first one)
-2. `demo-app-nat-gateway-2`:
+3. `demo-app-nat-gateway-2`:
    - **Name:** `demo-app-nat-gateway-2`
    - **Subnet:** `demo-app-public-subnet-2`
    - **Elastic IP:** (Select second one)
-3. `demo-app-nat-gateway-3`:
+4. `demo-app-nat-gateway-3`:
    - **Name:** `demo-app-nat-gateway-3`
    - **Subnet:** `demo-app-public-subnet-3`
    - **Elastic IP:** (Select third one)
-4. Click **Create**.
+5. Click **Create**.
 
 ### 6. Create Separate Route Tables for Each Private Subnet
 #### Route Table for Private-Subnet-1
-Go to **Route Tables** → Click **Create Route Table**.
-1. Enter:
+1. Go to **Route Tables** → Click **Create Route Table**.
+2. Enter:
    - **Name:** `demo-app-private-rt-1`
    - **VPC:** `demo-app-vpc`
-2. Click **Create**.
-3. Select `demo-app-private-rt-1` → **Edit Routes**.
+3. Click **Create**.
+4. Select `demo-app-private-rt-1` → **Edit Routes**.
    - **Add Route:**
      - **Destination:** `0.0.0.0/0`
      - **Target:** `NAT Gateway` → `demo-app-nat-gateway-1`
    - Click **Save Routes**.
-4. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
+5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
    - Select:
      - ✅ `demo-app-private-subnet-1`
    - Click **Save Associations**.
@@ -911,9 +911,9 @@ This completes the setup for creating an AMI, Launch Template, and Auto Scaling 
    - Your Flask app should load!
 
 ### 5. Update `index.html`
-Now that we have created an **ASG** and **Load Balancer**, we should point our **Frontend** to the Load Balancer instead of the EC2 IP:Port.
+Now that we have created an **ASG** and **Load Balancer**, we should point our **Frontend** to the Load Balancer instead of the EC2 IP:Port in `index.html`.
 
-1. Update `API_BASE` in `index.html` to point to `http://LoadBalancer:80`.
+1. Update `API_BASE` in `index.html` to point to `http://LoadBalancer:80` on your local machine.
 2. Re-upload the updated file to the **S3 Bucket** (e.g., `demo-app-frontend-s3-bucket-6789`).
 
 
