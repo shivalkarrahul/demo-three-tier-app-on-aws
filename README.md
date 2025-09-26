@@ -1,9 +1,17 @@
 # Three-Tier Application on AWS
 
-This repository contains step-by-step instructions to set up a three-tier application on AWS.  
-It is written for beginners and college students, with clear redundancy so that no prior AWS knowledge is required.
+This repo provides a **hands-on guide to deploy a three-tier application on AWS**. It covers:
+
+* **Network Layer:** VPC, public & private subnets, route tables.
+* **Application Layer:** Flask backend on EC2 with Load Balancer & Auto Scaling.
+* **Data Layer:** RDS MySQL for structured data, DynamoDB for metadata.
+* **Storage & Notifications:** S3 for files, SNS for notifications.
+* **Secure Access:** IAM roles and Bastion Host.
+
+By following this repo, you’ll learn how to **build, deploy, and scale a complete three-tier application on AWS**.
 
 ---
+
 
 ## Table of Contents
 - [Part 1: Network Setup](#part-1-network-setup)
@@ -18,11 +26,20 @@ It is written for beginners and college students, with clear redundancy so that 
 - [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
 
 
-
-
 ---
 
 ## Part 1: Network Setup
+
+In this section, we set up the **foundation of the three-tier architecture** on AWS:
+
+* **VPC:** Isolated network for your application.
+* **Subnets:** Separate public subnets for Load Balancers and NAT, and private subnets for app and database layers.
+* **Internet Gateway & NAT Gateways:** Enable internet access for public and private resources.
+* **Route Tables:** Proper routing for public and private subnets to ensure secure and controlled traffic flow.
+
+By completing this step, your AWS environment will be ready to deploy the application and database layers securely.
+
+---
 
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
@@ -172,10 +189,19 @@ It is written for beginners and college students, with clear redundancy so that 
 This forms the foundation of the three-tier architecture.
 
 
-
 ---
 
 ## Part 2: Set Up RDS
+
+In this step, we create a **MySQL RDS instance** to store the application’s data.
+
+* The database will hold **user information**, such as names and IDs.
+* The RDS instance is placed in **private subnets** for security, ensuring only the app layer can access it.
+
+After this step, the database is ready to support the backend of your three-tier application.
+
+---
+
 
 ### 1. Create an RDS Instance
 1. Open **AWS Management Console → RDS**.  
@@ -219,6 +245,15 @@ This forms the foundation of the three-tier architecture.
 
 ## Part 3: Set Up S3
 
+In this step, we create an **S3 bucket** to store **files uploaded by users**.
+
+* The bucket will hold **images, documents, or any backend files** required by the application.
+* Proper permissions and versioning ensure **security and easy recovery** of files.
+
+After this step, the S3 bucket is ready to support backend file storage.
+
+---
+
 This bucket will be used for backend purposes. Files uploaded to the demo-app will be stored here.
 
 ### 1. Create an S3 Bucket
@@ -238,6 +273,14 @@ This bucket will be used for backend purposes. Files uploaded to the demo-app wi
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
+
+In this step, we use **SNS (Simple Notification Service)** to get **email alerts whenever a file is uploaded to S3**.
+
+* An **SNS topic** is created and linked to the S3 bucket.
+* Users can subscribe via email to receive **real-time notifications**.
+* This ensures the team is immediately **aware of new uploads** for processing or auditing.
+
+---
 
 ### 1. Create an SNS Topic
 1. Go to AWS Console → Amazon SNS.
@@ -300,6 +343,14 @@ This bucket will be used for backend purposes. Files uploaded to the demo-app wi
 
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
+
+In this step, we **store metadata of uploaded files** in **DynamoDB** using a **Lambda function**:
+
+* A **DynamoDB table** is created to save details like **file name, bucket name, and upload timestamp**.
+* **Lambda** is triggered by the SNS notification from S3 uploads.
+* This automates **tracking and management of uploaded files**, enabling easy retrieval and further processing.
+
+---
 
 ### 1. Create a DynamoDB Table
 1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
@@ -392,6 +443,8 @@ def lambda_handler(event, context):
 
 ### 6. Quick Test
 
+After setting up S3, SNS, DynamoDB, and Lambda:
+
 1. Upload a file to your S3 bucket (e.g., `demo-app-backend-s3-bucket-1234`).
 2. You should receive an email notification from SNS.
 3. Go to **Lambda → demo-app-metadata-lambda → Monitor → View CloudWatch Logs**.
@@ -406,6 +459,15 @@ Extracted File: <your file name> from Bucket: <your bucket name>
 
 
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
+
+
+Here’s a concise version for **Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet**:
+
+---
+
+## Part 6: Deploy a Flask Application on EC2
+
+In this step, we deploy the backend Flask application on a test EC2 instance with full integration to **RDS, S3, and DynamoDB**:
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
@@ -636,6 +698,8 @@ sudo systemctl status flask-app
 
 ## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
 
+In this step, we prepare the infrastructure for **scalable deployment** of the Flask application:
+
 Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
 
 ### 1. Create an AMI from the Running EC2 Instance
@@ -750,6 +814,8 @@ The ASG will automatically manage EC2 instances to ensure availability.
 
 ## Part 8: Attach Load Balancer to Auto Scaling Group (ASG)
 
+In this step, we make the Flask application **highly available and fault-tolerant**:
+
 ### 1. Create a Target Group (TG)
 1. Go to AWS Console → **EC2 Dashboard**  
 2. On the left panel, click **Target Groups** under **Load Balancing**  
@@ -843,6 +909,8 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 
 ## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
+In this step, we will launch a public EC2 instance that acts as a Bastion Host. It will allow us to securely connect to and manage our private instances without exposing them directly to the internet.
+
 ### 1. Launch an EC2 Instance (Bastion Host)
 1. Go to AWS Management Console → **EC2** → **Launch Instance**  
 2. Enter an instance name: `demo-app-bastion-host`  
@@ -890,9 +958,9 @@ After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, t
 3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
 
 
-111
-
 ## Part 10: Connect From Bastion Host to Private Instance
+
+In this step, we will use the Bastion Host to securely access our private EC2 instances. This ensures all management is done through the Bastion, keeping private instances safe from direct internet access.
 
 ### 1. Copy the Private Key to Bastion Host
 **From Terminal (Linux/Mac):**  
