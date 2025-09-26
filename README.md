@@ -181,12 +181,12 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 This setup uses **one NAT Gateway per public subnet** for high availability and fault tolerance.
 
-#### 5.3 Allocate Elastic IPs
+#### 5.1 Allocate Elastic IPs
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** **3 times** (one for each NAT Gateway).
 
-#### 5.4 Create NAT Gateways
+#### 5.2 Create NAT Gateways
 
 **NAT Gateway 1**
 
