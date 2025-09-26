@@ -12,6 +12,14 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 
 ---
 
+## Who This Guide Is For
+This guide is intended for students and developers who want to **learn hands-on AWS deployment** using a three-tier architecture.  
+
+**Prerequisites:**  
+- AWS Account with appropriate permissions  
+- Basic Linux & SSH knowledge  
+- Familiarity with Python and Flask
+
 
 ## Table of Contents
 - [Part 1: Network Setup](#part-1-network-setup)
