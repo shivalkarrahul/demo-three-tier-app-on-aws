@@ -94,103 +94,154 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
-### 5. Create NAT Gateways (One per Private Subnet)
+---
 
-We will create **3 NAT Gateways**, one in each public subnet, to allow instances in private subnets to access the internet.
+### 5. Create NAT Gateways
 
-#### Allocate Elastic IPs
+We will create NAT Gateways to allow instances in private subnets to access the internet.
 
-1. Go to **Elastic IPs** in the AWS Console.
+* **Demo Setup:** 1 NAT Gateway for all private subnets.
+* **Prod Setup:** 3 NAT Gateways, one per private subnet.
+
+#### Allocate Elastic IP(s)
+
+1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP** → **Allocate**.
-3. Repeat until you have **3 Elastic IPs** (one for each NAT Gateway).
+
+* **Demo:** Allocate **1 Elastic IP**.
+* **Prod:** Allocate **3 Elastic IPs** (one per NAT Gateway).
 
 #### Create NAT Gateway 1
 
 1. Go to **NAT Gateways** → **Create NAT Gateway**.
-2. Enter the following:
+2. Enter:
 
    * **Name:** `demo-app-nat-gateway-1`
    * **Subnet:** `demo-app-public-subnet-1`
-   * **Elastic IP:** Select the **first Elastic IP** you allocated
+   * **Elastic IP:** Select the **first Elastic IP**
 3. Click **Create NAT Gateway**.
 4. Wait until the status shows **Available**.
 
-#### Create NAT Gateway 2
+* ✅ **Demo:** Associate **all private subnets** to this NAT Gateway.
+* ✅ **Prod:** Only associate **private-subnet-1**.
+
+<details>
+<summary> Create NAT Gateway 2 (Prod Only)</summary>
 
 1. Go to **NAT Gateways** → **Create NAT Gateway**.
-2. Enter the following:
+2. Enter:
 
    * **Name:** `demo-app-nat-gateway-2`
    * **Subnet:** `demo-app-public-subnet-2`
    * **Elastic IP:** Select the **second Elastic IP**
 3. Click **Create NAT Gateway**.
 4. Wait until the status shows **Available**.
+5. Associate **private-subnet-2** to this NAT Gateway.
 
-#### Create NAT Gateway 3
+</details>
+
+<details>
+<summary> Create NAT Gateway 3 (Prod Only)</summary>
 
 1. Go to **NAT Gateways** → **Create NAT Gateway**.
-2. Enter the following:
+2. Enter:
 
    * **Name:** `demo-app-nat-gateway-3`
    * **Subnet:** `demo-app-public-subnet-3`
    * **Elastic IP:** Select the **third Elastic IP**
 3. Click **Create NAT Gateway**.
 4. Wait until the status shows **Available**.
+5. Associate **private-subnet-3** to this NAT Gateway.
 
-**Note:** Only after all three NAT Gateways show **Available**, you can proceed to update the private route tables.
+</details>
 
-### 6. Create Separate Route Tables for Each Private Subnet
+✅ **Note:** Only after all NAT Gateways show **Available**, proceed to update the private route tables.
+
+---
+
+### 6. Create Separate Route Tables for Private Subnets
+
+We will create route tables to direct traffic from private subnets to the internet via NAT Gateways.
+
+* **Demo Setup:** 1 NAT Gateway for all private subnets → only **1 route table** needed.
+* **Prod Setup:** 3 NAT Gateways → 3 route tables (one per private subnet).
 
 #### Route Table for Private Subnet 1
-1. Go to **Route Tables → Create Route Table**.  
-2. Enter:  
-   - **Name:** `demo-app-private-rt-1`  
-   - **VPC:** `demo-app-vpc`  
-3. Click **Create**.  
-4. Select `demo-app-private-rt-1` → **Edit Routes**.  
-5. Add Route:  
-   - **Destination:** `0.0.0.0/0`  
-   - **Target:** NAT → `demo-app-nat-gateway-1`  
-6. Click **Save Routes**.  
-7. Go to **Subnet Associations → Edit Subnet Associations**.  
-8. Select:  
-   - ✅ `demo-app-private-subnet-1`  
+
+1. Go to **Route Tables → Create Route Table**.
+2. Enter:
+
+   * **Name:** `demo-app-private-rt-1`
+   * **VPC:** `demo-app-vpc`
+3. Click **Create**.
+4. Select `demo-app-private-rt-1` → **Edit Routes**.
+5. Add Route:
+
+   * **Destination:** `0.0.0.0/0`
+   * **Target:** NAT → `demo-app-nat-gateway-1`
+6. Click **Save Routes**.
+7. Go to **Subnet Associations → Edit Subnet Associations**.
+8. Select:
+
+   * ✅ `demo-app-private-subnet-1`
 9. Click **Save Associations**.
 
-#### Route Table for Private Subnet 2
-1. Go to **Route Tables → Create Route Table**.  
-2. Enter:  
-   - **Name:** `demo-app-private-rt-2`  
-   - **VPC:** `demo-app-vpc`  
-3. Click **Create**.  
-4. Select `demo-app-private-rt-2` → **Edit Routes**.  
-5. Add Route:  
-   - **Destination:** `0.0.0.0/0`  
-   - **Target:** NAT → `demo-app-nat-gateway-2`  
-6. Click **Save Routes**.  
-7. Go to **Subnet Associations → Edit Subnet Associations**.  
-8. Select:  
-   - ✅ `demo-app-private-subnet-2`  
+* **Demo:** Also associate **subnet-2 and subnet-3** to this route table.
+
+
+<details>
+<summary> Route Table for Private Subnet 2 (Prod Only)</summary>
+
+1. Go to **Route Tables → Create Route Table**.
+2. Enter:
+
+   * **Name:** `demo-app-private-rt-2`
+   * **VPC:** `demo-app-vpc`
+3. Click **Create**.
+4. Select `demo-app-private-rt-2` → **Edit Routes**.
+5. Add Route:
+
+   * **Destination:** `0.0.0.0/0`
+   * **Target:** NAT → `demo-app-nat-gateway-2`
+6. Click **Save Routes**.
+7. Go to **Subnet Associations → Edit Subnet Associations**.
+8. Select:
+
+   * ✅ `demo-app-private-subnet-2`
 9. Click **Save Associations**.
 
-#### Route Table for Private Subnet 3
-1. Go to **Route Tables → Create Route Table**.  
-2. Enter:  
-   - **Name:** `demo-app-private-rt-3`  
-   - **VPC:** `demo-app-vpc`  
-3. Click **Create**.  
-4. Select `demo-app-private-rt-3` → **Edit Routes**.  
-5. Add Route:  
-   - **Destination:** `0.0.0.0/0`  
-   - **Target:** NAT → `demo-app-nat-gateway-3`  
-6. Click **Save Routes**.  
-7. Go to **Subnet Associations → Edit Subnet Associations**.  
-8. Select:  
-   - ✅ `demo-app-private-subnet-3`  
+</details>
+
+<details>
+<summary> Route Table for Private Subnet 3 (Prod Only)</summary>
+
+1. Go to **Route Tables → Create Route Table**.
+2. Enter:
+
+   * **Name:** `demo-app-private-rt-3`
+   * **VPC:** `demo-app-vpc`
+3. Click **Create**.
+4. Select `demo-app-private-rt-3` → **Edit Routes**.
+5. Add Route:
+
+   * **Destination:** `0.0.0.0/0`
+   * **Target:** NAT → `demo-app-nat-gateway-3`
+6. Click **Save Routes**.
+7. Go to **Subnet Associations → Edit Subnet Associations**.
+8. Select:
+
+   * ✅ `demo-app-private-subnet-3`
 9. Click **Save Associations**.
 
-✅ **At this point, your VPC, subnets, internet gateway, NAT gateways, and route tables are fully set up.**  
-This forms the foundation of the three-tier architecture.
+</details>
+
+---
+
+✅ **Note:**
+
+* **Demo readers** use only `demo-app-private-rt-1` for all private subnets.
+* **Prod readers** follow the 3 route tables, one per private subnet.
+* After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
 
 ---
 
