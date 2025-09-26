@@ -32,28 +32,43 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 <details>
 <summary>📖 Theory: Understanding the Network Setup</summary>
 
-In this section, we set up the foundation of the three-tier architecture on AWS:
+In this section, we build the **foundation of the three-tier architecture** on AWS:
 
-VPC: Isolated network for your application.
+- **VPC:** Isolated network for your application.  
+- **Subnets:** Public subnets for Load Balancers & NAT, private subnets for app and database layers.  
+- **Internet Gateway & NAT Gateways:** Provide controlled internet access for resources.  
+- **Route Tables:** Ensure secure and proper traffic routing between subnets and the internet.  
 
-Subnets: Separate public subnets for Load Balancers and NAT, and private subnets for app and database layers.
+By completing this step, your AWS environment will be ready to securely host the application and database layers.
 
-Internet Gateway & NAT Gateways: Enable internet access for public and private resources.
+---
 
-Route Tables: Proper routing for public and private subnets to ensure secure and controlled traffic flow.
+#### Detailed Explanation
 
-By completing this step, your AWS environment will be ready to deploy the application and database layers securely.
+**VPC (Virtual Private Cloud):**  
+Think of the VPC as your own **virtual data center** inside AWS. It’s a completely isolated network where you define IP ranges, subnets, and routing. This ensures security and control over your infrastructure.
 
-Theory: Understanding the Network Setup
-The network setup is the most crucial part of any cloud application. Think of the VPC (Virtual Private Cloud) as your own virtual data center within AWS, completely isolated from other networks. The VPC provides a secure, private space where you can define and control your network environment.
+**Subnets:**  
+Within the VPC, subnets logically partition the network.  
+- **Public Subnets:** For resources that need internet access (Load Balancer, Bastion Host). Connected to the **Internet Gateway (IGW)**.  
+- **Private Subnets:** For sensitive resources (application servers, databases). These subnets have **no direct internet access**, which reduces the attack surface.
 
-Within the VPC, we create subnets to logically partition the network. This is a core security practice. Public subnets contain resources that must be accessible from the public internet, such as a load balancer or a bastion host. They get their internet access via the Internet Gateway (IGW). In contrast, private subnets host sensitive resources like application servers and databases. These resources cannot be directly reached from the internet, which drastically reduces their attack surface.
+**Internet Gateway (IGW) & NAT Gateway:**  
+- The **IGW** connects public subnets to the internet.  
+- The **NAT Gateway** allows private subnet resources to **initiate outbound traffic** (e.g., for updates) while blocking **inbound traffic** from the internet.
 
-To allow instances in private subnets to access the internet for things like software updates or patching, we use a NAT Gateway (Network Address Translation). The NAT Gateway allows outbound traffic to the internet but prevents any inbound connections initiated from the outside.
+**Route Tables:**  
+These act as **rules for traffic flow**:  
+- Public Route Table → Routes traffic from public subnets to the IGW.  
+- Private Route Table → Routes traffic from private subnets to the NAT Gateway.  
 
-Finally, Route Tables act as the rules for each subnet, dictating where network traffic is directed. Public subnets have a route table that points to the Internet Gateway, while private subnets have a route table that points to the NAT Gateway. This careful routing ensures all traffic flows securely and according to your design.
+---
+
+✅ **Why this matters:**  
+This layered setup enforces **security, availability, and scalability**. Public resources stay accessible, private resources remain protected, and traffic flows are tightly controlled.
 
 </details>
+
 
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
@@ -298,21 +313,43 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
 <details>
 <summary>📖 Theory: The Data Layer</summary>
 
-In this step, we create a MySQL RDS instance to store the application’s data.
+In this step, we create a **MySQL RDS instance** to store the application’s data.  
 
-The database will hold user information, such as names and IDs.
+- The database will hold **user information** (e.g., names, IDs, orders, etc.).  
+- The RDS instance is placed in **private subnets** for security, ensuring only the **application layer** can access it.  
+- After this step, the database is ready to support the backend of your three-tier application.  
 
-The RDS instance is placed in private subnets for security, ensuring only the app layer can access it.
+---
 
-After this step, the database is ready to support the backend of your three-tier application.
+#### Detailed Explanation
 
-Theory: The Data Layer
-The database is a core component of any application, and in a multi-tier architecture, it's essential to keep it separate and secure. RDS (Relational Database Service) is a fully managed AWS service that handles the heavy lifting of running a database, like backups, patching, and scaling.  This means you don't have to worry about managing the underlying infrastructure, allowing you to focus on your application's data and logic.
+**Database in Multi-Tier Architecture:**  
+The database is the **core of any application**. Separating it into a dedicated data layer ensures **security, maintainability, and scalability**.  
 
-We place the RDS instance in a private subnet to prevent direct access from the public internet. All traffic to and from the database must be routed through your application servers, which are in the application layer. This practice is a critical security measure that protects your data from unauthorized access.
-When setting up RDS, you'll specify a database subnet group, which tells AWS to place your database instances within your designated private subnets, ensuring they are always isolated from public access.
+**Amazon RDS (Relational Database Service):**  
+AWS RDS is a **fully managed service** that handles:  
+- Automatic backups  
+- Patching and updates  
+- Failover and replication  
+- Scaling (vertical and horizontal)  
+
+This removes the burden of infrastructure management, letting you focus on your **application data and logic**.  
+
+**Why Private Subnets?**  
+- The RDS instance is placed in **private subnets**, meaning it **cannot be accessed directly** from the internet.  
+- Only **application servers** in the private subnets can connect to it.  
+- This is a **critical security measure** that prevents unauthorized access.  
+
+**Database Subnet Group:**  
+When creating RDS, you must specify a **DB Subnet Group**. This ensures AWS deploys the database across your chosen **private subnets** for high availability and isolation.  
+
+---
+
+✅ **Why this matters:**  
+Placing the database in private subnets enforces **security best practices** while RDS ensures **operational efficiency**. Together, they form a **secure and reliable data layer** for your application.
 
 </details>
+
 
 ### 1. Create an RDS Instance
 1. Open **AWS Management Console → RDS**.  
@@ -353,17 +390,38 @@ When setting up RDS, you'll specify a database subnet group, which tells AWS to 
 <details>
 <summary>📖 Theory: The Storage Layer</summary>
 
-In this step, we create an S3 bucket to store files uploaded by users.
-	•	The bucket will hold images, documents, or any backend files required by the application.
-	•	Proper permissions and versioning ensure security and easy recovery of files.
-After this step, the S3 bucket is ready to support backend file storage.
-This bucket will be used for backend purposes. Files uploaded to the demo-app will be stored here.
+In this step, we create an **Amazon S3 bucket** to store files uploaded by users.  
 
-Theory: The Storage Layer
-In a cloud-native architecture, it's best practice to separate file storage from your application's compute layer. Amazon S3 (Simple Storage Service) is an object storage service that provides a simple, scalable, and highly available solution for storing and retrieving any amount of data. Using S3 for your application's files means you don't have to worry about managing disk space on your servers.
-S3 is incredibly durable, and features like Bucket Versioning give you a safety net by keeping multiple versions of a file, allowing you to easily recover from accidental deletions or overwrites. By enabling Block Public Access, we ensure that the bucket is not exposed to the public internet by default, which is a critical security measure to protect sensitive files.
+- The bucket will hold **images, documents, or any backend files** required by the application.  
+- **Proper permissions and versioning** ensure security and easy recovery of files.  
+- After this step, the S3 bucket is ready to support backend file storage.  
+- Files uploaded to the `demo-app` will be stored here.  
+
+---
+
+#### Detailed Explanation
+
+**Why a Separate Storage Layer?**  
+In a **cloud-native architecture**, it’s best practice to separate **file storage** from your application’s **compute layer**.  
+This ensures files are not tied to a single server and remain available even if servers are replaced, restarted, or scaled.  
+
+**Amazon S3 (Simple Storage Service):**  
+- Provides **object storage** that is **scalable, durable, and highly available**.  
+- Allows storing and retrieving **any amount of data** at any time.  
+- Removes the need to manage physical disks or worry about capacity planning.  
+
+**Key Features for Security & Reliability:**  
+- **Bucket Versioning:** Keeps multiple versions of a file → easy recovery from **accidental deletions or overwrites**.  
+- **Block Public Access:** Prevents files from being exposed to the internet by default → critical for protecting **sensitive data**.  
+- **IAM Policies & Permissions:** Ensure only authorized services (e.g., your app servers) can access the bucket.  
+
+---
+
+✅ **Why this matters:**  
+By using S3 for file storage, you gain a **cost-effective, secure, and highly durable storage solution** that integrates seamlessly with the rest of your AWS architecture.
 
 </details>
+
 
 ### 1. Create an S3 Bucket
 1. Open **AWS Console → Navigate to S3**.
@@ -388,17 +446,44 @@ S3 is incredibly durable, and features like Bucket Versioning give you a safety 
 <details>
 <summary>📖 Theory: Decoupled Messaging and Events</summary>
 
-In this step, we use SNS (Simple Notification Service) to get email alerts whenever a file is uploaded to S3.
-	•	An SNS topic is created and linked to the S3 bucket.
-	•	Users can subscribe via email to receive real-time notifications.
-	•	This ensures the team is immediately aware of new uploads for processing or auditing.
+In this step, we use **Amazon SNS (Simple Notification Service)** to get email alerts whenever a file is uploaded to **S3**.  
 
-Theory: Decoupled Messaging and Events
-A key principle of a scalable architecture is to decouple services. Instead of one service directly calling another, we can use a messaging system to trigger events. Amazon SNS (Simple Notification Service) is a fully managed pub/sub messaging service. It allows you to send messages from one service (the "publisher") to multiple other services (the "subscribers").
-Here, our S3 bucket is the publisher. When a new file is uploaded, S3 publishes an event notification to our SNS topic. The SNS topic then broadcasts this message to all of its subscribers. In this case, our subscribers are an email endpoint and, later, a Lambda function. This design pattern is powerful because it allows us to add or remove subscribers (like a new service or a different type of notification) without changing the S3 bucket's configuration.
-By using SNS, we create a flexible, event-driven architecture that can easily scale to meet future needs, such as triggering an image-resizing service or a file-processing workflow.
+- An **SNS topic** is created and linked to the S3 bucket.  
+- Users can **subscribe via email** to receive real-time notifications.  
+- This ensures the team is immediately aware of **new uploads** for processing or auditing.  
+
+---
+
+#### Detailed Explanation
+
+**Why Decoupling Matters?**  
+A key principle of building **scalable architectures** is to **decouple services**.  
+Instead of one service directly calling another, we use **event-driven messaging**. This improves flexibility, reliability, and scalability.  
+
+**Amazon SNS (Simple Notification Service):**  
+- A **fully managed pub/sub (publish/subscribe)** messaging service.  
+- **Publisher:** A service that generates events (here, the S3 bucket).  
+- **Subscribers:** Services or endpoints that receive the event (here, an email endpoint, and later possibly Lambda).  
+
+**How it works in our setup:**  
+1. A file is uploaded to the **S3 bucket** (event trigger).  
+2. S3 publishes a **notification** to the SNS topic.  
+3. SNS **broadcasts the message** to all its subscribers.  
+   - Example: Email notification to the team.  
+   - Example (future): A Lambda function to process the file.  
+
+**Benefits of SNS Integration:**  
+- **Loose Coupling:** Services don’t depend directly on each other.  
+- **Scalability:** Easily add new subscribers (e.g., another app, SMS, or Lambda) without modifying S3.  
+- **Flexibility:** Supports multiple use cases like file processing, auditing, or triggering workflows.  
+
+---
+
+✅ **Why this matters:**  
+By introducing SNS, we’re moving towards an **event-driven, decoupled architecture** that makes our system more **resilient, extensible, and scalable** for future enhancements.
 
 </details>
+
 
 ### 1. Create an SNS Topic
 1. Go to AWS Console → Amazon SNS.
@@ -466,18 +551,50 @@ By using SNS, we create a flexible, event-driven architecture that can easily sc
 <details>
 <summary>📖 Theory: Serverless Data Processing and Storage</summary>
 
-In this step, we store metadata of uploaded files in DynamoDB using a Lambda function:
-	•	A DynamoDB table is created to save details like file name, bucket name, and upload timestamp.
-	•	Lambda is triggered by the SNS notification from S3 uploads.
-	•	This automates tracking and management of uploaded files, enabling easy retrieval and further processing.
+In this step, we **store metadata of uploaded files in DynamoDB using a Lambda function**:  
 
-Theory: Serverless Data Processing and Storage
-This step introduces two powerful concepts: serverless computing and NoSQL databases.
-AWS Lambda is a serverless, event-driven compute service. This means you don't have to provision or manage servers. You simply upload your code, and Lambda runs it in response to specific events. In our case, the event is a message published to an SNS topic. Lambda acts as the "glue" between our storage and data layers, automating a crucial task without any server maintenance.
-Amazon DynamoDB is a fully managed NoSQL database. Unlike traditional relational databases (like MySQL), DynamoDB is designed for key-value and document data. It's incredibly fast and scalable, and it doesn't require a fixed schema. This makes it perfect for our use case, where we're only storing simple, structured data about each uploaded file, such as the file_name, bucket_name, and a timestamp.
-The combined workflow is a prime example of a modern, event-driven architecture: a file upload to S3 triggers an SNS message, which in turn invokes the Lambda function. The Lambda function then automatically extracts the file's metadata from the event and stores it in the DynamoDB table. This entire process is automated, scalable, and requires no server management.
+- A **DynamoDB table** is created to save details like `file_name`, `bucket_name`, and `upload_timestamp`.  
+- **Lambda** is triggered by the **SNS notification** from S3 uploads.  
+- This automates **tracking and management** of uploaded files, enabling easy retrieval and further processing.  
+
+---
+
+#### Detailed Explanation
+
+**AWS Lambda (Serverless Compute):**  
+- A **serverless, event-driven compute service**.  
+- No servers to provision or manage.  
+- Runs your code automatically in response to events.  
+- In our case, the event is an **SNS message** triggered when a file is uploaded to S3.  
+- Lambda acts as the **glue** between the storage (S3) and data (DynamoDB) layers.  
+
+**Amazon DynamoDB (NoSQL Database):**  
+- A **fully managed NoSQL database** designed for **key-value** and **document** data.  
+- Extremely **fast, scalable, and schema-less** (no fixed schema required).  
+- Perfect for storing **lightweight, structured metadata** such as:  
+  - `file_name`  
+  - `bucket_name`  
+  - `upload_timestamp`  
+
+**Workflow in Our Setup:**  
+1. A file is uploaded to **S3**.  
+2. S3 triggers an **SNS notification**.  
+3. The **SNS topic** invokes the **Lambda function**.  
+4. Lambda extracts **file metadata** and stores it in **DynamoDB**.  
+
+**Benefits of This Design:**  
+- **Fully automated:** No manual intervention needed for tracking uploads.  
+- **Serverless:** Scales automatically, no server management required.  
+- **Event-driven:** Each upload triggers the workflow instantly.  
+- **Seamless integration:** Storage, processing, and data management work together.  
+
+---
+
+✅ **Why this matters:**  
+This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, event-driven architecture**. It’s **scalable, cost-efficient, and maintenance-free**, making it ideal for modern cloud-native applications.
 
 </details>
+
 
 ### 1. Create a DynamoDB Table
 1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
@@ -591,16 +708,47 @@ Extracted File: <your file name> from Bucket: <your bucket name>
 <details>
 <summary>📖 Theory: The Application Layer and Service Integration</summary>
 
-In this step, we deploy the backend Flask application on a test EC2 instance with full integration to RDS, S3, and DynamoDB:
-Theory: The Application Layer and Service Integration
-The core of our three-tier architecture is the application layer, where the business logic lives. In this setup, an EC2 (Elastic Compute Cloud) instance serves as our application server. Think of EC2 as a virtual machine in the cloud that gives you complete control over your operating system and environment. We're using a public subnet for this instance to make it easily accessible for testing.
-To ensure our application can securely interact with our other services (RDS, S3, and DynamoDB), we use an IAM (Identity and Access Management) Role. An IAM role is a set of permissions that we can grant to an AWS service, in this case, our EC2 instance. By attaching a role to the instance, we give our Flask application the necessary permissions to read and write to S3 and DynamoDB without ever embedding sensitive access keys in our code. This is a crucial security practice.
-The Flask application itself acts as the communication hub, connecting the frontend to the backend services.
-	•	It uses pymysql to connect to the RDS database (the data layer) and perform CRUD operations on user data.
-	•	It uses boto3 (the AWS SDK for Python) to interact with S3 for file uploads and to retrieve metadata from the DynamoDB table.
-Finally, we use systemd to manage the Flask application. This ensures that the application automatically starts when the EC2 instance reboots and that it keeps running, making our deployment more robust and reliable.
+In this step, we **deploy the backend Flask application** on a test **EC2 instance** with full integration to **RDS, S3, and DynamoDB**.  
+
+---
+
+#### Detailed Explanation
+
+**Application Layer (Business Logic):**  
+- This is the **core of the three-tier architecture** where your **business logic** resides.  
+- We use **Amazon EC2 (Elastic Compute Cloud)** as the application server.  
+- Think of EC2 as a **virtual machine in the cloud**, giving you full control over OS, software, and environment.  
+- The EC2 instance is launched in a **public subnet** so it’s easily accessible for testing.  
+
+**IAM Role for Secure Access:**  
+- Instead of storing AWS keys inside your code, we attach an **IAM Role** to the EC2 instance.  
+- The IAM Role grants the Flask app the necessary permissions to:  
+  - Read/write files in **S3**.  
+  - Insert/retrieve metadata from **DynamoDB**.  
+- This is a **best practice for security**, since no credentials are hardcoded in the app.  
+
+**Flask Application (Integration Hub):**  
+- Acts as the **communication hub** between the frontend and backend services.  
+- Handles requests and routes them to the correct services.  
+- Uses:  
+  - **pymysql** → To connect to **RDS MySQL** (data layer) for CRUD operations.  
+  - **boto3** → To interact with:  
+    - **S3** for file uploads/downloads.  
+    - **DynamoDB** for retrieving file metadata.  
+
+**Service Management (systemd):**  
+- We configure the Flask app as a **systemd service**.  
+- This ensures:  
+  - The app **starts automatically** on EC2 reboot.  
+  - The app stays **running reliably** in the background.  
+
+---
+
+✅ **Why this matters:**  
+The **application layer** is the glue that ties everything together — frontend, database, file storage, and metadata. By combining **EC2, IAM roles, Flask, and AWS SDKs**, we build a secure, modular, and production-ready backend for the three-tier architecture.  
 
 </details>
+
 
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
@@ -836,15 +984,45 @@ sudo systemctl status flask-app
 
 <details>
 <summary>📖 Theory: Immutable Infrastructure and Automated Scaling</summary>
-In this step, we prepare the infrastructure for scalable deployment of the Flask application:
-Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
-Theory: Immutable Infrastructure and Automated Scaling
-The final piece of our modern cloud architecture is building for scalability and resilience. We do this by adopting an immutable infrastructure pattern. Instead of making changes to a running server, we create a new, pre-configured image and launch new servers from it. This ensures consistency and prevents configuration drift.
-An AMI (Amazon Machine Image) is the foundation of this pattern. It's a static, complete copy of our EC2 instance, including the operating system, our Flask application, and all its dependencies. We can use this single AMI to create a consistent fleet of new servers.
-The Launch Template acts as the blueprint for our new instances. It combines all the necessary configuration details—like which AMI to use, the instance type, security groups, and even a script to start our Flask app—into a single, versioned resource. This makes it easy to manage and update our infrastructure.
-The Auto Scaling Group (ASG) is the key to automating our scaling. It monitors the health and performance of our instances. Using the Launch Template, the ASG can automatically add more EC2 instances when the application load increases or replace any unhealthy instances, guaranteeing high availability and responsiveness. This setup provides the scalability and resilience needed for a production application.
+
+In this step, we prepare the infrastructure for scalable deployment of the Flask application:  
+• We create an Amazon Machine Image (AMI) from our configured EC2 instance.  
+• We define a Launch Template instead of a Launch Configuration (as it’s the modern and recommended approach).  
+• Finally, we set up an Auto Scaling Group (ASG) to handle automatic scaling and fault tolerance.
+
+---
+
+#### Detailed Explanation
+
+**Immutable Infrastructure**  
+Immutable infrastructure means that instead of modifying existing servers, we create a new, pre-configured image and launch new servers from it. This ensures consistency, avoids configuration drift, and provides predictable environments.
+
+**Amazon Machine Image (AMI)**  
+An AMI is a snapshot of a server containing the operating system, application code, and dependencies. By using the same AMI, we can spin up multiple identical servers, ensuring uniformity across environments.
+
+**Launch Template**  
+A Launch Template acts as a reusable blueprint for creating EC2 instances. It defines:  
+- The AMI ID to use  
+- Instance type (CPU/memory configuration)  
+- Security Groups and networking details  
+- User Data scripts to initialize the application  
+
+Since Launch Templates are versioned, we can easily roll out updates or roll back to previous versions.
+
+**Auto Scaling Group (ASG)**  
+The ASG is responsible for maintaining application availability and elasticity. It:  
+- Launches new instances when demand increases  
+- Terminates instances when demand decreases  
+- Replaces unhealthy instances automatically  
+
+By combining AMIs, Launch Templates, and ASGs, we create a **self-healing, auto-scaling infrastructure** that’s production-ready and highly resilient.
+
+---
+
+✅ This setup ensures that our Flask application can scale dynamically based on demand while maintaining consistency and reliability.
 
 </details>
+
 
 ### 1. Create an AMI from the Running EC2 Instance
 
@@ -957,13 +1135,36 @@ The ASG will automatically manage EC2 instances to ensure availability.
 <details>
 <summary>📖 Theory: High Availability and Traffic Management</summary>
 
-In this step, we make the Flask application highly available and fault-tolerant:
-Theory: High Availability and Traffic Management
-To ensure our application can handle a large number of users and remain available even if an instance fails, we use a Load Balancer. A Load Balancer (ALB) acts as a single point of contact for all incoming traffic. It then automatically distributes that traffic across multiple healthy instances in our Auto Scaling Group (ASG). This prevents any single instance from becoming a bottleneck and ensures that the application remains responsive, even under heavy load.
-A Target Group (TG) is a logical grouping of our EC2 instances. The Load Balancer forwards traffic to a Target Group, and the Target Group then routes the requests to the individual instances. The Target Group also performs health checks to ensure that only healthy instances receive traffic. If an instance fails a health check, the Target Group automatically stops sending traffic to it until it recovers or is replaced by the ASG. This continuous health monitoring is what makes our architecture fault-tolerant and highly available.
-The combination of a Load Balancer, a Target Group, and an Auto Scaling Group creates a robust, self-healing system: the ASG maintains the desired number of instances, the Target Group monitors their health, and the Load Balancer ensures that all user requests are efficiently distributed among the available, healthy instances.
+In this step, we make the Flask application **highly available and fault-tolerant**:  
+• We configure an **Application Load Balancer (ALB)** to handle all incoming traffic.  
+• We create a **Target Group (TG)** to manage our EC2 instances and their health.  
+• The ALB distributes traffic only to healthy instances in the **Auto Scaling Group (ASG)**, ensuring seamless availability.
+
+---
+
+#### Detailed Explanation
+
+**Application Load Balancer (ALB)**  
+An ALB acts as a single entry point for users. It distributes incoming requests across multiple EC2 instances in the ASG. By spreading traffic, it prevents any single instance from being overloaded and ensures consistent application responsiveness.
+
+**Target Group (TG)**  
+A Target Group is a collection of EC2 instances registered under the ALB.  
+- The ALB forwards incoming traffic to this group.  
+- The TG performs **health checks** on each instance.  
+- If an instance fails a health check, the TG automatically stops routing traffic to it until it is healthy again or replaced by the ASG.  
+
+**Auto Scaling Group (ASG) Integration**  
+The ASG works with the ALB and TG to maintain a resilient setup:  
+- The ASG ensures the desired number of instances is always running.  
+- If an instance becomes unhealthy, the ASG replaces it.  
+- The ALB and TG seamlessly route traffic only to healthy instances.  
+
+---
+
+✅ Together, the **ALB, Target Group, and Auto Scaling Group** create a **self-healing, highly available system** that can handle increased user load and maintain uptime even in the event of failures.
 
 </details>
+
 
 ### 1. Create a Target Group (TG)
 1. Go to AWS Console → **EC2 Dashboard**  
@@ -1053,12 +1254,33 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 
 <details>
 <summary>📖 Theory: Secure Access to Private Resources</summary>
-In this step, we will launch a public EC2 instance that acts as a Bastion Host. It will allow us to securely connect to and manage our private instances without exposing them directly to the internet.
-Theory: Secure Access to Private Resources
-In a secure cloud architecture, resources like our application servers and databases are placed in a private subnet to shield them from direct public access. While this is great for security, it presents a challenge for administrators who need to connect to these instances for maintenance or debugging. This is where a Bastion Host comes in.
-A Bastion Host is a dedicated, hardened EC2 instance located in a public subnet. It acts as a jump server or a single point of entry into our private network. Instead of opening up SSH (port 22) access from the internet to every single private instance, we only open it to the Bastion Host. This significantly reduces the attack surface and provides a centralized, monitored access point.
-The process is simple and secure: an administrator first connects to the Bastion Host via SSH, and from there, establishes a second, internal SSH connection to the desired private instance. This creates a secure "tunnel" that allows for management without compromising the security of our private resources.
 
+In this step, we configure a **Bastion Host** (public EC2 instance) to securely access and manage private instances:  
+• Private servers (application servers, databases) stay isolated in private subnets.  
+• A **Bastion Host** in the public subnet acts as the single secure entry point.  
+• Administrators first connect to the Bastion Host, then securely tunnel into private resources.  
+
+---
+
+#### Detailed Explanation
+
+**Private Subnets and Security**  
+Private subnets ensure that sensitive resources (like application servers and RDS databases) are not directly exposed to the internet. This strengthens security but creates the challenge of how administrators can access these instances when needed.  
+
+**Bastion Host (Jump Server)**  
+A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled SSH (port 22) access.  
+- It serves as the only externally accessible point for administrators.  
+- From the Bastion Host, admins can securely "jump" into private instances via SSH.  
+- This minimizes the attack surface by avoiding direct internet access to all private instances.  
+
+**Workflow**  
+1. Administrator connects to the Bastion Host over SSH.  
+2. From the Bastion Host, the administrator initiates a second SSH session into the target private instance.  
+3. This setup forms a secure, controlled tunnel for managing private resources.  
+
+---
+
+✅ Using a Bastion Host provides **centralized, auditable, and secure access** to private infrastructure while keeping critical resources hidden from the public internet.  
 
 </details>
 
@@ -1106,14 +1328,37 @@ After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, t
 
 <details>
 <summary>📖 Theory: Secure Access and Debugging with Bastion Hosts</summary>
-In this step, we will use the Bastion Host to securely access our private EC2 instances. This ensures all management is done through the Bastion, keeping private instances safe from direct internet access.
-Theory: Secure Access and Debugging with Bastion Hosts
-Now that we have our Bastion Host, we'll use it to securely manage and debug our private instances. The core principle here is that all administrative access flows through a single, controlled entry point. This is a critical security practice for any production environment.
-The first step is to get the necessary credentials onto the Bastion Host. We use the Secure Copy Protocol (SCP) to copy our private key from our local machine to the Bastion Host. This private key is the credential that allows the Bastion Host to authenticate with the other private instances.
-Once we are on the Bastion Host, we use a standard SSH command to "jump" to the private instance. This second SSH connection is made from the public Bastion Host to the private IP address of the target instance. The connection is secured because we've updated the ASG security group to only allow inbound traffic on port 22 (SSH) from the Bastion Host's security group. This creates a highly secure, restricted path for all management tasks.
-This setup is invaluable for debugging. By connecting to the private instance via the Bastion Host, you can run diagnostic commands like journalctl to view application logs and systemctl to manage the Flask service. This allows you to troubleshoot issues directly on the server without ever exposing it to the public internet.
+
+In this step, we use the **Bastion Host** to securely access and debug private EC2 instances:  
+• All administrative access flows only through the Bastion Host.  
+• SCP is used to copy private keys to the Bastion Host for authentication.  
+• SSH connections from Bastion to private instances allow secure management.  
+• Debugging and troubleshooting can be done without exposing private servers to the internet.  
+
+---
+
+#### Detailed Explanation
+
+**Centralized Access Control**  
+The Bastion Host acts as the **single point of entry** for managing private EC2 instances. This ensures that administrators never connect to private servers directly from the internet, reducing the risk of unauthorized access.  
+
+**Authentication Workflow**  
+1. The administrator copies the necessary private key to the Bastion Host using **SCP (Secure Copy Protocol)**.  
+2. From the Bastion Host, the administrator initiates a secure **SSH session** to the private instance using its private IP address.  
+3. Security groups are configured so that SSH (port 22) access to private instances is only allowed from the Bastion Host’s security group.  
+
+**Debugging and Maintenance**  
+Once connected to the private EC2 instance via the Bastion Host, administrators can:  
+- Use `journalctl` to view application and system logs.  
+- Use `systemctl` to manage services like the Flask application.  
+- Run diagnostic commands safely within the private environment.  
+
+---
+
+✅ This setup enforces **secure, controlled, and auditable management access** while enabling effective debugging of private infrastructure.  
 
 </details>
+
 
 ### 1. Copy the Private Key to Bastion Host
 **From Terminal (Linux/Mac):**  
@@ -1200,17 +1445,40 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 <details>
 <summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
 
-After testing your three-tier application, you should clean up all AWS resources to avoid incurring charges. In this step, we will terminate EC2 instances, delete RDS databases, remove S3 buckets, and delete other associated resources.
-Theory: The Importance of a Clean AWS Environment
-A key principle of cloud computing is paying for what you use. The final, and arguably most important, step of any project is to clean up your environment. This is crucial for cost management, ensuring you don't continue to pay for resources that are no longer needed. Beyond cost, a clean environment is also easier to manage and less prone to configuration errors.
-The cleanup process should be done in a specific, dependency-based order. You can't delete a VPC if there are still resources running inside it. Therefore, you must first terminate the dependent services.
-	1	EC2 Instances and Auto Scaling Groups are the first to go. Since the ASG manages the instances, deleting the ASG will automatically terminate the instances it launched.
-	2	Next, AMIs and their underlying snapshots should be deregistered and deleted.
-	3	Then, delete the databases (RDS, DynamoDB), storage buckets (S3), and messaging topics (SNS).
-	4	Finally, you can clean up the networking components: the custom Security Groups, Route Tables, and Internet Gateway. The VPC is the last resource to be deleted, as it is the container for everything else.
-By following this careful process, you ensure that all resources are properly removed, leaving your AWS account in a clean state.
+In this step, we clean up all AWS resources after testing the three-tier application:  
+• Terminate EC2 instances and Auto Scaling Groups.  
+• Delete RDS and DynamoDB databases.  
+• Remove S3 buckets and SNS topics.  
+• Delete networking components such as Security Groups, Route Tables, Internet Gateway, and finally the VPC.  
+
+---
+
+#### Detailed Explanation
+
+**Cost Management**  
+A fundamental principle of cloud computing is **paying only for what you use**. Leaving resources running unnecessarily can lead to unexpected costs. Cleaning up your AWS environment ensures that you are only billed for active resources.  
+
+**Simplified Management**  
+A clean environment is easier to manage and reduces the chance of misconfiguration or conflicts with future projects.  
+
+**Dependency-Based Cleanup Order**  
+AWS resources often depend on each other. To avoid errors during deletion, follow a specific order:  
+
+1. **EC2 Instances & Auto Scaling Groups (ASG)**  
+   - Deleting the ASG automatically terminates all EC2 instances it manages.  
+2. **AMIs and Snapshots**  
+   - Deregister AMIs and delete the associated snapshots to free storage.  
+3. **Databases & Storage**  
+   - Delete RDS instances, DynamoDB tables, S3 buckets, and SNS topics.  
+4. **Networking Components**  
+   - Delete Security Groups, Route Tables, and the Internet Gateway.  
+5. **VPC**  
+   - The VPC is deleted last, as it is the container for all other resources.  
+
+✅ Following this order ensures a **safe, complete, and cost-effective cleanup** of your AWS environment.
 
 </details>
+
 
 ### Steps:
 
