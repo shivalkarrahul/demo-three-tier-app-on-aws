@@ -12,14 +12,25 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 
 ---
 
+## 📊 Architecture Diagram
+
+![Architecture Diagram](artifacts/demo-three-tier-app-on-aws.png)
+
+![Architecture Diagram](artifacts/demo-three-tier-app-on-aws.svg)
+
+---
+
 ## Who This Guide Is For
 This guide is intended for students and developers who want to **learn hands-on AWS deployment** using a three-tier architecture.  
+
+---
 
 **Prerequisites:**  
 - AWS Account with appropriate permissions  
 - Basic Linux & SSH knowledge  
 - Familiarity with Python and Flask
 
+---
 
 ## Table of Contents
 - [Part 1: Network Setup](#part-1-network-setup)
@@ -33,6 +44,7 @@ This guide is intended for students and developers who want to **learn hands-on 
 - [Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-9-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
 - [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
 - [Part 11: Cleanup – Terminate All Resources](#part-11-cleanup--terminate-all-resources)
+
 ---
 
 ## Part 1: Network Setup
@@ -77,6 +89,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 </details>
 
+---
 
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
@@ -358,6 +371,7 @@ Placing the database in private subnets enforces **security best practices** whi
 
 </details>
 
+---
 
 ### 1. Create an RDS Instance
 1. Open **AWS Management Console → RDS**.  
@@ -430,6 +444,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 </details>
 
+---
 
 ### 1. Create an S3 Bucket
 1. Open **AWS Console → Navigate to S3**.
@@ -492,6 +507,7 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 </details>
 
+---
 
 ### 1. Create an SNS Topic
 1. Go to AWS Console → Amazon SNS.
@@ -603,6 +619,7 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 
 </details>
 
+---
 
 ### 1. Create a DynamoDB Table
 1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
@@ -757,7 +774,7 @@ The **application layer** is the glue that ties everything together — frontend
 
 </details>
 
-
+---
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
@@ -1031,6 +1048,7 @@ By combining AMIs, Launch Templates, and ASGs, we create a **self-healing, auto-
 
 </details>
 
+---
 
 ### 1. Create an AMI from the Running EC2 Instance
 
@@ -1173,6 +1191,7 @@ The ASG works with the ALB and TG to maintain a resilient setup:
 
 </details>
 
+---
 
 ### 1. Create a Target Group (TG)
 1. Go to AWS Console → **EC2 Dashboard**  
@@ -1292,6 +1311,8 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 </details>
 
+---
+
 ### 1. Launch an EC2 Instance (Bastion Host)
 1. Go to AWS Management Console → **EC2** → **Launch Instance**  
 2. Enter an instance name: `demo-app-bastion-host`  
@@ -1367,6 +1388,7 @@ Once connected to the private EC2 instance via the Bastion Host, administrators 
 
 </details>
 
+---
 
 ### 1. Copy the Private Key to Bastion Host
 **From Terminal (Linux/Mac):**  
@@ -1487,6 +1509,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 </details>
 
+---
 
 ### Steps:
 
@@ -1534,3 +1557,5 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
    * Delete subnets, Internet Gateway, and finally the VPC itself.
 
 > ⚠️ Make sure to double-check before deleting resources to avoid accidentally removing something important.
+
+---
