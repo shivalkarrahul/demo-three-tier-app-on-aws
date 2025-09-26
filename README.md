@@ -24,7 +24,7 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 - [Part 8: Attach Load Balancer to Auto Scaling Group (ASG)](#part-8-attach-load-balancer-to-auto-scaling-group-asg)
 - [Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-9-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
 - [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
-
+- [Part 11: Cleanup – Terminate All Resources](#part-11-cleanup--terminate-all-resources)
 ---
 
 ## Part 1: Network Setup
@@ -985,3 +985,56 @@ sudo systemctl status flask-app
 ```bash
 sudo journalctl -u flask-app.service -n 50 --no-pager
 ```
+
+---
+
+## Part 11: Cleanup – Terminate All Resources
+
+After testing your three-tier application, you should clean up all AWS resources to avoid incurring charges. In this step, we will terminate EC2 instances, delete RDS databases, remove S3 buckets, and delete other associated resources.
+
+### Steps:
+
+1. **Terminate EC2 Instances**
+
+   * Go to **EC2 → Instances**.
+   * Select all instances (including Bastion host and application instances) and click **Terminate Instance**.
+
+2. **Delete Auto Scaling Group & Launch Template**
+
+   * Go to **EC2 → Auto Scaling Groups**.
+   * Delete the Auto Scaling Group.
+   * Go to **Launch Templates** and delete the corresponding launch template.
+
+3. **Deregister AMI**
+
+   * Go to **EC2 → AMIs**.
+   * Select your AMI and click **Deregister**.
+   * Delete associated snapshots to free up storage.
+
+4. **Delete RDS Database**
+
+   * Go to **RDS → Databases**.
+   * Select your database and choose **Delete**.
+   * Optionally, skip final snapshot if not needed.
+
+5. **Delete S3 Buckets**
+
+   * Go to **S3 → Buckets**.
+   * Empty all buckets and delete them.
+
+6. **Delete DynamoDB Table**
+
+   * Go to **DynamoDB → Tables**.
+   * Select the table used for file metadata and delete it.
+
+7. **Delete SNS Topics**
+
+   * Go to **SNS → Topics**.
+   * Delete any topics created for notifications.
+
+8. **Delete Security Groups and VPC**
+
+   * Go to **VPC → Security Groups** and delete custom security groups.
+   * Delete subnets, Internet Gateway, and finally the VPC itself.
+
+> ⚠️ Make sure to double-check before deleting resources to avoid accidentally removing something important.
