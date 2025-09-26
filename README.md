@@ -147,8 +147,6 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
----
-
 ### 5. Create NAT Gateways
 
 In this step, we will create NAT Gateways to allow instances in private subnets to access the internet for updates and downloads.
@@ -216,8 +214,6 @@ This setup uses **one NAT Gateway per public subnet** for high availability and 
 </details>
 
 ✅ **Note:** Proceed to the next step (creating private route tables) only after all NAT Gateways show **Available**.
-
----
 
 ### 6. Create Route Tables for Private Subnets
 
@@ -1084,8 +1080,6 @@ sudo systemctl stop flask-app
 1. Navigate to EC2 Dashboard → **AMIs**
 2. Wait until the AMI status changes to `available`
 
----
-
 ### 2. Create a Launch Template
 
 A Launch Template defines how instances are launched with predefined configurations.
@@ -1167,6 +1161,7 @@ The ASG will automatically manage EC2 instances to ensure availability.
 * Check the **Launch Time** of the instances to confirm they are newly created
 * Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances
 
+---
 
 ## Part 8: Attach Load Balancer to Auto Scaling Group (ASG)
 
