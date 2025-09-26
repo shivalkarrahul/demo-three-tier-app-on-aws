@@ -277,9 +277,6 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
 
 #### 6.2 Route Table for Private Subnet 2
 
-<details>
-<summary>Expand for Steps</summary>
-
 1. Go to **Route Tables → Create Route Table**.
 2. Enter:
 
@@ -292,12 +289,7 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
    * Target: NAT → `demo-app-nat-gateway-2`
 5. Associate **private-subnet-2**.
 
-</details>
-
 #### 6.3 Route Table for Private Subnet 3
-
-<details>
-<summary>Expand for Steps</summary>
 
 1. Go to **Route Tables → Create Route Table**.
 2. Enter:
@@ -310,8 +302,6 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
    * Destination: `0.0.0.0/0`
    * Target: NAT → `demo-app-nat-gateway-3`
 5. Associate **private-subnet-3**.
-
-</details>
 
 ✅ Each private subnet now has its **own NAT Gateway via separate route tables**.
 
