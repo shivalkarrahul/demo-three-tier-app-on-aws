@@ -25,7 +25,6 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 - [Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-9-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
 - [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
 
-
 ---
 
 ## Part 1: Network Setup
@@ -39,8 +38,6 @@ In this section, we set up the **foundation of the three-tier architecture** on 
 
 By completing this step, your AWS environment will be ready to deploy the application and database layers securely.
 
----
-
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
 2. Click **Create VPC**.  
@@ -48,8 +45,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - **Name:** `demo-app-vpc`  
    - **IPv4 CIDR Block:** `10.0.0.0/16`  
 4. Click **Create VPC**.
-
----
 
 ### 2. Create Public & Private Subnets
 
@@ -71,8 +66,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
 
----
-
 ### 3. Create & Attach Internet Gateway (IGW)
 1. Go to **Internet Gateways → Create Internet Gateway**.  
 2. Enter:  
@@ -80,8 +73,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
 3. Click **Create**.  
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
-
----
 
 ### 4. Create & Configure Route Tables
 
@@ -102,8 +93,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - ✅ `demo-app-public-subnet-2`  
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
-
----
 
 ### 5. Create NAT Gateways (One per Private Subnet)
 
@@ -127,8 +116,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
 
 ⚠️ **Note:** Wait until all NAT Gateways are created before proceeding.
 
----
-
 ### 6. Create Separate Route Tables for Each Private Subnet
 
 #### Route Table for Private Subnet 1
@@ -147,8 +134,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - ✅ `demo-app-private-subnet-1`  
 9. Click **Save Associations**.
 
----
-
 #### Route Table for Private Subnet 2
 1. Go to **Route Tables → Create Route Table**.  
 2. Enter:  
@@ -164,8 +149,6 @@ By completing this step, your AWS environment will be ready to deploy the applic
 8. Select:  
    - ✅ `demo-app-private-subnet-2`  
 9. Click **Save Associations**.
-
----
 
 #### Route Table for Private Subnet 3
 1. Go to **Route Tables → Create Route Table**.  
@@ -183,11 +166,8 @@ By completing this step, your AWS environment will be ready to deploy the applic
    - ✅ `demo-app-private-subnet-3`  
 9. Click **Save Associations**.
 
----
-
 ✅ **At this point, your VPC, subnets, internet gateway, NAT gateways, and route tables are fully set up.**  
 This forms the foundation of the three-tier architecture.
-
 
 ---
 
@@ -200,9 +180,6 @@ In this step, we create a **MySQL RDS instance** to store the application’s da
 
 After this step, the database is ready to support the backend of your three-tier application.
 
----
-
-
 ### 1. Create an RDS Instance
 1. Open **AWS Management Console → RDS**.  
 2. Click **Create database**.  
@@ -210,21 +187,15 @@ After this step, the database is ready to support the backend of your three-tier
 4. Select **MySQL** as the database engine.  
 5. Select **Free tier** to avoid charges.
 
----
-
 ### 2. Configure Database Settings
 1. Set **DB instance identifier:** `my-demo-db`  
 2. Set **Master username:** `admin`  
 3. Set **Master password:** Choose a strong password and **note it down** somewhere safe.
 
----
-
 ### 3. Configure Storage
 1. **Storage type:** General Purpose (SSD)  
 2. **Allocated storage:** 20 GiB  
 3. Keep **storage auto-scaling enabled** in Additional storage configuration.
-
----
 
 ### 4. Configure Connectivity
 1. **VPC:** Select the VPC created earlier (`demo-app-vpc`).  
@@ -234,13 +205,13 @@ After this step, the database is ready to support the backend of your three-tier
    - Click **Create new security group**  
    - Name: `demo-app-db-sg`
 
----
-
 ### 5. Create the RDS Instance
 1. Click **Create database**.  
 2. Wait for the RDS instance to reach **Available** status before proceeding.  
 
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
+
+---
 
 
 ## Part 3: Set Up S3
@@ -251,8 +222,6 @@ In this step, we create an **S3 bucket** to store **files uploaded by users**.
 * Proper permissions and versioning ensure **security and easy recovery** of files.
 
 After this step, the S3 bucket is ready to support backend file storage.
-
----
 
 This bucket will be used for backend purposes. Files uploaded to the demo-app will be stored here.
 
@@ -272,6 +241,8 @@ This bucket will be used for backend purposes. Files uploaded to the demo-app wi
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
+---
+
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
 
 In this step, we use **SNS (Simple Notification Service)** to get **email alerts whenever a file is uploaded to S3**.
@@ -279,8 +250,6 @@ In this step, we use **SNS (Simple Notification Service)** to get **email alerts
 * An **SNS topic** is created and linked to the S3 bucket.
 * Users can subscribe via email to receive **real-time notifications**.
 * This ensures the team is immediately **aware of new uploads** for processing or auditing.
-
----
 
 ### 1. Create an SNS Topic
 1. Go to AWS Console → Amazon SNS.
@@ -341,6 +310,7 @@ In this step, we use **SNS (Simple Notification Service)** to get **email alerts
 
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
+---
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
@@ -349,8 +319,6 @@ In this step, we **store metadata of uploaded files** in **DynamoDB** using a **
 * A **DynamoDB table** is created to save details like **file name, bucket name, and upload timestamp**.
 * **Lambda** is triggered by the SNS notification from S3 uploads.
 * This automates **tracking and management of uploaded files**, enabling easy retrieval and further processing.
-
----
 
 ### 1. Create a DynamoDB Table
 1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
@@ -457,15 +425,9 @@ Extracted File: <your file name> from Bucket: <your bucket name>
 
 ✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
-
-## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
-
-
-Here’s a concise version for **Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet**:
-
 ---
 
-## Part 6: Deploy a Flask Application on EC2
+## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
 
 In this step, we deploy the backend Flask application on a test EC2 instance with full integration to **RDS, S3, and DynamoDB**:
 
@@ -494,6 +456,7 @@ In this step, we deploy the backend Flask application on a test EC2 instance wit
 10. Launch the instance and copy the **Public IP**.
 
 ### 3. Connect to the Test AMI Builder
+
 **Terminal:**  
 ```bash
 chmod 400 /path/to/your/key/demo-app-private-key.pem
@@ -695,6 +658,7 @@ sudo systemctl status flask-app
 
 ✅ Your Flask app is now running as a **persistent, auto-starting systemd service**, integrated with **RDS, S3, and DynamoDB**, and connected to the frontend hosted on S3.
 
+---
 
 ## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
 
@@ -762,8 +726,6 @@ sudo systemctl enable flask-app
 
 * Review and click **Create Launch Template**
 
----
-
 ### 3. Create an Auto Scaling Group (ASG)
 
 The ASG will automatically manage EC2 instances to ensure availability.
@@ -796,8 +758,6 @@ The ASG will automatically manage EC2 instances to ensure availability.
 * **Value:** app-demo-asg-instances
 
 * Review & Click **Create ASG**
-
----
 
 ### 4. Verify ASG Setup
 
@@ -834,8 +794,6 @@ Fill in the details:
 - **Do not manually register targets** (Auto Scaling will handle this)  
 - Click **Create target group**
 
----
-
 ### 2. Create an Application Load Balancer (ALB)
 
 #### 2.1 First Create a Security Group
@@ -868,8 +826,6 @@ Fill in the details:
 
 - Click **Create Load Balancer**
 
----
-
 ### 3. Attach the Target Group to the Auto Scaling Group (ASG)
 1. Go to EC2 → **Auto Scaling Groups**  
 2. Select your ASG  
@@ -878,8 +834,6 @@ Fill in the details:
 5. Tick **Application, Network or Gateway Load Balancer target groups**  
 6. Select the target group `demo-app-tg`  
 7. Click **Update**
-
----
 
 ### 4. Verify Load Balancer and ASG Integration
 1. Go to EC2 Dashboard → **Target Groups** → Select `demo-app-tg`  
@@ -898,14 +852,13 @@ Fill in the details:
 - Open a browser → Enter `http://<ALB-DNS-Name>`  
 - Your Flask app should load!
 
----
-
 ### 5. Update `index.html`
 Since the frontend is hosted on S3 and the backend is now behind the ALB:  
 1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>:80`  
 2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
 3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
+---
 
 ## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
@@ -927,27 +880,19 @@ In this step, we will launch a public EC2 instance that acts as a Bastion Host. 
 - Download `.ppk` for Putty  
 - Download `.pem` for Terminal  
 
----
-
 ### 2. Configure Networking
 - **Network:** Select the VPC where the Bastion Host should be deployed  
 - **Subnet:** Select a Public Subnet (`demo-app-public-subnet-1`)  
 - **Auto-Assign Public IP:** Enabled  
-
----
 
 ### 3. Set Up Security Group
 - Create a new SG or use an existing one:  
   - **Name:** `demo-app-bastion-host-sg`  
   - **Inbound Rule:** Allow SSH (port 22) from your IP (or 0.0.0.0/0 for testing; restrict in production)  
 
----
-
 ### 4. Launch the Instance
 - Click **Launch Instance** and wait for it to start  
 - Copy the **Public IP Address** of the Bastion Host  
-
----
 
 ### ⚠️ Note
 After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
@@ -957,6 +902,7 @@ After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, t
 2. Delete the existing ASG instances.  
 3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
 
+---
 
 ## Part 10: Connect From Bastion Host to Private Instance
 
@@ -972,8 +918,6 @@ scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-ke
 
 * Use a tool like **WinSCP** and upload the private key to `/home/ubuntu/` directory on the Bastion Host.
 
----
-
 ### 2. Update ASG Security Group
 
 * Update the ASG security group `demo-app-lt-asg-sg`
@@ -981,8 +925,6 @@ scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-ke
 
   * **Port:** 22
   * **Source:** Custom → select `demo-app-bastion-host-sg`
-
----
 
 ### 3. Connect to the Bastion Host
 
@@ -1000,8 +942,6 @@ ssh -i demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 
 Your Bastion Host is now ready to access private instances securely! 🚀
 
----
-
 ### 4. Access Private Instance from Bastion Host
 
 1. Verify the private key is on Bastion Host:
@@ -1017,8 +957,6 @@ ls -l
 ```bash
 ssh -i "demo-app-private-key.pem" ubuntu@<PRIVATE_EC2_IP>
 ```
-
----
 
 ### 5. Debug and Manage Flask App on Private Instance
 
