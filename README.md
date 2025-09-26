@@ -14,8 +14,6 @@ By following this repo, you’ll learn how to **build, deploy, and scale a compl
 
 ## 📊 Architecture Diagram
 
-![Architecture Diagram](artifacts/demo-three-tier-app-on-aws.png)
-
 ![Architecture Diagram](artifacts/demo-three-tier-app-on-aws.svg)
 
 ---
@@ -25,7 +23,7 @@ This guide is intended for students and developers who want to **learn hands-on 
 
 ---
 
-**Prerequisites:**  
+## Prerequisites
 - AWS Account with appropriate permissions  
 - Basic Linux & SSH knowledge  
 - Familiarity with Python and Flask
@@ -86,6 +84,8 @@ These act as **rules for traffic flow**:
 
 ✅ **Why this matters:**  
 This layered setup enforces **security, availability, and scalability**. Public resources stay accessible, private resources remain protected, and traffic flows are tightly controlled.
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
@@ -369,6 +369,8 @@ When creating RDS, you must specify a **DB Subnet Group**. This ensures AWS depl
 ✅ **Why this matters:**  
 Placing the database in private subnets enforces **security best practices** while RDS ensures **operational efficiency**. Together, they form a **secure and reliable data layer** for your application.
 
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
+
 </details>
 
 ---
@@ -442,6 +444,8 @@ This ensures files are not tied to a single server and remain available even if 
 ✅ **Why this matters:**  
 By using S3 for file storage, you gain a **cost-effective, secure, and highly durable storage solution** that integrates seamlessly with the rest of your AWS architecture.
 
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
+
 </details>
 
 ---
@@ -504,6 +508,8 @@ Instead of one service directly calling another, we use **event-driven messaging
 
 ✅ **Why this matters:**  
 By introducing SNS, we’re moving towards an **event-driven, decoupled architecture** that makes our system more **resilient, extensible, and scalable** for future enhancements.
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
@@ -616,6 +622,8 @@ In this step, we **store metadata of uploaded files in DynamoDB using a Lambda f
 
 ✅ **Why this matters:**  
 This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, event-driven architecture**. It’s **scalable, cost-efficient, and maintenance-free**, making it ideal for modern cloud-native applications.
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
@@ -771,6 +779,8 @@ In this step, we **deploy the backend Flask application** on a test **EC2 instan
 
 ✅ **Why this matters:**  
 The **application layer** is the glue that ties everything together — frontend, database, file storage, and metadata. By combining **EC2, IAM roles, Flask, and AWS SDKs**, we build a secure, modular, and production-ready backend for the three-tier architecture.  
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
@@ -1046,6 +1056,8 @@ By combining AMIs, Launch Templates, and ASGs, we create a **self-healing, auto-
 
 ✅ This setup ensures that our Flask application can scale dynamically based on demand while maintaining consistency and reliability.
 
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
+
 </details>
 
 ---
@@ -1189,6 +1201,8 @@ The ASG works with the ALB and TG to maintain a resilient setup:
 
 ✅ Together, the **ALB, Target Group, and Auto Scaling Group** create a **self-healing, highly available system** that can handle increased user load and maintain uptime even in the event of failures.
 
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
+
 </details>
 
 ---
@@ -1309,6 +1323,8 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 ✅ Using a Bastion Host provides **centralized, auditable, and secure access** to private infrastructure while keeping critical resources hidden from the public internet.  
 
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
+
 </details>
 
 ---
@@ -1385,6 +1401,8 @@ Once connected to the private EC2 instance via the Bastion Host, administrators 
 ---
 
 ✅ This setup enforces **secure, controlled, and auditable management access** while enabling effective debugging of private infrastructure.  
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
@@ -1506,6 +1524,8 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
    - The VPC is deleted last, as it is the container for all other resources.  
 
 ✅ Following this order ensures a **safe, complete, and cost-effective cleanup** of your AWS environment.
+
+<p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
