@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Flask 3-Tier App</title>
+</head>
+<body>
+   <h2>Insert User in RDS</h2>
+   <input type="text" id="username" placeholder="Enter Name">
+   <button onclick="insertUser()">Insert</button>
+
+   <h2>Fetch Users from RDS</h2>
+   <button onclick="fetchUsers()">Load Users</button>
+   <ul id="users-list"></ul>
+
+   <h2>Upload File to S3</h2>
+   <input type="file" id="file">
+   <button onclick="uploadFile()">Upload</button>
+
+   <h2>List Files in S3</h2>
+   <button onclick="listFiles()">List Files</button>
+   <ul id="files-list"></ul>
+
+   <h2>Fetch File Metadata from DynamoDB</h2>
+   <button onclick="fetchMetadata()">Fetch Metadata</button>
+   <ul id="metadata-list"></ul>
+
+   <script>
+       const API_BASE = "http://<>EC2IP:5000Port";
+
+       async function insertUser() {
+           let name = document.getElementById("username").value;
+           let response = await fetch(API_BASE + "/insert", {
+               method: "POST",
+               headers: {"Content-Type": "application/json"},
+               body: JSON.stringify({name: name})
+           });
+           alert("User inserted!");
+       }
+
+       async function fetchUsers() {
+           let response = await fetch(API_BASE + "/fetch");
+           let data = await response.json();
+           let list = document.getElementById("users-list");
+           list.innerHTML = "";
+           data.users.forEach(user => {
+               let li = document.createElement("li");
+               li.textContent = user[1];
+               list.appendChild(li);
+           });
+       }
+
+       async function uploadFile() {
+           let file = document.getElementById("file").files[0];
+           let formData = new FormData();
+           formData.append("file", file);
+
+           await fetch(API_BASE + "/upload", { method: "POST", body: formData });
+           alert("File uploaded!");
+       }
+
+       async function listFiles() {
+           let response = await fetch(API_BASE + "/list_files");
+           let data = await response.json();
+           let list = document.getElementById("files-list");
+           list.innerHTML = "";
+
+           data.files.forEach(file => {
+               let li = document.createElement("li");
+               li.textContent = file;
+               list.appendChild(li);
+           });
+       }
+
+       async function fetchMetadata() {
+           let response = await fetch(API_BASE + "/get_file_metadata");
+           let data = await response.json();
+           let list = document.getElementById("metadata-list");
+           list.innerHTML = "";
+
+           data.files_metadata.forEach(file => {
+               let li = document.createElement("li");
+               li.textContent = `File: ${file.file_name}, Bucket: ${file.bucket_name}, Uploaded: ${file.timestamp}`;
+               list.appendChild(li);
+           });
+       }
+   </script>
+</body>
+</html>
