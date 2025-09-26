@@ -101,7 +101,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 ### 2. Create Public & Private Subnets
 
-#### Public Subnets (For Load Balancer & NAT Gateways)
+#### 2.1 Public Subnets (For Load Balancer & NAT Gateways)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
 3. Create three public subnets:  
@@ -110,7 +110,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-#### Private Subnets (For App & DB Layers)
+#### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
 3. Create three private subnets:  
@@ -129,7 +129,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 ### 4. Create & Configure Route Tables
 
-#### Public Route Table (For Public Subnets)
+#### 4.1 Public Route Table (For Public Subnets)
 1. Go to **Route Tables → Create Route Table**.  
 2. Enter:  
    - **Name:** `demo-app-public-rt`  
@@ -156,12 +156,12 @@ In this step, we will create NAT Gateways to allow instances in private subnets 
 
 This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
-#### Allocate Elastic IP
+#### 5.1 Allocate Elastic IP
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** (allocate **1 Elastic IP**).
 
-#### Create NAT Gateway
+#### 5.2 Create NAT Gateway
 
 1. Go to **NAT Gateways → Create NAT Gateway**.
 2. Enter:
@@ -181,12 +181,12 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 This setup uses **one NAT Gateway per public subnet** for high availability and fault tolerance.
 
-#### Allocate Elastic IPs
+#### 5.3 Allocate Elastic IPs
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** **3 times** (one for each NAT Gateway).
 
-#### Create NAT Gateways
+#### 5.4 Create NAT Gateways
 
 **NAT Gateway 1**
 
@@ -224,7 +224,7 @@ In this step, we will create route tables to direct traffic from private subnets
 
 This setup uses **one NAT Gateway** for all private subnets → only **one route table** is needed.
 
-#### Create Route Table
+#### 6.1 Create Route Table
 
 1. Go to **Route Tables → Create Route Table**.
 2. Enter:
@@ -233,7 +233,7 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
    * **VPC:** `demo-app-vpc`
 3. Click **Create**.
 
-#### Edit Routes
+#### 6.2 Edit Routes
 
 1. Select `demo-app-private-rt-1` → **Edit Routes**.
 2. Add Route:
@@ -242,7 +242,7 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
    * **Target:** NAT → `demo-app-nat-gateway-1`
 3. Click **Save Routes**.
 
-#### Associate Subnets
+#### 6.3 Associate Subnets
 
 1. Go to **Subnet Associations → Edit Subnet Associations**.
 2. Select:
@@ -261,7 +261,7 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 
 This setup uses **one NAT Gateway per private subnet**, requiring **three route tables** for high availability.
 
-#### Route Table for Private Subnet 1
+#### 6.4 Route Table for Private Subnet 1
 
 1. Go to **Route Tables → Create Route Table**.
 2. Enter:
@@ -275,7 +275,7 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
    * Target: NAT → `demo-app-nat-gateway-1`
 5. Associate **private-subnet-1**.
 
-#### Route Table for Private Subnet 2
+#### 6.5 Route Table for Private Subnet 2
 
 <details>
 <summary>Expand for Steps</summary>
@@ -294,7 +294,7 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
 
 </details>
 
-#### Route Table for Private Subnet 3
+#### 6.6 Route Table for Private Subnet 3
 
 <details>
 <summary>Expand for Steps</summary>
