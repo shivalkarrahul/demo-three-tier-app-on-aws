@@ -7,6 +7,18 @@ It is written for beginners and college students, with clear redundancy so that 
 
 ## Table of Contents
 - [Part 1: Network Setup](#part-1-network-setup)
+- [Part 2: Set Up RDS](#part-2-set-up-rds)
+- [Part 3: Set Up S3](#part-3-set-up-s3)
+- [Part 4: Configure SNS to Send Email Notifications on S3 File Uploads](#part-4-configure-sns-to-send-email-notifications-on-s3-file-uploads)
+- [Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage](#part-5-create-dynamodb-table-and-lambda-for-file-metadata-extraction--storage)
+- [Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet](#part-6-deploy-a-flask-application-on-test-ami-builder-ec2-with-rds--s3-dynamodb-integration-in-public-subnet)
+- [Part 7: Create an AMI, Launch Template, and Auto Scaling Group](#part-7-create-an-ami-launch-template-and-auto-scaling-group)
+- [Part 8: Attach Load Balancer to Auto Scaling Group (ASG)](#part-8-attach-load-balancer-to-auto-scaling-group-asg)
+- [Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-9-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
+- [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
+
+
+
 
 ---
 
@@ -393,7 +405,7 @@ Extracted File: <your file name> from Bucket: <your bucket name>
 ✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
 
-## Part 6: Step-by-Step Guide to Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
+## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
@@ -622,7 +634,7 @@ sudo systemctl status flask-app
 ✅ Your Flask app is now running as a **persistent, auto-starting systemd service**, integrated with **RDS, S3, and DynamoDB**, and connected to the frontend hosted on S3.
 
 
-## Part 7: Step-by-Step Guide to Create an AMI, Launch Template, and Auto Scaling Group
+## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
 
 Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
 
@@ -736,7 +748,7 @@ The ASG will automatically manage EC2 instances to ensure availability.
 * Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances
 
 
-## Part 8: Step-by-Step Guide to Attach Load Balancer to Auto Scaling Group (ASG)
+## Part 8: Attach Load Balancer to Auto Scaling Group (ASG)
 
 ### 1. Create a Target Group (TG)
 1. Go to AWS Console → **EC2 Dashboard**  
