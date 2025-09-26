@@ -96,25 +96,48 @@ By completing this step, your AWS environment will be ready to deploy the applic
 
 ### 5. Create NAT Gateways (One per Private Subnet)
 
+We will create **3 NAT Gateways**, one in each public subnet, to allow instances in private subnets to access the internet.
+
 #### Allocate Elastic IPs
-1. Go to **Elastic IPs → Allocate Elastic IP → Allocate**.  
-2. Repeat 2 more times (Total: **3 Elastic IPs**).  
 
-#### Create 3 NAT Gateways (One in Each Public Subnet)
-1. Go to **NAT Gateways → Create NAT Gateway**.  
-2. Create:  
-   - **demo-app-nat-gateway-1**  
-     - Subnet: `demo-app-public-subnet-1`  
-     - Elastic IP: (Select first one)  
-   - **demo-app-nat-gateway-2**  
-     - Subnet: `demo-app-public-subnet-2`  
-     - Elastic IP: (Select second one)  
-   - **demo-app-nat-gateway-3**  
-     - Subnet: `demo-app-public-subnet-3`  
-     - Elastic IP: (Select third one)  
-3. Click **Create**.  
+1. Go to **Elastic IPs** in the AWS Console.
+2. Click **Allocate Elastic IP** → **Allocate**.
+3. Repeat until you have **3 Elastic IPs** (one for each NAT Gateway).
 
-⚠️ **Note:** Wait until all NAT Gateways are created before proceeding.
+#### Create NAT Gateway 1
+
+1. Go to **NAT Gateways** → **Create NAT Gateway**.
+2. Enter the following:
+
+   * **Name:** `demo-app-nat-gateway-1`
+   * **Subnet:** `demo-app-public-subnet-1`
+   * **Elastic IP:** Select the **first Elastic IP** you allocated
+3. Click **Create NAT Gateway**.
+4. Wait until the status shows **Available**.
+
+#### Create NAT Gateway 2
+
+1. Go to **NAT Gateways** → **Create NAT Gateway**.
+2. Enter the following:
+
+   * **Name:** `demo-app-nat-gateway-2`
+   * **Subnet:** `demo-app-public-subnet-2`
+   * **Elastic IP:** Select the **second Elastic IP**
+3. Click **Create NAT Gateway**.
+4. Wait until the status shows **Available**.
+
+#### Create NAT Gateway 3
+
+1. Go to **NAT Gateways** → **Create NAT Gateway**.
+2. Enter the following:
+
+   * **Name:** `demo-app-nat-gateway-3`
+   * **Subnet:** `demo-app-public-subnet-3`
+   * **Elastic IP:** Select the **third Elastic IP**
+3. Click **Create NAT Gateway**.
+4. Wait until the status shows **Available**.
+
+**Note:** Only after all three NAT Gateways show **Available**, you can proceed to update the private route tables.
 
 ### 6. Create Separate Route Tables for Each Private Subnet
 
