@@ -45,6 +45,7 @@ def lambda_handler(event, context):
                    }
                )
 
+
        return {"statusCode": 200, "body": "File metadata stored successfully"}
 
    except Exception as e:

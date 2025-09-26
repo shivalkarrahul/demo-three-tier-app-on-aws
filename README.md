@@ -1,161 +1,208 @@
-# Three-Tier Application Setup on AWS
+# Three-Tier Application on AWS
+
+This repository contains step-by-step instructions to set up a three-tier application on AWS.  
+It is written for beginners and college students, with clear redundancy so that no prior AWS knowledge is required.
+
+---
+
+## Table of Contents
+- [Part 1: Network Setup](#part-1-network-setup)
+
+---
 
 ## Part 1: Network Setup
 
 ### 1. Create a VPC
-1. Go to AWS Console → VPC Dashboard.
-2. Click **Create VPC**
-3. Enter:
-   - **Name:** `demo-app-vpc`
-   - **IPv4 CIDR Block:** `10.0.0.0/16`
+1. Go to **AWS Console → VPC Dashboard**.  
+2. Click **Create VPC**.  
+3. Enter:  
+   - **Name:** `demo-app-vpc`  
+   - **IPv4 CIDR Block:** `10.0.0.0/16`  
 4. Click **Create VPC**.
 
+---
+
 ### 2. Create Public & Private Subnets
+
 #### Public Subnets (For Load Balancer & NAT Gateways)
-1. Go to **Subnets** → Click **Create Subnet**.
-2. Choose **VPC:** `demo-app-vpc`.
-3. Create three public subnets:
-   - `demo-app-public-subnet-1` (`10.0.1.0/24`) → `us-east-1a`
-   - `demo-app-public-subnet-2` (`10.0.2.0/24`) → `us-east-1b`
-   - `demo-app-public-subnet-3` (`10.0.3.0/24`) → `us-east-1c`
+1. Go to **Subnets → Create Subnet**.  
+2. Choose **VPC:** `demo-app-vpc`.  
+3. Create three public subnets:  
+   - `demo-app-public-subnet-1` → `10.0.1.0/24` → **us-east-1a**  
+   - `demo-app-public-subnet-2` → `10.0.2.0/24` → **us-east-1b**  
+   - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
 #### Private Subnets (For App & DB Layers)
-1. Create three private subnets:
-   - `demo-app-private-subnet-1` (`10.0.11.0/24`) → `us-east-1a`
-   - `demo-app-private-subnet-2` (`10.0.12.0/24`) → `us-east-1b`
-   - `demo-app-private-subnet-3` (`10.0.13.0/24`) → `us-east-1c`
-2. Click **Create**.
+1. Go to **Subnets → Create Subnet**.  
+2. Choose **VPC:** `demo-app-vpc`.  
+3. Create three private subnets:  
+   - `demo-app-private-subnet-1` → `10.0.11.0/24` → **us-east-1a**  
+   - `demo-app-private-subnet-2` → `10.0.12.0/24` → **us-east-1b**  
+   - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
+4. Click **Create**.
+
+---
 
 ### 3. Create & Attach Internet Gateway (IGW)
-1. Go to **Internet Gateways** → Click **Create Internet Gateway**.
-2. Enter:
-   - **Name:** `demo-app-igw`
-3. Click **Create**.
-4. Select `demo-app-igw` → Click **Actions** → **Attach to VPC** → Select `demo-app-vpc` → Click **Attach**.
+1. Go to **Internet Gateways → Create Internet Gateway**.  
+2. Enter:  
+   - **Name:** `demo-app-igw`  
+3. Click **Create**.  
+4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
+5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
+
+---
 
 ### 4. Create & Configure Route Tables
+
 #### Public Route Table (For Public Subnets)
-1. Go to **Route Tables** → Click **Create Route Table**.
-2. Enter:
-   - **Name:** `demo-app-public-rt`
-   - **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Select `demo-app-public-rt` → **Routes** → Click **Edit Routes**.
-   - **Add Route:**
-     - **Destination:** `0.0.0.0/0`
-     - **Target:** `Internet Gateway` → `demo-app-igw`
-   - Click **Save Routes**.
-5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
-   - Select:
-     - ✅ `demo-app-public-subnet-1`
-     - ✅ `demo-app-public-subnet-2`
-     - ✅ `demo-app-public-subnet-3`
-   - Click **Save Associations**.
+1. Go to **Route Tables → Create Route Table**.  
+2. Enter:  
+   - **Name:** `demo-app-public-rt`  
+   - **VPC:** `demo-app-vpc`  
+3. Click **Create**.  
+4. Select `demo-app-public-rt` → **Routes → Edit Routes**.  
+5. Add Route:  
+   - **Destination:** `0.0.0.0/0`  
+   - **Target:** Internet Gateway → `demo-app-igw`  
+6. Click **Save Routes**.  
+7. Go to **Subnet Associations → Edit Subnet Associations**.  
+8. Select:  
+   - ✅ `demo-app-public-subnet-1`  
+   - ✅ `demo-app-public-subnet-2`  
+   - ✅ `demo-app-public-subnet-3`  
+9. Click **Save Associations**.
+
+---
 
 ### 5. Create NAT Gateways (One per Private Subnet)
-#### Allocate 3 Elastic IPs
-1. Go to **Elastic IPs** → Click **Allocate Elastic IP** → Click **Allocate**.
-- Repeat 2 more times (Total: **3 Elastic IPs**).
+
+#### Allocate Elastic IPs
+1. Go to **Elastic IPs → Allocate Elastic IP → Allocate**.  
+2. Repeat 2 more times (Total: **3 Elastic IPs**).  
 
 #### Create 3 NAT Gateways (One in Each Public Subnet)
-1. Go to **NAT Gateways** → Click **Create NAT Gateway**.
-2. `demo-app-nat-gateway-1`:
-   - **Name:** `demo-app-nat-gateway-1`
-   - **Subnet:** `demo-app-public-subnet-1`
-   - **Elastic IP:** (Select first one)
-3. `demo-app-nat-gateway-2`:
-   - **Name:** `demo-app-nat-gateway-2`
-   - **Subnet:** `demo-app-public-subnet-2`
-   - **Elastic IP:** (Select second one)
-4. `demo-app-nat-gateway-3`:
-   - **Name:** `demo-app-nat-gateway-3`
-   - **Subnet:** `demo-app-public-subnet-3`
-   - **Elastic IP:** (Select third one)
-5. Click **Create**.
+1. Go to **NAT Gateways → Create NAT Gateway**.  
+2. Create:  
+   - **demo-app-nat-gateway-1**  
+     - Subnet: `demo-app-public-subnet-1`  
+     - Elastic IP: (Select first one)  
+   - **demo-app-nat-gateway-2**  
+     - Subnet: `demo-app-public-subnet-2`  
+     - Elastic IP: (Select second one)  
+   - **demo-app-nat-gateway-3**  
+     - Subnet: `demo-app-public-subnet-3`  
+     - Elastic IP: (Select third one)  
+3. Click **Create**.  
+
+⚠️ **Note:** Wait until all NAT Gateways are created before proceeding.
+
+---
 
 ### 6. Create Separate Route Tables for Each Private Subnet
-#### Route Table for Private-Subnet-1
-1. Go to **Route Tables** → Click **Create Route Table**.
-2. Enter:
-   - **Name:** `demo-app-private-rt-1`
-   - **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Select `demo-app-private-rt-1` → **Edit Routes**.
-   - **Add Route:**
-     - **Destination:** `0.0.0.0/0`
-     - **Target:** `NAT Gateway` → `demo-app-nat-gateway-1`
-   - Click **Save Routes**.
-5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
-   - Select:
-     - ✅ `demo-app-private-subnet-1`
-   - Click **Save Associations**.
 
-#### Route Table for Private-Subnet-2
-1. Go to **Route Tables** → Click **Create Route Table**.
-2. Enter:
-   - **Name:** `demo-app-private-rt-2`
-   - **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Select `demo-app-private-rt-2` → **Edit Routes**.
-   - **Add Route:**
-     - **Destination:** `0.0.0.0/0`
-     - **Target:** `NAT Gateway` → `demo-app-nat-gateway-2`
-   - Click **Save Routes**.
-5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
-   - Select:
-     - ✅ `demo-app-private-subnet-2`
-   - Click **Save Associations**.
+#### Route Table for Private Subnet 1
+1. Go to **Route Tables → Create Route Table**.  
+2. Enter:  
+   - **Name:** `demo-app-private-rt-1`  
+   - **VPC:** `demo-app-vpc`  
+3. Click **Create**.  
+4. Select `demo-app-private-rt-1` → **Edit Routes**.  
+5. Add Route:  
+   - **Destination:** `0.0.0.0/0`  
+   - **Target:** NAT → `demo-app-nat-gateway-1`  
+6. Click **Save Routes**.  
+7. Go to **Subnet Associations → Edit Subnet Associations**.  
+8. Select:  
+   - ✅ `demo-app-private-subnet-1`  
+9. Click **Save Associations**.
 
-#### Route Table for Private-Subnet-3
-1. Go to **Route Tables** → Click **Create Route Table**.
-2. Enter:
-   - **Name:** `demo-app-private-rt-3`
-   - **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Select `demo-app-private-rt-3` → **Edit Routes**.
-   - **Add Route:**
-     - **Destination:** `0.0.0.0/0`
-     - **Target:** `NAT Gateway` → `demo-app-nat-gateway-3`
-   - Click **Save Routes**.
-5. Go to **Subnet Associations** → Click **Edit Subnet Associations**.
-   - Select:
-     - ✅ `demo-app-private-subnet-3`
-   - Click **Save Associations**.
+---
+
+#### Route Table for Private Subnet 2
+1. Go to **Route Tables → Create Route Table**.  
+2. Enter:  
+   - **Name:** `demo-app-private-rt-2`  
+   - **VPC:** `demo-app-vpc`  
+3. Click **Create**.  
+4. Select `demo-app-private-rt-2` → **Edit Routes**.  
+5. Add Route:  
+   - **Destination:** `0.0.0.0/0`  
+   - **Target:** NAT → `demo-app-nat-gateway-2`  
+6. Click **Save Routes**.  
+7. Go to **Subnet Associations → Edit Subnet Associations**.  
+8. Select:  
+   - ✅ `demo-app-private-subnet-2`  
+9. Click **Save Associations**.
+
+---
+
+#### Route Table for Private Subnet 3
+1. Go to **Route Tables → Create Route Table**.  
+2. Enter:  
+   - **Name:** `demo-app-private-rt-3`  
+   - **VPC:** `demo-app-vpc`  
+3. Click **Create**.  
+4. Select `demo-app-private-rt-3` → **Edit Routes**.  
+5. Add Route:  
+   - **Destination:** `0.0.0.0/0`  
+   - **Target:** NAT → `demo-app-nat-gateway-3`  
+6. Click **Save Routes**.  
+7. Go to **Subnet Associations → Edit Subnet Associations**.  
+8. Select:  
+   - ✅ `demo-app-private-subnet-3`  
+9. Click **Save Associations**.
+
+---
+
+✅ **At this point, your VPC, subnets, internet gateway, NAT gateways, and route tables are fully set up.**  
+This forms the foundation of the three-tier architecture.
 
 
+
+---
 
 ## Part 2: Set Up RDS
 
 ### 1. Create an RDS Instance
-1. Open the AWS Management Console → Navigate to **RDS**. → Click on **Create database**.
-2. Choose **Standard create**.
-3. Select **MySQL** as the **database engine**.
-4. Select **Free tier** to avoid charges.
+1. Open **AWS Management Console → RDS**.  
+2. Click **Create database**.  
+3. Choose **Standard create**.  
+4. Select **MySQL** as the database engine.  
+5. Select **Free tier** to avoid charges.
+
+---
 
 ### 2. Configure Database Settings
-1. Set DB instance identifier: `my-demo-db`.
-2. Set Master username: `admin`.
-3. Set Master password: Choose a strong password and note it down.
+1. Set **DB instance identifier:** `my-demo-db`  
+2. Set **Master username:** `admin`  
+3. Set **Master password:** Choose a strong password and **note it down** somewhere safe.
+
+---
 
 ### 3. Configure Storage
-1. Storage type: **Select General Purpose (SSD)**.
-2. Allocated storage: Set to **20 GiB**.
+1. **Storage type:** General Purpose (SSD)  
+2. **Allocated storage:** 20 GiB  
 3. Keep **storage auto-scaling enabled** in Additional storage configuration.
 
+---
+
 ### 4. Configure Connectivity
-1. VPC: Select the VPC `demo-app-vpc` created earlier.
-2. Subnet group:
-   - Select Create new DB subnet group.
-4. Public access: Select **No** (RDS should not be publicly accessible).
-5. VPC security groups:
-6. Click Create new security group.
+1. **VPC:** Select the VPC created earlier (`demo-app-vpc`).  
+2. **Subnet group:** Select **Create new DB subnet group**.  
+3. **Public access:** Select **No** (RDS should **not** be publicly accessible).  
+4. **VPC security groups:**  
+   - Click **Create new security group**  
    - Name: `demo-app-db-sg`
 
-### 5. Create the RDS Instance
-1. Click **Create database**.
+---
 
-Wait for the instance to be available before proceeding further.
+### 5. Create the RDS Instance
+1. Click **Create database**.  
+2. Wait for the RDS instance to reach **Available** status before proceeding.  
+
+✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
 
 ## Part 3: Set Up S3
@@ -163,40 +210,41 @@ Wait for the instance to be available before proceeding further.
 This bucket will be used for backend purposes. Files uploaded to the demo-app will be stored here.
 
 ### 1. Create an S3 Bucket
-1. Open **AWS Console** → Navigate to **S3**.
+1. Open **AWS Console → Navigate to S3**.
 2. Click **Create bucket**.
-3. **Bucket Name**: Enter a unique name (e.g., `demo-app-backend-s3-bucket-1234`).
-   - 🚨 **Important**: S3 bucket names must be globally unique across all AWS accounts.
+3. Enter a unique bucket name, for example:  
+   `demo-app-backend-s3-bucket-1234`  
+   🚨 **Important:** S3 bucket names must be globally unique across all AWS accounts.
+4. Choose the **same region** as your VPC (e.g., `us-east-1`).
+5. Click **Next**.
 
 ### 2. Configure Bucket Settings
-1. Keep **Block Public Access** enabled (for security).
-2. Enable **Bucket Versioning** (optional).
-3. Click **Create bucket**.
+1. Keep **Block Public Access enabled** (recommended for security).
+2. Enable **Bucket Versioning** (optional) – useful to keep previous versions of uploaded files.
+3. Leave other settings as default and click **Create bucket**.
 
+✅ Your S3 bucket is now ready to store backend files for the demo application.
 
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
 
 ### 1. Create an SNS Topic
-1. Go to **AWS Console** → Navigate to **Amazon SNS**.
-2. Click **Topics** → Click **Create topic**.
-3. **Type**: Standard.
-4. **Name**: `demo-app-sns-topic`.
+1. Go to AWS Console → Amazon SNS.
+2. Click **Topics → Create topic**.
+3. Select **Type:** Standard.
+4. Enter **Name:** `demo-app-sns-topic`.
 5. Click **Create topic**.
 
 ### 2. Subscribe an Email to the SNS Topic
-1. In the **SNS Console**, go to **Topics**.
-2. Select **demo-app-sns-topic**.
-3. Click **Create subscription**.
-4. **Protocol**: Select **Email**.
-5. **Endpoint**: Enter your email address (e.g., `your-email@example.com`).
-6. Click **Create subscription**.
-7. Go to your email and **confirm the subscription** (You will receive an email from AWS SNS—click the confirmation link).
+1. In SNS Console → Topics, select `demo-app-sns-topic`.
+2. Click **Create subscription**.
+3. Protocol: **Email**.
+4. Endpoint: Enter your email address (e.g., `your-email@example.com`).
+5. Click **Create subscription**.
+6. Open your email and confirm the subscription (click the link from AWS SNS).
 
 ### 3. Update SNS Topic Policy to Allow S3 to Publish
-By default, SNS only allows the topic owner to publish messages. To allow S3 to publish events, update the SNS topic policy.
-
-1. Go to **SNS Console** → Click on **demo-app-sns-topic**.
-2. Click **Edit** → Scroll down to **Access policy**.
+1. In SNS Console, click `demo-app-sns-topic`.
+2. Click **Edit → Access policy**.
 3. Replace the existing policy with:
 
 ```json
@@ -222,227 +270,197 @@ By default, SNS only allows the topic owner to publish messages. To allow S3 to 
 }
 ```
 
-🔹 **Replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID**.
-🔹 Click **Save changes**.
+> **Note:** Replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID.
+
+4. Click **Save changes**.
 
 ### 4. Configure S3 to Trigger SNS on File Upload
-1. Go to **AWS Console** → Navigate to **Amazon S3**.
-2. Select the bucket (`demo-app-backend-s3-bucket-1234`).
-3. Click **Properties** → Scroll to **Event notifications**.
-4. Click **Create event notification**.
-5. **Event name**: `demo-app-s3-object-upload-notification`.
-6. **Event types**: Select **Object creation (All object create events)**.
-7. **Destination**:
-   - Choose **SNS topic**.
-   - Select **demo-app-sns-topic**.
-8. Click **Save changes**.
 
+1. Open **AWS Console → S3** and select your bucket (e.g., `demo-app-backend-s3-bucket-1234`).
+2. Go to **Properties → Event notifications**.
+3. Click **Create event notification**.
+4. Enter **Event name:** `demo-app-s3-object-upload-notification`.
+5. Select **Event types:** `All object create events`.
+6. Set **Destination:** **SNS topic**, select `demo-app-sns-topic`.
+7. Click **Save changes**.
+
+✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
 ### 1. Create a DynamoDB Table
-1. Go to AWS Console → **DynamoDB** → **Tables** → **Create Table**  
-   - Table name: `demo-app-file-metadata-dynamodb`  
-2. Partition Key:  
-   - Name: file_name  
-   - Type: String  
-3. Leave all other settings as default  
-4. Click **Create Table**   
+1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
+2. Enter **Table name:** `demo-app-file-metadata-dynamodb`.
+3. Set **Partition Key:**  
+   - Name: `file_name`  
+   - Type: String
+4. Leave all other settings as default.
+5. Click **Create Table**.
+
+> **Important:** You don’t need to manually define other attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB.
 
 ### 2. Create an IAM Role for Lambda
-1. Go to the IAM Console → **Roles** → **Create role**
-2. Select **AWS Service** → **Lambda** → **Next**  
-3. Attach the following policies:  
-   - **AmazonS3ReadOnlyAccess** (To read files from S3)  
-   - **AmazonDynamoDBFullAccess** (To write metadata to DynamoDB)  
-   - **AWSLambdaBasicExecutionRole** (For CloudWatch logging)  
-4. Create the role and note down the **Role ARN**  
-   - Name: **demo-app-lambda-iam-role**  
+1. Go to **IAM Console → Roles → Create role**.
+2. Select **AWS Service → Lambda → Next**.
+3. Attach the following policies:
+   - `AmazonS3ReadOnlyAccess` (To read files from S3)  
+   - `AmazonDynamoDBFullAccess` (To write metadata to DynamoDB)  
+   - `AWSLambdaBasicExecutionRole` (For CloudWatch logging)
+4. Create the role and note the **Role ARN**.
+5. Name the role: `demo-app-lambda-iam-role`.
 
 ### 3. Create a Lambda Function
-1. Go to the Lambda Console → **Create function**  
-2. Choose **Author from Scratch**  
-   - Enter **Function Name**: `demo-app-metadata-lambda`  
-   - Select **Python 3.x** as Runtime  
-   - Choose **Use an existing role** (demo-app-lambda-iam-role) and select the IAM role created earlier  
-3. Click **Create Function**  
+1. Go to **Lambda Console → Create function**.
+2. Choose **Author from scratch**.
+3. Enter **Function Name:** `demo-app-metadata-lambda`.
+4. Select **Python 3.x** as Runtime.
+5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`).
+6. Click **Create Function**.
 
 ### 4. Subscribe Lambda to Existing SNS Topic
-1. Go to the SNS Console → Your SNS Topic (**demo-app-sns-topic**)  
-2. Click **Create Subscription**  
-   - Choose **Protocol**: AWS Lambda  
-   - Select the Lambda Function you created (**demo-app-metadata-lambda**)  
-3. Click **Create Subscription**  
-4. Confirm the subscription in **Lambda Permissions** (IAM might require adding SNS invoke permissions).  
+1. Go to **SNS Console → Your SNS Topic (`demo-app-sns-topic`)**.
+2. Click **Create Subscription**.
+3. Protocol: **AWS Lambda**.
+4. Select the Lambda Function you created (`demo-app-metadata-lambda`).
+5. Click **Create Subscription**.
+6. Ensure Lambda permissions allow SNS to invoke the function (IAM might require adding SNS invoke permissions).
 
 ### 5. Update Lambda Code to Process SNS Events
-Modify the Lambda function to extract bucket name, file name, and timestamp from the SNS event and store it in the DynamoDB table.  
-
-1. Go to **Lambda demo-app-metadata-lambda** → **Code** → Paste the following code in it → Click on **Deploy**  
+1. Go to **Lambda → `demo-app-metadata-lambda` → Code**.
+2. Paste the following Python code:
 
 ```python
 import boto3
 import json
-import os
 
-# Set the AWS Region (Update with your actual region)
+# Set the AWS Region
 AWS_REGION = "us-east-1"
 
-# Initialize DynamoDB with the region
+# Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
-
 TABLE_NAME = "demo-app-file-metadata-dynamodb"
 
 def lambda_handler(event, context):
-   try:
-       print("✅ Event received:", json.dumps(event, indent=2))  # Debugging log
+    try:
+        print("✅ Event received:", json.dumps(event, indent=2))
+        for record in event.get("Records", []):
+            sns_message = record["Sns"]["Message"]
+            print("✅ Extracted SNS Message:", sns_message)
+            s3_event = json.loads(sns_message)
 
-       for record in event.get("Records", []):
-           # Extract SNS message (which contains the actual S3 event)
-           sns_message = record["Sns"]["Message"]
-           print("✅ Extracted SNS Message:", sns_message)
+            for s3_record in s3_event.get("Records", []):
+                s3_info = s3_record.get("s3", {})
+                bucket_name = s3_info.get("bucket", {}).get("name")
+                file_name = s3_info.get("object", {}).get("key")
 
-           # Parse the SNS message as JSON (contains the actual S3 event)
-           s3_event = json.loads(sns_message)
+                if not bucket_name or not file_name:
+                    print("❌ Missing bucket name or file name, skipping record.")
+                    continue 
 
-           # Process each S3 record inside the SNS message
-           for s3_record in s3_event.get("Records", []):
-               s3_info = s3_record.get("s3", {})
-               bucket_name = s3_info.get("bucket", {}).get("name")
-               file_name = s3_info.get("object", {}).get("key")
+                print(f"✅ Extracted File: {file_name} from Bucket: {bucket_name}")
 
-               if not bucket_name or not file_name:
-                   print("❌ Missing bucket name or file name, skipping record.")
-                   continue 
+                table = dynamodb.Table(TABLE_NAME)
+                table.put_item(
+                    Item={
+                        "file_name": file_name,
+                        "bucket_name": bucket_name,
+                        "timestamp": s3_record["eventTime"]
+                    }
+                )
 
-               print(f"✅ Extracted File: {file_name} from Bucket: {bucket_name}")
+        return {"statusCode": 200, "body": "File metadata stored successfully"}
 
-               # Store in DynamoDB
-               table = dynamodb.Table(TABLE_NAME)  # Get the table object
-
-               table.put_item(
-                   Item={
-                       "file_name": file_name,
-                       "bucket_name": bucket_name,
-                       "timestamp": s3_record["eventTime"]
-                   }
-               )
-
-       return {"statusCode": 200, "body": "File metadata stored successfully"}
-
-   except Exception as e:
-       print("❌ Error:", str(e))
-       return {"statusCode": 500, "body": f"Error: {str(e)}"}
+    except Exception as e:
+        print("❌ Error:", str(e))
+        return {"statusCode": 500, "body": f"Error: {str(e)}"}
 ```
 
-### 6. Quick Test
-1. Go to the S3 Bucket **demo-app-backend-s3-bucket-1234** (the name might be different for you).
-2. Upload any file.
-3. Now, you should have received an **Email**.
-4. Go to **Lambda demo-app-metadata-lambda**.
-5. Click on **Monitor** → **View CloudWatch Logs**.
-6. This will take you to CloudWatch Group **/aws/lambda/demo-app-metadata-lambda**.
-7. Click on the latest **Logstream** (e.g., `2025/03/05/[$LATEST]d5ca2959b8ba45feb602aae9915f4fce`).
-8. At the end of the logs, you will see something like:
-   ```
-   Extracted File: <your file name> from Bucket: <your bucket name>
-   ```
+3. Click **Deploy**.
 
-This confirms that:
-- Upon uploading a file to **S3**, an **event is sent to the SNS topic**.
-- **SNS successfully sends an Email and triggers the Lambda Function**.
-- **Lambda writes metadata to the DynamoDB table**. ✅
+### 6. Quick Test
+
+1. Upload a file to your S3 bucket (e.g., `demo-app-backend-s3-bucket-1234`).
+2. You should receive an email notification from SNS.
+3. Go to **Lambda → demo-app-metadata-lambda → Monitor → View CloudWatch Logs**.
+4. Open the latest log stream.
+5. You should see a log entry like:
+
+```
+Extracted File: <your file name> from Bucket: <your bucket name>
+```
+
+✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
 
 ## Part 6: Step-by-Step Guide to Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
-
-1. Go to the AWS IAM Console
-2. Click **Roles** in the left menu
-3. Click **Create Role**
-4. **Attach Policies**
-   - Select AWS service → EC2 → Next.
-   - Attach `AmazonS3FullAccess` and `AmazonDynamoDBReadOnlyAccess` policy.
-5. Name the role and create it.
-   - Name: `demo-app-s3-dynamo-iam-role`
+1. Open AWS IAM Console → **Roles → Create Role**.
+2. Select **AWS Service → EC2 → Next**.
+3. Attach policies:  
+   - `AmazonS3FullAccess`  
+   - `AmazonDynamoDBReadOnlyAccess`
+4. Name the role: `demo-app-s3-dynamo-iam-role` → Click **Create**.
 
 ### 2. Launch a Test and AMI Builder EC2 Instance
-
-1. Go to AWS Management Console → Navigate to EC2.
-2. Click **Launch Instance**.
-3. Enter an Instance Name  
-   - Name: `demo-app-test-ami-builder`
-4. Choose an AMI:
-   - Select Ubuntu 24.04 LTS (or latest available).
-5. Choose Instance Type:
-   - `t2.micro` (for free-tier) or any other type as required.
-6. **Create/Select Key Pair**:
-   - If you don’t have a key, click **Create a new key pair**, download it, and keep it safe.
-   - Name: `demo-app-private-key`
-   - Download `.ppk` for Putty and `.pem` for Terminal.
-7. **Network Settings**:
-   - Select the VPC `demo-app-vpc` where the Test AMI Builder instance should be deployed.
-   - Subnet: Choose a **Public Subnet** (e.g., `demo-app-public-subnet-1`).
-   - Enable **Auto-Assign Public IP**.
-8. **Create a Security Group**:
-   - Name: `demo-app-test-ami-builder-sg`
-   - Allow **SSH (port 22)** from your IP (or `0.0.0.0/0` for testing but restrict it in production).
-   - Allow **5000** from your IP (or `0.0.0.0/0` for testing but restrict it in production). This is required because our sample python app runs on port `5000`.
-9. **Assign IAM Role**:
-   - Select the IAM role `demo-app-s3-dynamo-iam-role` created in the above step in **Advanced details** → **IAM instance profile**.
-10. Click **Launch Instance** and wait for it to start.
-11. Copy the **Public IP Address** of the instance.
+1. Open AWS EC2 Console → **Launch Instance**.
+2. Enter **Instance Name:** `demo-app-test-ami-builder`.
+3. Choose AMI: Ubuntu 24.04 LTS (or latest).
+4. Instance Type: `t2.micro` (free-tier) or as required.
+5. Key Pair: Create or select an existing key pair (download `.pem` for terminal, `.ppk` for Putty).  
+   Name: `demo-app-private-key`.
+6. Network: Select your VPC → Subnet: `demo-app-public-subnet-1`.
+7. Enable **Auto-assign Public IP**.
+8. Security Group: Create or select:  
+   - Name: `demo-app-test-ami-builder-sg`  
+   - Allow SSH (22) from your IP  
+   - Allow 5000 from your IP (Flask app)
+9. Attach IAM role: `demo-app-s3-dynamo-iam-role`.
+10. Launch the instance and copy the **Public IP**.
 
 ### 3. Connect to the Test AMI Builder
-
-#### Terminal:
+**Terminal:**  
 ```bash
 chmod 400 /path/to/your/key/demo-app-private-key.pem
-ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
+ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<EC2_PUBLIC_IP>
 ```
-#### Putty:
-- Use the `.ppk` file.
+
+**Putty:** use the `.ppk` file.
+
+Your instance is ready for package installation, app deployment, testing, and AMI creation.
 
 ### 4. Install Dependencies
 
-#### Update Packages
 ```bash
+# Update packages
 sudo apt update && sudo apt upgrade -y
-```
 
-#### Install Required Software
-```bash
+# Install software
 sudo apt install python3 python3-pip python3-venv git vim -y
-```
 
-#### Set Up a Virtual Environment
-```bash
+# Set up Python virtual environment
 cd /home/ubuntu
 python3 -m venv venv
 source venv/bin/activate
+
+# Install Python packages
+pip install flask pymysql boto3
+pip install flask-cors
 ```
 
-#### Install Python Packages
-```bash
-pip install flask pymysql boto3 flask-cors
-```
+### 5. Deploy Flask Application: Backend - Application Layer
 
-### 5. Deploy Flask Application (Backend - Application Layer)
+1. Create application directory:
 
-#### Create Application Directory
 ```bash
 mkdir /home/ubuntu/flask-app
 cd /home/ubuntu/flask-app
-```
-
-#### Create `app.py`
-```bash
 vim app.py
 ```
 
-#### Paste the following Flask application (Modify `RDS_HOST`, `RDS_USER`, `RDS_PASSWORD`, `S3_BUCKET`):
+2. Paste the Flask app code below. Update `RDS_HOST`, `RDS_USER`, `RDS_PASSWORD`, `S3_BUCKET` accordingly:
+
 ```python
 from flask import Flask, request, jsonify
 import pymysql
@@ -450,7 +468,7 @@ import boto3
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # ✅ Allow all origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # RDS and S3 Configurations
 RDS_HOST = "CHANGE_ME"
@@ -463,30 +481,28 @@ DYNAMODB_TABLE_NAME = "demo-app-file-metadata-dynamodb"
 # AWS S3 Client
 s3_client = boto3.client("s3")
 
-# Create Database if Not Exists
+# Database initialization
 def initialize_database():
     conn = pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD)
     with conn.cursor() as cursor:
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {RDS_DATABASE}")
     conn.commit()
     conn.close()
-
     conn = pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD, database=RDS_DATABASE)
     with conn.cursor() as cursor:
-        cursor.execute(
-            """CREATE TABLE IF NOT EXISTS users (
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL
-            )"""
-        )
+            )
+        """)
     conn.commit()
     conn.close()
 
-# Connect to RDS
 def get_db_connection():
     return pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD, database=RDS_DATABASE)
 
-# API to Insert User into RDS
+# API Routes
 @app.route("/insert", methods=["POST"])
 def insert():
     data = request.json
@@ -498,24 +514,46 @@ def insert():
     conn.close()
     return jsonify({"message": "User inserted successfully!"})
 
+@app.route("/fetch", methods=["GET"])
+def fetch():
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users")
+        users = cursor.fetchall()
+    conn.close()
+    return jsonify({"users": users})
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    file = request.files["file"]
+    s3_client.upload_fileobj(file, S3_BUCKET, file.filename)
+    return jsonify({"message": "File uploaded successfully!"})
+
+@app.route("/list_files", methods=["GET"])
+def list_files():
+    objects = s3_client.list_objects_v2(Bucket=S3_BUCKET)
+    files = [obj["Key"] for obj in objects.get("Contents", [])]
+    return jsonify({"files": files})
+
+@app.route("/get_file_metadata", methods=["GET"])
+def get_file_metadata():
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+    response = table.scan()
+    metadata = response.get("Items", [])
+    return jsonify({"files_metadata": metadata})
+
 if __name__ == "__main__":
     initialize_database()
     app.run(host="0.0.0.0", port=5000, debug=True)
 ```
 
-### 6. Deploy HTML+JavaScript Frontend on S3 (Frontend - Presentation Layer)
+### 6. Deploy HTML + JavaScript Frontend on S3
 
-#### Create an S3 Bucket for Frontend
-1. Go to **AWS S3 Console** → **Create a bucket** (e.g., `demo-app-frontend-s3-bucket-6789`).
-2. **Disable Block public access**.
-
-#### Enable Static Website Hosting
-1. Go to **Properties** → **Static website hosting** → **Edit** → **Enable**.
-2. Set **Index document** to `index.html`.
-3. **Save changes**.
-
-#### Set Bucket Policy to Allow Public Read Access
-1. Go to **Permissions** → **Bucket Policy** → **Edit** → Paste the following policy (you may have to change the bucket name in the policy to match with your bucket name) → **Save**.
+1. Create S3 Bucket for frontend (e.g., `demo-app-frontend-s3-bucket-6789`).
+2. Disable **Block public access**.
+3. Enable **Static website hosting** → Index document: `index.html`.
+4. Set **Bucket Policy**:
 
 ```json
 {
@@ -531,157 +569,24 @@ if __name__ == "__main__":
 }
 ```
 
-#### Upload Code to the S3 Bucket
+5. Upload `index.html` and update `API_BASE` with EC2 IP:Port.
 
-1. **Create the `index.html` File**
-   - Create a new file named `index.html` on your local machine.
-   - Copy and paste the following code into it
+### 7. Start the Flask Application
 
-```html
-   <!DOCTYPE html>
-   <html lang="en">
-   <head>
-      <meta charset="UTF-8">
-      <title>Flask 3-Tier App</title>
-   </head>
-   <body>
-      <h2>Insert User in RDS</h2>
-      <input type="text" id="username" placeholder="Enter Name">
-      <button onclick="insertUser()">Insert</button>
+```bash
+python3 app.py
+```
 
-      <h2>Fetch Users from RDS</h2>
-      <button onclick="fetchUsers()">Load Users</button>
-      <ul id="users-list"></ul>
+> If connection fails due to RDS security group, allow inbound 3306 from `demo-app-test-ami-builder-sg`.
 
-      <h2>Upload File to S3</h2>
-      <input type="file" id="file">
-      <button onclick="uploadFile()">Upload</button>
+### 8. Configure Flask as a Systemd Service
 
-      <h2>List Files in S3</h2>
-      <button onclick="listFiles()">List Files</button>
-      <ul id="files-list"></ul>
+1. Create service file:
 
-      <h2>Fetch File Metadata from DynamoDB</h2>
-      <button onclick="fetchMetadata()">Fetch Metadata</button>
-      <ul id="metadata-list"></ul>
-
-      <script>
-          const API_BASE = "http://<EC2-IP>:5000";
-
-          async function insertUser() {
-              let name = document.getElementById("username").value;
-              await fetch(API_BASE + "/insert", {
-                  method: "POST",
-                  headers: {"Content-Type": "application/json"},
-                  body: JSON.stringify({name: name})
-              });
-              alert("User inserted!");
-          }
-
-          async function fetchUsers() {
-              let response = await fetch(API_BASE + "/fetch");
-              let data = await response.json();
-              let list = document.getElementById("users-list");
-              list.innerHTML = "";
-              data.users.forEach(user => {
-                  let li = document.createElement("li");
-                  li.textContent = user[1];
-                  list.appendChild(li);
-              });
-          }
-
-          async function uploadFile() {
-              let file = document.getElementById("file").files[0];
-              let formData = new FormData();
-              formData.append("file", file);
-              await fetch(API_BASE + "/upload", { method: "POST", body: formData });
-              alert("File uploaded!");
-          }
-
-          async function listFiles() {
-              let response = await fetch(API_BASE + "/list_files");
-              let data = await response.json();
-              let list = document.getElementById("files-list");
-              list.innerHTML = "";
-              data.files.forEach(file => {
-                  let li = document.createElement("li");
-                  li.textContent = file;
-                  list.appendChild(li);
-              });
-          }
-
-          async function fetchMetadata() {
-              let response = await fetch(API_BASE + "/get_file_metadata");
-              let data = await response.json();
-              let list = document.getElementById("metadata-list");
-              list.innerHTML = "";
-              data.files_metadata.forEach(file => {
-                  let li = document.createElement("li");
-                  li.textContent = `File: ${file.file_name}, Bucket: ${file.bucket_name}, Uploaded: ${file.timestamp}`;
-                  list.appendChild(li);
-              });
-          }
-      </script>
-   </body>
-   </html>
-   ```   
-
-2. **Modify API Base URL**
-   - Replace `<EC2-IP>:5000` in the `API_BASE` constant in the above code with your actual EC2 instance's public IP and port.
-
-3. **Upload `index.html` to S3**
-   - Open the AWS Management Console.
-   - Navigate to **S3**.
-   - Select your bucket (e.g., `demo-app-frontend-s3-bucket-6789`)..
-   - Click **Upload** → **Add Files** → Select `index.html`.
-   - Click **Upload**.
-
-### 7: Start the Flask Application
-1. SSH into your EC2 instance.
-2. Navigate to your application directory and start the Flask app:
-   ```bash
-   python3 app.py
-   ```
-3. This may fail with the following error:
-   ```
-   pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'my-demo-db.c66qvyoujzwv.us-east-1.rds.amazonaws.com' (timed out)")
-   ```
-   This happens because the RDS Security Group (SG) allows connections on Port 3306 only from your public IP.
-
-### 8: Update the RDS Security Group
-1. Go to the AWS RDS Console.
-2. Select the instance **my-demo-db**.
-3. Navigate to **Connectivity & Security** → Open the **SG demo-app-db-sg**.
-4. In **SG demo-app-db-sg**, go to **Inbound Rules** → Click **Edit Inbound Rules**.
-5. Add a new rule:
-   - **Port Range:** 3306
-   - **Source:** Search for and select **demo-app-test-ami-builder-sg**.
-6. Save the changes.
-
-### 9: Start the Flask Application Again
-1. Try starting the Flask app again:
-   ```bash
-   python3 app.py
-   ```
-2. If there are no errors, your backend is now connected to the database.
-
-### 10: Access the Application on S3 Bucket
-1. Go to the **S3 Bucket** in AWS Console.
-2. Navigate to **Properties** → **Static Website Hosting**.
-3. Copy the **Bucket website endpoint**.
-4. Open the copied URL in a browser and test the application.
-
-This setup ensures your Flask backend runs on EC2, the frontend is hosted on S3, and all components interact correctly.
-
-### 11: Configure Flask as a Systemd Service
-To ensure the Flask application runs in the background and starts automatically on system reboots, we will create a systemd service.
-
-#### 1. Create a Systemd Service File
 ```bash
 sudo vim /etc/systemd/system/flask-app.service
 ```
 
-Paste the following content:
 ```ini
 [Unit]
 Description=Flask Application
@@ -697,85 +602,81 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-#### 2. Reload Systemd and Enable the Service
+2. Reload systemd and enable service:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable flask-app
-```
-
-#### 3. Start the Flask Service
-```bash
 sudo systemctl start flask-app
-```
-
-Check the status:
-```bash
 sudo systemctl status flask-app
 ```
-If everything is running correctly, you should see output indicating that the service is **active (running)**.
 
-#### 4. Verify the Application
-Open a browser and visit the **S3 Static Website URL** to test.
+3. Verify via browser using S3 Static Website URL.
+4. Test auto-start after reboot:
 
-#### 5. Restart the EC2 Instance to Test Auto-Start
 ```bash
 sudo reboot
-```
-
-After rebooting, check if the service is running:
-```bash
 sudo systemctl status flask-app
 ```
 
-## Part 7: Step-by-Step Guide to Create an AMI, Launch Template, and Auto Scaling Group for High Availability
+✅ Your Flask app is now running as a **persistent, auto-starting systemd service**, integrated with **RDS, S3, and DynamoDB**, and connected to the frontend hosted on S3.
+
+
+## Part 7: Step-by-Step Guide to Create an AMI, Launch Template, and Auto Scaling Group
 
 Since Launch Configurations are being replaced by Launch Templates, we will use a Launch Template instead. This approach is more flexible, supports multiple versions, and is recommended by AWS.
 
 ### 1. Create an AMI from the Running EC2 Instance
-We first create an Amazon Machine Image (AMI) so that new instances launched by the Auto Scaling Group (ASG) will have our application pre-installed.
 
-#### Stop the Flask Application
-Before creating an AMI, stop the flask-app service running on `demo-app-test-ami-builder` instance:
+#### 1.1 Stop the Flask Application
+Before creating an AMI, stop the Flask app service running on the `demo-app-test-ami-builder` instance:
 ```bash
 sudo systemctl stop flask-app
 ```
 
-#### Create an AMI from the Running Instance
-1. Go to AWS Console → EC2 Dashboard
+#### 1.2 Create an AMI from the Running Instance
+
+1. Go to AWS Console → **EC2 Dashboard**
 2. Select the running instance
-3. Click on **Actions → Image and templates → Create Image**
-4. Provide an Image Name 
-   - Name: `demo-app-ami`
-5. Enable **No reboot** (optional but recommended)
+3. Click **Actions → Image and templates → Create Image**
+4. Provide an **Image Name** (e.g., `demo-app-ami`)
+5. Enable **No Reboot** (optional but recommended)
 6. Click **Create Image**
 
-#### Verify AMI Creation
-1. Navigate to **EC2 Dashboard → AMIs**
-2. Wait until the AMI status changes to "available"
+#### 1.3 Verify AMI Creation
+
+1. Navigate to EC2 Dashboard → **AMIs**
+2. Wait until the AMI status changes to `available`
 
 ---
 
-## 2. Create a Launch Template
+### 2. Create a Launch Template
+
 A Launch Template defines how instances are launched with predefined configurations.
 
-#### Open Launch Template Wizard
-1. Go to **EC2 Dashboard**
-2. Click on **Launch Templates**
-3. Click **Create Launch Template**
+#### 2.1 Open Launch Template Wizard
 
-#### Configure Launch Template
-- **Template Name**: `demo-app-launch-template`
-- **AMI ID**: Select the AMI we just created (`demo-app-ami`)
-- **Instance Type**: `t2.micro` (or as per requirement)
-- **Key pair name**: `demo-app-private-key`
-- **Subnet**: Do not select any here; we will select in ASG
-- **Create security group**: Do not specify any rule now; we will do that later
-  - **Name**: `demo-app-lt-asg-sg`
-  - **Description**: Access from Bastion Host and LB
-  - **VPC**: Select the `demo-app-vpc` in which the SG will be created.
-- **Storage**: Keep default (or modify as needed)  
-- **Advanced details → IAM instance profile**: Select the IAM role `demo-app-s3-dynamo-iam-role` with DynamoDB and S3 Access created earlier.
-- **Advanced details → User Data**: Add the following script (to start the service on instance launch):
+1. Go to EC2 Dashboard → **Launch Templates**
+2. Click **Create Launch Template**
+
+#### 2.2 Configure Launch Template
+
+* **Template Name:** `demo-app-launch-template`
+* **AMI ID:** Select the AMI created above (`demo-app-ami`)
+* **Instance Type:** `t2.micro` (or as per requirement)
+* **Key pair name:** `demo-app-private-key`
+* **Subnet:** Do not select (ASG will select subnets)
+* **Security Group:** Do not specify now (configure later)
+
+  * Name: `demo-app-lt-asg-sg`
+  * Description: Access from Bastion Host and LB
+* **VPC:** `demo-app-vpc`
+* **Storage:** Keep default (or modify as needed)
+
+**Advanced details:**
+
+* **IAM instance profile:** Select `demo-app-s3-dynamo-iam-role`
+* **User Data:** Add the following script to start the Flask service on instance launch:
 
 ```bash
 #!/bin/bash
@@ -783,241 +684,286 @@ sudo systemctl start flask-app
 sudo systemctl enable flask-app
 ```
 
-- Click **Review & Create**
+* Review and click **Create Launch Template**
 
 ---
 
 ### 3. Create an Auto Scaling Group (ASG)
+
 The ASG will automatically manage EC2 instances to ensure availability.
 
-#### Open ASG Wizard
-1. Go to **EC2 Dashboard**
-2. Click on **Auto Scaling Groups**
-3. Click **Create Auto Scaling Group**
+#### 3.1 Open ASG Wizard
 
-#### Configure ASG
-- **Enter ASG Name**: `demo-app-asg`
-- **Choose Launch Template**: Select `demo-app-launch-template`
-- **Choose VPC and Subnets**: We will create ASG in Private Subnet
-  - **VPC**: `demo-app-vpc`
-  - **Availability Zones and subnets**:
-    - `demo-app-private-subnet-1`
-    - `demo-app-private-subnet-2`
-    - `demo-app-private-subnet-3`
-- **Set Scaling Policies**
-  - **Desired Capacity** = `2`
-  - **Min Instances** = `2`
-  - **Max Instances** = `3`
-  - **Automatic scaling** → Target tracking scaling policy
-- **Tags**
-  - **Key** = `Name`  
-  - **Value** = `app-demo-asg-instances`
-- Click **Review & Create**
-- Click **Create ASG**
+1. Go to EC2 Dashboard → **Auto Scaling Groups**
+2. Click **Create Auto Scaling Group**
+
+#### 3.2 Configure ASG
+
+* **ASG Name:** `demo-app-asg`
+* **Launch Template:** Select `demo-app-launch-template`
+* **VPC and Subnets:**
+
+  * VPC: `demo-app-vpc`
+  * Subnets (Private): `demo-app-private-subnet-1`, `demo-app-private-subnet-2`, `demo-app-private-subnet-3`
+
+#### 3.3 Set Scaling Policies
+
+* **Desired Capacity:** 2
+* **Min Instances:** 2
+* **Max Instances:** 3
+* **Automatic scaling:** Target tracking scaling policy
+
+#### 3.4 Add Tags
+
+* **Key:** Name
+
+* **Value:** app-demo-asg-instances
+
+* Review & Click **Create ASG**
 
 ---
 
 ### 4. Verify ASG Setup
 
-#### Check if ASG Launches Instances
-1. Go to **EC2 Dashboard → Instances**
-2. Confirm that new instances are being launched by ASG
+#### 4.1 Check if ASG Launches Instances
 
-#### Verify New Instances
-1. Go to **EC2 Dashboard → Instances**
-2. Check the **Launch Time** of the instances to confirm they are newly created.
-3. Verify IAM Role is attached to instances.
+* Go to **EC2 Dashboard → Instances**
+* Confirm that new instances are being launched by the ASG
 
----
+#### 4.2 Verify New Instances
 
-This completes the setup for creating an AMI, Launch Template, and Auto Scaling Group!
+* Check the **Launch Time** of the instances to confirm they are newly created
+* Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances
 
 
 ## Part 8: Step-by-Step Guide to Attach Load Balancer to Auto Scaling Group (ASG)
 
 ### 1. Create a Target Group (TG)
-1. Go to AWS Console → Navigate to EC2 Dashboard.
-2. On the left panel, click **Target Groups** under **Load Balancing**.
-3. Click **Create target group**.
-4. Fill in the details:
-   - **Choose target type** → Select **Instance**
-   - **Target group name** → `demo-app-tg`
-   - **Protocol** → HTTP
-   - **Port** → 5000 (Your Flask app port)
-   - **VPC** → Select the same VPC where your EC2 instances are running (`demo-app-vpc`)
-   - **Health check protocol** → HTTP
-   - **Health check path** → `/`
-5. Click **Next**.
-6. **DO NOT** manually register targets (Auto Scaling will handle this).
-7. Click **Create target group**.
+1. Go to AWS Console → **EC2 Dashboard**  
+2. On the left panel, click **Target Groups** under **Load Balancing**  
+3. Click **Create target group**  
+
+Fill in the details:  
+- **Target type:** Instance  
+- **Target group name:** `demo-app-tg`  
+- **Protocol:** HTTP  
+- **Port:** 5000 (Flask app port)  
+- **VPC:** `demo-app-vpc`  
+- **Health check protocol:** HTTP  
+- **Health check path:** `/`  
+
+- Click **Next**  
+- **Do not manually register targets** (Auto Scaling will handle this)  
+- Click **Create target group**
+
+---
 
 ### 2. Create an Application Load Balancer (ALB)
 
-#### First, Create a Security Group (SG)
-1. Go to **EC2** → **Security Groups**.
-2. Create a Security Group:
-   - **Security group name**: `demo-app-lb-sg`
-   - **Description**: `demo-app-lb-sg for public access`
-   - **VPC**: Select your VPC → `demo-app-vpc`
-   - **Inbound Rule**: 
-     - **Port Range**: `80`
-     - **Source**: `Anywhere`
+#### 2.1 First Create a Security Group
+1. Go to EC2 → **Security Groups** → **Create Security Group**  
+2. Fill details:  
+   - **Security group name:** `demo-app-lb-sg`  
+   - **Description:** `demo-app-lb-sg for public access`  
+   - **VPC:** `demo-app-vpc`  
+   - **Inbound Rule:** Port 80, Source: Anywhere  
 
-#### Create the Load Balancer
-1. Go to **EC2 Dashboard** → Click **Load Balancers** to create a Load Balancer.
-2. Click **Create Load Balancer**.
-3. Select **Application Load Balancer (ALB)**.
-4. Configure basic details:
-   - **Name** → `demo-app-alb`
-   - **Scheme** → `Internet-facing`
-   - **IP address type** → `IPv4`
-   - **VPC** → Select your VPC.
-   - **Availability Zones** → Select AZs with Public Subnets:
-     - `demo-app-public-subnet-1`
-     - `demo-app-public-subnet-2`
-     - `demo-app-public-subnet-3`
-5. Configure Security Groups:
-   - Use the security group created in the above step: `demo-app-lb-sg`
-6. Configure Listeners and Routing:
-   - **Listener protocol** → HTTP
-   - **Listener port** → `80`
-   - **Forward to target group** → Select `demo-app-tg`
-7. Click **Create Load Balancer**.
+#### 2.2 Create the ALB
+1. Go to EC2 Dashboard → **Load Balancers** → **Create Load Balancer**  
+2. Select **Application Load Balancer (ALB)**  
+
+**Configure basic details:**  
+- **Name:** `demo-app-alb`  
+- **Scheme:** Internet-facing  
+- **IP address type:** IPv4  
+- **VPC:** `demo-app-vpc`  
+- **Availability Zones:** Select public subnets:  
+  `demo-app-public-subnet-1`, `demo-app-public-subnet-2`, `demo-app-public-subnet-3`
+
+**Configure Security Groups:**  
+- Use the SG created above: `demo-app-lb-sg`  
+
+**Configure Listeners and Routing:**  
+- **Listener protocol:** HTTP  
+- **Listener port:** 80  
+- **Forward to target group:** Select `demo-app-tg`  
+
+- Click **Create Load Balancer**
+
+---
 
 ### 3. Attach the Target Group to the Auto Scaling Group (ASG)
-1. Go to **AWS Console** → Navigate to **EC2**.
-2. Click **Auto Scaling Groups**.
-3. Select your **Auto Scaling Group (ASG)**.
-4. Click **Edit**.
-5. Scroll to **Load balancing** → **Load Balancers**.
-6. Tick **Application, Network, or Gateway Load Balancer target groups** and select the Target Group `demo-app-tg`.
-7. Click **Update**.
+1. Go to EC2 → **Auto Scaling Groups**  
+2. Select your ASG  
+3. Click **Edit**  
+4. Scroll to **Load balancing → Load Balancers**  
+5. Tick **Application, Network or Gateway Load Balancer target groups**  
+6. Select the target group `demo-app-tg`  
+7. Click **Update**
+
+---
 
 ### 4. Verify Load Balancer and ASG Integration
-1. Go to **EC2 Dashboard** → Click **Target Groups**.
-2. Select `demo-app-tg`.
-3. Click on **Targets** → Ensure that ASG instances appear here.
-4. Verify that instances show **healthy** status (**This will fail initially**).
-5. Go to **ASG Security Group (`demo-app-lt-asg-sg`)**.
-6. Edit **Inbound Rules**:
-   - Click **Add Rule**.
-   - **Port Range**: `5000`
-   - **Source**: Custom → Select `demo-app-lb-sg`.
-   - Click **Save Rules**.
-7. **Test Load Balancer URL**:
-   - Go to **Load Balancers** → Click `demo-app-lb`.
-   - Copy **DNS Name**.
-   - Open a browser → Enter `http://<ALB-DNS-Name>`.
-   - Your Flask app should load!
+1. Go to EC2 Dashboard → **Target Groups** → Select `demo-app-tg`  
+2. Click on **Targets** → Ensure ASG instances appear here  
+3. If instances are not healthy:  
+   - Go to ASG SG `demo-app-lt-asg-sg`  
+   - **Edit Inbound Rules**  
+   - Add rule:  
+     - **Port Range:** 5000  
+     - **Source:** Custom → select `demo-app-lb-sg`  
+   - Save rules  
+
+4. Test Load Balancer URL  
+- Go to **Load Balancers → demo-app-lb**  
+- Copy **DNS Name**  
+- Open a browser → Enter `http://<ALB-DNS-Name>`  
+- Your Flask app should load!
+
+---
 
 ### 5. Update `index.html`
-Now that we have created an **ASG** and **Load Balancer**, we should point our **Frontend** to the Load Balancer instead of the EC2 IP:Port in `index.html`.
-
-1. Update `API_BASE` in `index.html` to point to `http://LoadBalancer:80` on your local machine.
-2. Re-upload the updated file to the **S3 Bucket** (e.g., `demo-app-frontend-s3-bucket-6789`).
+Since the frontend is hosted on S3 and the backend is now behind the ALB:  
+1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>:80`  
+2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
+3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
 
 ## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
 ### 1. Launch an EC2 Instance (Bastion Host)
-- Go to AWS Management Console → Navigate to EC2.
-- Click **Launch Instance**.
-- Enter an Instance Name (e.g., `demo-app-bastion-host`).
+1. Go to AWS Management Console → **EC2** → **Launch Instance**  
+2. Enter an instance name: `demo-app-bastion-host`  
 
-#### Choose an AMI:
-- Select **Ubuntu 24.04 LTS** (or latest available).
+**Choose AMI:**  
+- Ubuntu 24.04 LTS (or latest available)
 
-#### Choose Instance Type:
-- `t2.micro` (for free-tier) or any other type as required.
+**Choose Instance Type:**  
+- t2.micro (free-tier) or as required  
 
-#### Create/Select Key Pair:
-- If you don’t have a key, click **Create a new key pair**, download it, and keep it safe.
-- **Name:** `demo-app-private-key`
-- Download **.ppk** for Putty.
-- Download **.pem** for Terminal.
+**Create/Select Key Pair:**  
+- If no key exists, create a new one, download, and keep it safe  
+- **Name:** demo-app-private-key  
+- Download `.ppk` for Putty  
+- Download `.pem` for Terminal  
+
+---
 
 ### 2. Configure Networking
-- **Network:** Select the VPC where the Bastion Host should be deployed.
-- **Subnet:** Choose a **Public Subnet** (`demo-app-public-subnet-1`).
-- **Enable Auto-Assign Public IP:** Ensure **Auto-assign public IP** is **Enabled**.
+- **Network:** Select the VPC where the Bastion Host should be deployed  
+- **Subnet:** Select a Public Subnet (`demo-app-public-subnet-1`)  
+- **Auto-Assign Public IP:** Enabled  
+
+---
 
 ### 3. Set Up Security Group
-Create a new Security Group (or use an existing one):
-- **Name:** `demo-app-bastion-host-sg`
-- Allow **SSH (port 22)** from your IP (or `0.0.0.0/0` for testing but restrict it in production).
+- Create a new SG or use an existing one:  
+  - **Name:** `demo-app-bastion-host-sg`  
+  - **Inbound Rule:** Allow SSH (port 22) from your IP (or 0.0.0.0/0 for testing; restrict in production)  
+
+---
 
 ### 4. Launch the Instance
-- Click **Launch Instance** and wait for it to start.
-- Copy the **Public IP Address** of the instance.
+- Click **Launch Instance** and wait for it to start  
+- Copy the **Public IP Address** of the Bastion Host  
 
+---
+
+### ⚠️ Note
+After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
+
+**To fix this:**  
+1. Update the **RDS Security Group** to allow inbound access from the new ASG SG.  
+2. Delete the existing ASG instances.  
+3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
+
+
+111
 
 ## Part 10: Connect From Bastion Host to Private Instance
 
 ### 1. Copy the Private Key to Bastion Host
-
-#### Using Terminal:
+**From Terminal (Linux/Mac):**  
 ```bash
-scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-key.pem ubuntu@18.207.106.246:/home/ubuntu/
+scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>:/home/ubuntu/
 ```
 
-#### From Windows:
-- Use a tool like **WinSCP** and upload the private key to `/home/ubuntu/` directory.
+**From Windows:**
 
-### 2. Update ASG of `demo-app-lt-asg-sg`
-- Update `demo-app-lt-asg-sg` security group.
-- **Add Rule:**
-  - **Port:** 22
-  - **Source:** Custom
-  - Search for `demo-app-bastion-host-sg` and select it.
+* Use a tool like **WinSCP** and upload the private key to `/home/ubuntu/` directory on the Bastion Host.
+
+---
+
+### 2. Update ASG Security Group
+
+* Update the ASG security group `demo-app-lt-asg-sg`
+* Add an **Inbound Rule:**
+
+  * **Port:** 22
+  * **Source:** Custom → select `demo-app-bastion-host-sg`
+
+---
 
 ### 3. Connect to the Bastion Host
 
-#### Open a terminal or Putty to connect to the Bastion Host (Instance) via SSH:
+**Terminal (Linux/Mac):**
 
-#### Terminal:
 ```bash
 chmod 400 demo-app-private-key.pem
 ssh -i demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 ```
 
-#### Putty:
-- Use the `.ppk` file.
+**Putty (Windows):**
 
-> Replace `demo-app-private-key.pem` with your actual key and `<BASTION_PUBLIC_IP>` with the copied IP.
+* Use the `.ppk` file
+* Replace `<BASTION_PUBLIC_IP>` with the public IP of your Bastion Host
 
-🚀 Your Bastion Host is ready to access private instances securely!
+Your Bastion Host is now ready to access private instances securely! 🚀
 
-### 4. You are in Bastion Host
-- You should be able to see the private key copied in `/home/ubuntu`:
+---
+
+### 4. Access Private Instance from Bastion Host
+
+1. Verify the private key is on Bastion Host:
+
 ```bash
 ls -l
 ```
-- Go to the **AWS Console** → **EC2 Instance**.
-- Select one of the instances created by the ASG.
-- Get its **private IP**.
 
-#### Try SSH:
+2. Get the private IP of a private instance from the AWS Console → EC2 → Instances
+
+3. Connect to the private instance:
+
 ```bash
-ssh -i "demo-app-private-key.pem" ubuntu@<EC2_PRIVATE_IP>
+ssh -i "demo-app-private-key.pem" ubuntu@<PRIVATE_EC2_IP>
 ```
 
-**Note**: Now you are in the Private App Instance
+---
 
-#### Install netstat command to debug anything:
+### 5. Debug and Manage Flask App on Private Instance
+
+1. Install `netstat` command for debugging:
+
 ```bash
 sudo apt install net-tools
 ```
-#### Check logs:
+
+2. Check Flask service logs:
+
 ```bash
 sudo journalctl -u flask-app.service -n 50 --no-pager
 ```
-#### Stop and Start Flask App Service:
+
+3. Stop, start, and check Flask service:
+
 ```bash
 sudo systemctl stop flask-app
 sudo systemctl start flask-app
 sudo systemctl status flask-app
 ```
-#### Check logs again:
+
+4. Check logs again to verify:
+
 ```bash
 sudo journalctl -u flask-app.service -n 50 --no-pager
 ```
