@@ -653,14 +653,19 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 2. Click **Create bucket**.
 3. Enter a unique bucket name, for example:  
    `demo-app-backend-s3-bucket-1234`  
-   🚨 **Important:** S3 bucket names must be globally unique across all AWS accounts.
-4. Choose the **same region** as your VPC (e.g., `us-east-1`).
-5. Click **Next**.
+   
+   🚨 **Important:**  
+   - S3 bucket names must be globally unique across all AWS accounts.  
+   - You may use a different name if this one is not available.  
+   - **Note:** Keep a record of this bucket name as it will be required later.  
+   - It is recommended to add a random string at the end of the bucket name `demo-app-backend-s3-bucket-1234-<some-random-string>` to avoid conflicts or confusion.
 
-### 2. Configure Bucket Settings
-1. Keep **Block Public Access enabled** (recommended for security).
-2. Enable **Bucket Versioning** (optional) – useful to keep previous versions of uploaded files.
-3. Leave other settings as default and click **Create bucket**.
+4. Choose the **same region** as your VPC (e.g., `us-east-1`).
+5. Keep **Block Public Access enabled** (recommended for security).
+6. Enable **Bucket Versioning** (optional) – useful to keep previous versions of uploaded files.
+7. Leave other settings as default and click **Create bucket**.
+8. Click **Create bucket**.  
+
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
@@ -728,10 +733,15 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 5. Click **Create subscription**.
 6. Open your email and confirm the subscription (click the link from AWS SNS).
 
+> **Note:** You should see the status as **Confirmed** for your subscription
+
+
 ### 3. Update SNS Topic Policy to Allow S3 to Publish
 1. In SNS Console, click `demo-app-sns-topic`.
 2. Click **Edit → Access policy**.
 3. Replace the existing policy with:
+
+> **Note:** In the following policy, replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID.
 
 ```json
 {
@@ -755,8 +765,6 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
   ]
 }
 ```
-
-> **Note:** Replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID.
 
 4. Click **Save changes**.
 
@@ -836,24 +844,26 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 4. Leave all other settings as default.
 5. Click **Create Table**.
 
-> **Important:** You don’t need to manually define other attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB.
+> **Important:** You don’t need to manually define other required attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB later.
 
 ### 2. Create an IAM Role for Lambda
 1. Go to **IAM Console → Roles → Create role**.
 2. Select **AWS Service → Lambda → Next**.
-3. Attach the following policies:
+3. Search and attach the following policies:
    - `AmazonS3ReadOnlyAccess` (To read files from S3)  
    - `AmazonDynamoDBFullAccess` (To write metadata to DynamoDB)  
    - `AWSLambdaBasicExecutionRole` (For CloudWatch logging)
-4. Create the role and note the **Role ARN**.
+4. Click on Next.
 5. Name the role: `demo-app-lambda-iam-role`.
+6. Create the role and note the **Role ARN**.
+
 
 ### 3. Create a Lambda Function
 1. Go to **Lambda Console → Create function**.
 2. Choose **Author from scratch**.
 3. Enter **Function Name:** `demo-app-metadata-lambda`.
-4. Select **Python 3.x** as Runtime.
-5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`).
+4. Select **Python 3.13** as Runtime.
+5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`) under **Change default execution role**.
 6. Click **Create Function**.
 
 ### 4. Subscribe Lambda to Existing SNS Topic
@@ -862,7 +872,8 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 3. Protocol: **AWS Lambda**.
 4. Select the Lambda Function you created (`demo-app-metadata-lambda`).
 5. Click **Create Subscription**.
-6. Ensure Lambda permissions allow SNS to invoke the function (IAM might require adding SNS invoke permissions).
+6. Return to the SNS Topic `demo-app-sns-topic` and verify that there are now **2 subscriptions**, both showing the **Status: Subscribed**.
+
 
 ### 5. Update Lambda Code to Process SNS Events
 1. Go to **Lambda → `demo-app-metadata-lambda` → Code**.
@@ -924,11 +935,10 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 2. You should receive an email notification from SNS.
 3. Go to **Lambda → demo-app-metadata-lambda → Monitor → View CloudWatch Logs**.
 4. Open the latest log stream.
-5. You should see a log entry like:
-
-```
-Extracted File: <your file name> from Bucket: <your bucket name>
-```
+   - You should see a log entry like:  
+     `Extracted File: <your file name> from Bucket: <your bucket name>`
+5. Go to **DynamoDB → Explore Items**, select the table `demo-app-file-metadata-dynamodb`, and click **Run**.
+   - You should see **one entry** corresponding to the file you just uploaded.
 
 ✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
