@@ -997,38 +997,60 @@ The **application layer** is the glue that ties everything together — frontend
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
 2. Select **AWS Service → EC2 → Next**.
-3. Attach policies:  
+3. Search and attach the following policies:  
    - `AmazonS3FullAccess`  
    - `AmazonDynamoDBReadOnlyAccess`
-4. Name the role: `demo-app-s3-dynamo-iam-role` → Click **Create**.
+4. Click on Next.   
+5. Name the role: `demo-app-s3-dynamo-iam-role`
+6. Click **Create**.
 
 ### 2. Launch a Test and AMI Builder EC2 Instance
 1. Open AWS EC2 Console → **Launch Instance**.
 2. Enter **Instance Name:** `demo-app-test-ami-builder`.
-3. Choose AMI: Ubuntu 24.04 LTS (or latest).
+3. Choose AMI: Ubuntu Server 24.04 LTS (HVM), SSD Volume Type .
 4. Instance Type: `t2.micro` (free-tier) or as required.
-5. Key Pair: Create or select an existing key pair (download `.pem` for terminal, `.ppk` for Putty).  
+5. Key Pair: Create or select an existing key pair (download `.pem` for terminal(Linux/Mac), `.ppk` for Putty(Windows)).  
    Name: `demo-app-private-key`.
-6. Network: Select your VPC → Subnet: `demo-app-public-subnet-1`.
+6. Network → Edit : Select your VPC → Subnet: `demo-app-public-subnet-1`.
 7. Enable **Auto-assign Public IP**.
 8. Security Group: Create or select:  
    - Name: `demo-app-test-ami-builder-sg`  
-   - Allow SSH (22) from your IP  
-   - Allow 5000 from your IP (Flask app)
-9. Attach IAM role: `demo-app-s3-dynamo-iam-role`.
+   - Allow SSH (22) from Anywhere-IPv4
+   - Allow 5000 from Anywhere-IPv4
+9. Under **Advanced details** → **IAM instance profile** Attach IAM role: `demo-app-s3-dynamo-iam-role`.
 10. Launch the instance and copy the **Public IP**.
 
 ### 3. Connect to the Test AMI Builder
 
-**Terminal:**  
+1. Go to the EC2 instance you just launched.
+2. Under the **Details** section, find the **Public IPv4 address** and copy it.  
+   - This is the IP you will use to connect to the instance.
+3. Based on your workstation OS, choose one of the following:
+
+**For macOS/Linux (Terminal):**  
 ```bash
+# Set the correct permissions for your private key
 chmod 400 /path/to/your/key/demo-app-private-key.pem
+
+# Connect to your EC2 instance
 ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<EC2_PUBLIC_IP>
+````
+
+**For Windows (Putty):**
+
+1. Open **Putty**, enter the **Public IPv4 address** in the Host Name field.
+2. Under **SSH → Auth**, browse and select your `.ppk` key file.
+3. Click **Open** to connect.
+4. Enter Ubuntu username
+
+> ⚠️ **Note:** If SSH or port 22 is not working even after all correct configurations, you can temporarily allow SSH (port 22) from **all IPs (0.0.0.0/0)** in your security group to troubleshoot. Remember to tighten it later for security.
+
+✅ Once connected, your instance is ready for **package installation, application deployment, testing, and AMI creation**.
+
 ```
 
-**Putty:** use the `.ppk` file.
+---
 
-Your instance is ready for package installation, app deployment, testing, and AMI creation.
 
 ### 4. Install Dependencies
 
@@ -1152,8 +1174,8 @@ if __name__ == "__main__":
 
 1. Create S3 Bucket for frontend (e.g., `demo-app-frontend-s3-bucket-6789`).
 2. Disable **Block public access**.
-3. Enable **Static website hosting** → Index document: `index.html`.
-4. Set **Bucket Policy**:
+3. Go to the Bucket → Properties → Static website hosting → Edit → Enable **Static website hosting** → Index document: `index.html`.
+4. Go to the Bucket → Permissions → Edit **Bucket Policy**: and paste the folloing. Change Resource ARN to match with you bucket name → Save changes
 
 ```json
 {
@@ -1169,15 +1191,92 @@ if __name__ == "__main__":
 }
 ```
 
-5. Upload `index.html` and update `API_BASE` with EC2 IP:Port.
+5. **Download the `index.html` file** from the repo:
+   [Frontend `index.html`](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws/blob/dev/frontend/index.html)
+
+6. **Edit the file** to update the backend API endpoint:
+
+   * Open `index.html` in a text editor.
+   * Find the line with:
+
+     ```javascript
+     const API_BASE = "http://<EC2IP>:5000";
+     ```
+   * Replace `<EC2IP>` with your EC2 Public IP and keep the port unchanged, for example:
+
+     ```javascript
+     const API_BASE = "http://192.199.100.111:5000";
+     ```
+
+7. **Save the file** after updating the API endpoint.
+
+8. **Upload the updated `index.html`** to your frontend hosting S3 Bucket (`demo-app-frontend-s3-bucket-6789`):
+
+   * Go to your frontend S3 bucket → Upload → Select `index.html` → Upload.
+
+---
 
 ### 7. Start the Flask Application
+
+1. **SSH into your EC2 instance** (Test AMI Builder) if not already connected.
+2. **Navigate to the Flask application directory** and set up the environment:
+
+```bash
+cd /home/ubuntu/flask-app
+python3 -m venv venv        # Create virtual environment
+source venv/bin/activate    # Activate virtual environment
+```
+
+3. **Start the Flask application**:
 
 ```bash
 python3 app.py
 ```
 
-> If connection fails due to RDS security group, allow inbound 3306 from `demo-app-test-ami-builder-sg`.
+> ⚠️ If the connection to RDS fails, it is likely due to security group rules.
+> To resolve this:
+>
+> * Go to the **demo-app-db-sg** security group.
+> * Allow **inbound traffic on port 3306** from the **demo-app-test-ami-builder-sg** security group.
+> * After updating the rules, retry starting the Flask application.
+
+```bash
+python3 app.py
+```
+
+4. **Expected logs** when the Flask app starts successfully:
+
+```
+(venv) ubuntu@ip-10-0-1-100:~/flask-app$ python3 app.py
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.1.100:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 805-847-091
+```
+
+5. **Test the frontend**:
+   * Go to your frontend S3 bucket (e.g., demo-app-frontend-s3-bucket-6789) → Properties → Copy the Bucket website endpoint URL.
+   
+   * Open this S3 website URL in your browser.
+
+   * The frontend should now communicate with your Flask backend running on EC2.
+
+> ✅ Now your frontend is connected to your backend services and ready for interaction.
+
+
+And You should be able to:
+
+* **Insert User** in RDS
+* **Fetch Users** from RDS
+* **Upload File** to S3
+* **List Files** in S3
+* **Fetch File Metadata** from DynamoDB
 
 ### 8. Configure Flask as a Systemd Service
 
