@@ -212,6 +212,8 @@ This setup ensures a **secure, scalable, and event-driven three-tier architectur
 
 ## Hands-On Lab: Deploying the Three-Tier AWS Application
 
+> **Context:** All the following steps are performed in the **us-east-1** (N. Virginia) region.
+
 ---
 
 ## Who This Guide Is For
@@ -292,18 +294,20 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
-2. Click **Create VPC**.  
-3. Enter:  
-   - **Name:** `demo-app-vpc`  
-   - **IPv4 CIDR Block:** `10.0.0.0/16`  
-4. Click **Create VPC**.
+2. Click **Create VPC**. 
+3. Select `VPC only`option under **Resources to create** 
+4. Enter:  
+   - **Name tag:** `demo-app-vpc`  
+   - **IPv4 CIDR Block:** `10.0.0.0/16`
+5. Keep all other settings as **default**.     
+6. Click **Create VPC**.
 
 ### 2. Create Public & Private Subnets
 
 #### 2.1 Public Subnets (For Load Balancer & NAT Gateways)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
-3. Create three public subnets:  
+3. Create three public subnets: (Use the **“Add subnet”** option to create **3 subnets at a time**:)  
    - `demo-app-public-subnet-1` → `10.0.1.0/24` → **us-east-1a**  
    - `demo-app-public-subnet-2` → `10.0.2.0/24` → **us-east-1b**  
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
@@ -312,7 +316,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
 #### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
-3. Create three private subnets:  
+3. Create three private subnets: (Use the **“Add subnet”** option to create **3 subnets at a time**:)  
    - `demo-app-private-subnet-1` → `10.0.11.0/24` → **us-east-1a**  
    - `demo-app-private-subnet-2` → `10.0.12.0/24` → **us-east-1b**  
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
@@ -359,6 +363,9 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** (allocate **1 Elastic IP**).
+3. Click **Tags → Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-eip-1`
 
 #### 5.2 Create NAT Gateway
 
@@ -384,6 +391,10 @@ This setup uses **one NAT Gateway per public subnet** for high availability and 
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** **3 times** (one for each NAT Gateway).
+3. For each Elastic IP, click **Tags → Add new tag**:  
+   - **Key:** `Name`  
+   - **Value:** `demo-app-eip-1`, `demo-app-eip-2`, and `demo-app-eip-3` respectively
+
 
 #### 5.2 Create NAT Gateways
 
