@@ -1214,7 +1214,6 @@ if __name__ == "__main__":
 
    * Go to your frontend S3 bucket → Upload → Select `index.html` → Upload.
 
----
 
 ### 7. Start the Flask Application
 
@@ -1261,7 +1260,7 @@ Press CTRL+C to quit
 ```
 
 5. **Test the frontend**:
-   * Go to your frontend S3 bucket (e.g., demo-app-frontend-s3-bucket-6789) → Properties → Copy the Bucket website endpoint URL.
+   * Go to your frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`) → Properties → Copy the Bucket website endpoint URL.
    
    * Open this S3 website URL in your browser.
 
@@ -1384,7 +1383,10 @@ sudo systemctl stop flask-app
 3. Click **Actions → Image and templates → Create Image**
 4. Provide an **Image Name** (e.g., `demo-app-ami`)
 5. Enable **No Reboot** (optional but recommended)
-6. Click **Create Image**
+6. 3. Click **Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-ami` 
+7. Click **Create Image**
 
 #### 1.3 Verify AMI Creation
 
@@ -1403,11 +1405,11 @@ A Launch Template defines how instances are launched with predefined configurati
 #### 2.2 Configure Launch Template
 
 * **Template Name:** `demo-app-launch-template`
-* **AMI ID:** Select the AMI created above (`demo-app-ami`)
+* **AMI ID:** Select the AMI created above (`demo-app-ami`) from **MyAMIs**
 * **Instance Type:** `t2.micro` (or as per requirement)
 * **Key pair name:** `demo-app-private-key`
 * **Subnet:** Do not select (ASG will select subnets)
-* **Security Group:** Do not specify now (configure later)
+* **Security Group:** Select **Create security group** and do not specify rules now (configure them later), just specify the name now
 
   * Name: `demo-app-lt-asg-sg`
   * Description: Access from Bastion Host and LB
@@ -1440,25 +1442,36 @@ The ASG will automatically manage EC2 instances to ensure availability.
 
 * **ASG Name:** `demo-app-asg`
 * **Launch Template:** Select `demo-app-launch-template`
+* Click **Next**
 * **VPC and Subnets:**
 
   * VPC: `demo-app-vpc`
   * Subnets (Private): `demo-app-private-subnet-1`, `demo-app-private-subnet-2`, `demo-app-private-subnet-3`
 
-#### 3.3 Set Scaling Policies
+* Click **Next** and go to **Configure group size and scaling - optional** page
 
-* **Desired Capacity:** 2
-* **Min Instances:** 2
-* **Max Instances:** 3
-* **Automatic scaling:** Target tracking scaling policy
+#### 3.3 Configure group size and scaling - optional 
 
-#### 3.4 Add Tags
+* **Desired Capacity:** = 2
+* **Min Instances:** = 1
+* **Max Instances:** = 3
+* **Automatic scaling:** = Target tracking scaling policy
+* **Scaling policy name** = **Target Tracking Policy**
+* **Metric type** = Average CPU Utilization
+* **Target value** = 80
+* **Instance warmup** = 300 
 
-* **Key:** Name
+* Click **Next** and go to **Add tags - optional** page
 
-* **Value:** app-demo-asg-instances
+#### 3.4 Add tags - optional
 
-* Review & Click **Create ASG**
+* **Key:** `Name`
+
+* **Value:** `app-demo-asg-instances`
+
+* Click **Next** and go to **Review** page
+
+* Review & Click **Create Auto Scaling group**
 
 ### 4. Verify ASG Setup
 
@@ -1470,7 +1483,7 @@ The ASG will automatically manage EC2 instances to ensure availability.
 #### 4.2 Verify New Instances
 
 * Check the **Launch Time** of the instances to confirm they are newly created
-* Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances
+* Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances. Select one instance → Action → Security →Modify IAM Role. Here you should be able to see `demo-app-s3-dynamo-iam-role` attached to the instance.
 
 ---
 
