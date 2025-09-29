@@ -374,7 +374,7 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
    * **Name:** `demo-app-nat-gateway-1`
    * **Subnet:** `demo-app-public-subnet-1`
-   * **Elastic IP:** Select the Elastic IP you allocated
+   * **Elastic IP:** Select the `demo-app-eip-1` Elastic IP you allocated
 3. Click **Create NAT Gateway**.
 4. Wait until the status shows **Available**.
 
@@ -402,21 +402,21 @@ This setup uses **one NAT Gateway per public subnet** for high availability and 
 
 * Name: `demo-app-nat-gateway-1`
 * Subnet: `demo-app-public-subnet-1`
-* Elastic IP: first Elastic IP
+* Elastic IP: `demo-app-eip-1` first Elastic IP
 * Click **Create**, wait until **Available**
 
 **NAT Gateway 2**
 
 * Name: `demo-app-nat-gateway-2`
 * Subnet: `demo-app-public-subnet-2`
-* Elastic IP: second Elastic IP
+* Elastic IP: `demo-app-eip-2` second Elastic IP
 * Click **Create**, wait until **Available**
 
 **NAT Gateway 3**
 
 * Name: `demo-app-nat-gateway-3`
 * Subnet: `demo-app-public-subnet-3`
-* Elastic IP: third Elastic IP
+* Elastic IP: `demo-app-eip-3` third Elastic IP
 * Click **Create**, wait until **Available**
 
 ✅ Each NAT Gateway will be associated with its respective private subnet.
@@ -576,17 +576,19 @@ Placing the database in private subnets enforces **security best practices** whi
 2. Click **Create database**.  
 3. Choose **Standard create**.  
 4. Select **MySQL** as the database engine.  
+5. Select **Engine version** as `MySQL 8.0.42`
 5. Select **Free tier** to avoid charges.
 
 ### 2. Configure Database Settings
 1. Set **DB instance identifier:** `my-demo-db`  
-2. Set **Master username:** `admin`  
+2. Set **Master username:** `admin`
+3. Select **Credentials management** as **Self managed**  
 3. Set **Master password:** Choose a strong password and **note it down** somewhere safe.
 
 ### 3. Configure Storage
 1. **Storage type:** General Purpose (SSD)  
 2. **Allocated storage:** 20 GiB  
-3. Keep **storage auto-scaling enabled** in Additional storage configuration.
+3. Keep **storage auto-scaling enabled** under Additional storage configuration.
 
 ### 4. Configure Connectivity
 1. **VPC:** Select the VPC created earlier (`demo-app-vpc`).  
