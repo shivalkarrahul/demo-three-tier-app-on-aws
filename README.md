@@ -1124,6 +1124,13 @@ def initialize_database():
 def get_db_connection():
     return pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD, database=RDS_DATABASE)
 
+# --------------------
+# Health Check
+# --------------------
+@app.route("/", methods=["GET"])
+def healthcheck():
+    return jsonify({"status": "ok", "message": "Service is healthy"}), 200
+
 # API Routes
 @app.route("/insert", methods=["POST"])
 def insert():
@@ -1383,7 +1390,7 @@ sudo systemctl stop flask-app
 3. Click **Actions → Image and templates → Create Image**
 4. Provide an **Image Name** (e.g., `demo-app-ami`)
 5. Enable **No Reboot** (optional but recommended)
-6. 3. Click **Add new tag**:  
+6. Click **Add new tag**:  
    - **Key:** `Name`
    - **Value:** `demo-app-ami` 
 7. Click **Create Image**
@@ -1538,7 +1545,10 @@ Fill in the details:
 - **Port:** 5000 (Flask app port)  
 - **VPC:** `demo-app-vpc`  
 - **Health check protocol:** HTTP  
-- **Health check path:** `/`  
+- **Health check path:** `/`
+- Click **Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-tg` 
 
 - Click **Next**  
 - **Do not manually register targets** (Auto Scaling will handle this)  
@@ -1552,7 +1562,8 @@ Fill in the details:
    - **Security group name:** `demo-app-lb-sg`  
    - **Description:** `demo-app-lb-sg for public access`  
    - **VPC:** `demo-app-vpc`  
-   - **Inbound Rule:** Port 80, Source: Anywhere  
+   - **Inbound Rule:** Port 80, Source: Anywhere-IPV4  
+3. Click **Create security group**   
 
 #### 2.2 Create the ALB
 1. Go to EC2 Dashboard → **Load Balancers** → **Create Load Balancer**  
@@ -1563,11 +1574,10 @@ Fill in the details:
 - **Scheme:** Internet-facing  
 - **IP address type:** IPv4  
 - **VPC:** `demo-app-vpc`  
-- **Availability Zones:** Select public subnets:  
-  `demo-app-public-subnet-1`, `demo-app-public-subnet-2`, `demo-app-public-subnet-3`
+- **Availability Zones:** Select public subnets: tick check-boxes `us-east-1a (use1-az1)`, `us-east-1b (use1-az2)`, `us-east-1c (use1-az4)` and select `demo-app-public-subnet-1`, `demo-app-public-subnet-2`, `demo-app-public-subnet-3` resepetively.
 
 **Configure Security Groups:**  
-- Use the SG created above: `demo-app-lb-sg`  
+- Use the SG created above: `demo-app-lb-sg` and remove the `default` SG.
 
 **Configure Listeners and Routing:**  
 - **Listener protocol:** HTTP  
@@ -1665,7 +1675,7 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 - Download `.pem` for Terminal  
 
 ### 2. Configure Networking
-- **Network:** Select the VPC where the Bastion Host should be deployed  
+- **Network:** Select the VPC `demo-app-vpc` where the Bastion Host should be deployed  
 - **Subnet:** Select a Public Subnet (`demo-app-public-subnet-1`)  
 - **Auto-Assign Public IP:** Enabled  
 
@@ -1682,7 +1692,7 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
 
 **To fix this:**  
-1. Update the **RDS Security Group** to allow inbound access from the new ASG SG.  
+1. Update the **RDS Security Group** `demo-app-db-sg`to allow inbound access from `demo-app-lt-asg-sg` the new ASG SG.  
 2. Delete the existing ASG instances.  
 3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
 
