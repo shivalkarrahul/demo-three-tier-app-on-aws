@@ -2187,8 +2187,10 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 ```bash
 echo "Deleting NAT Gateway: demo-app-nat-gateway-1"
+
+# Get the NAT Gateway ID with the given Name AND State=available
 NAT_ID=$(aws ec2 describe-nat-gateways \
-    --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" \
+    --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" "Name=state,Values=available" \
     --query "NatGateways[0].NatGatewayId" \
     --output text --no-cli-pager)
 
@@ -2196,7 +2198,7 @@ if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
     aws ec2 delete-nat-gateway --nat-gateway-id $NAT_ID --no-cli-pager
     echo "✅ NAT Gateway deleted: $NAT_ID"
 else
-    echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found"
+    echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found in available state"
 fi
 ```
 
