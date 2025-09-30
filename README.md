@@ -384,7 +384,10 @@ aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.13.0/24 --availability-
 IGW_ID=$(aws ec2 create-internet-gateway \
     --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=demo-app-igw}]' \
     --query 'InternetGateway.InternetGatewayId' --output text)
+echo $IGW_ID
+```
 
+```bash
 aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
 ```
 
@@ -413,14 +416,21 @@ aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID -
 ```bash
 # Get IDs
 VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=demo-app-vpc" --query "Vpcs[0].VpcId" --output text)
+echo $VPC_ID
+
 IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=demo-app-igw" --query "InternetGateways[0].InternetGatewayId" --output text)
+echo $IGW_ID
+
 SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-public-subnet-1,demo-app-public-subnet-2,demo-app-public-subnet-3" --query "Subnets[].SubnetId" --output text)
+echo $SUBNET_IDS
+
 ```
 
 
 ```bash
 # Create public route table
 PUBLIC_RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-public-rt}]' --query 'RouteTable.RouteTableId' --output text)
+echo $PUBLIC_RT_ID
 ```
 
 ```bash
@@ -456,6 +466,7 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 ```bash
 EIP_ALLOC_ID=$(aws ec2 allocate-address --domain vpc --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=demo-app-eip-1}]' --query 'AllocationId' --output text)
+echo $EIP_ALLOC_ID
 ```
 
 #### 5.2 Create NAT Gateway
@@ -473,9 +484,15 @@ EIP_ALLOC_ID=$(aws ec2 allocate-address --domain vpc --tag-specifications 'Resou
 
 ```bash
 PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
+echo $PUBLIC_SUBNET_ID
+```
 
+```bash
 NAT_ID=$(aws ec2 create-nat-gateway --subnet-id $PUBLIC_SUBNET_ID --allocation-id $EIP_ALLOC_ID --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=demo-app-nat-gateway-1}]' --query 'NatGateway.NatGatewayId' --output text)
+echo $NAT_ID
+```
 
+```bash
 # Wait until NAT is available
 aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
 ```
@@ -567,7 +584,9 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 ```bash
 # Create private route table
 PRIVATE_RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-private-rt-1}]' --query 'RouteTable.RouteTableId' --output text)
+echo $PRIVATE_RT_ID
 ```
+
 ```bash
 # Create route to NAT Gateway
 aws ec2 create-route --route-table-id $PRIVATE_RT_ID --destination-cidr-block 0.0.0.0/0 --nat-gateway-id $NAT_ID --no-cli-pager
@@ -576,6 +595,7 @@ aws ec2 create-route --route-table-id $PRIVATE_RT_ID --destination-cidr-block 0.
 ```bash
 # Associate private subnets
 PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-private-subnet-1,demo-app-private-subnet-2,demo-app-private-subnet-3" --query "Subnets[].SubnetId" --output text)
+echo $PRIVATE_SUBNET_IDS
 ```
 
 ```bash
@@ -2160,49 +2180,137 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 ### Steps:
 
-1. **Terminate EC2 Instances**
 
-   * Go to **EC2 → Instances**.
-   * Select all instances (including Bastion host and application instances) and click **Terminate Instance**.
+### 🧹 Cleanup VPC Resources (AWS CLI)
 
-2. **Delete Auto Scaling Group & Launch Template**
+### **1. Delete NAT Gateway**
 
-   * Go to **EC2 → Auto Scaling Groups**.
-   * Delete the Auto Scaling Group.
-   * Go to **Launch Templates** and delete the corresponding launch template.
+```bash
+echo "Deleting NAT Gateway: demo-app-nat-gateway-1"
+NAT_ID=$(aws ec2 describe-nat-gateways \
+    --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" \
+    --query "NatGateways[0].NatGatewayId" \
+    --output text --no-cli-pager)
 
-3. **Deregister AMI**
-
-   * Go to **EC2 → AMIs**.
-   * Select your AMI and click **Deregister**.
-   * Delete associated snapshots to free up storage.
-
-4. **Delete RDS Database**
-
-   * Go to **RDS → Databases**.
-   * Select your database and choose **Delete**.
-   * Optionally, skip final snapshot if not needed.
-
-5. **Delete S3 Buckets**
-
-   * Go to **S3 → Buckets**.
-   * Empty all buckets and delete them.
-
-6. **Delete DynamoDB Table**
-
-   * Go to **DynamoDB → Tables**.
-   * Select the table used for file metadata and delete it.
-
-7. **Delete SNS Topics**
-
-   * Go to **SNS → Topics**.
-   * Delete any topics created for notifications.
-
-8. **Delete Security Groups and VPC**
-
-   * Go to **VPC → Security Groups** and delete custom security groups.
-   * Delete subnets, Internet Gateway, and finally the VPC itself.
-
-> ⚠️ Make sure to double-check before deleting resources to avoid accidentally removing something important.
+if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
+    aws ec2 delete-nat-gateway --nat-gateway-id $NAT_ID --no-cli-pager
+    echo "✅ NAT Gateway deleted: $NAT_ID"
+else
+    echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found"
+fi
+```
 
 ---
+
+### **2. Release Elastic IP**
+
+```bash
+echo "Releasing Elastic IP: demo-app-eip-1"
+EIP_ALLOC_ID=$(aws ec2 describe-addresses \
+    --filters "Name=tag:Name,Values=demo-app-eip-1" \
+    --query "Addresses[0].AllocationId" \
+    --output text --no-cli-pager)
+
+if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
+    aws ec2 release-address --allocation-id $EIP_ALLOC_ID --no-cli-pager
+    echo "✅ Elastic IP released: $EIP_ALLOC_ID"
+else
+    echo "⚠️ Elastic IP demo-app-eip-1 not found"
+fi
+```
+
+---
+
+### **3. Detach & Delete Internet Gateway**
+
+```bash
+echo "Deleting Internet Gateway: demo-app-igw"
+IGW_ID=$(aws ec2 describe-internet-gateways \
+    --filters "Name=tag:Name,Values=demo-app-igw" \
+    --query "InternetGateways[0].InternetGatewayId" \
+    --output text --no-cli-pager)
+
+if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
+    VPC_ID=$(aws ec2 describe-internet-gateways --internet-gateway-ids $IGW_ID \
+        --query "InternetGateways[0].Attachments[0].VpcId" --output text --no-cli-pager)
+    aws ec2 detach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
+    aws ec2 delete-internet-gateway --internet-gateway-id $IGW_ID --no-cli-pager
+    echo "✅ Internet Gateway deleted: $IGW_ID"
+else
+    echo "⚠️ Internet Gateway demo-app-igw not found"
+fi
+```
+
+---
+
+### **4. Delete Public & Private Route Tables**
+
+```bash
+for RT_NAME in demo-app-public-rt demo-app-private-rt-1; do
+    echo "Deleting Route Table: $RT_NAME"
+    RT_ID=$(aws ec2 describe-route-tables \
+        --filters "Name=tag:Name,Values=$RT_NAME" \
+        --query "RouteTables[0].RouteTableId" \
+        --output text --no-cli-pager)
+
+    if [ "$RT_ID" != "None" ] && [ -n "$RT_ID" ]; then
+        # Disassociate any associated subnets
+        ASSOCIATIONS=$(aws ec2 describe-route-tables --route-table-ids $RT_ID \
+            --query "RouteTables[0].Associations[?Main==\`false\`].RouteTableAssociationId" \
+            --output text --no-cli-pager)
+        for assoc in $ASSOCIATIONS; do
+            aws ec2 disassociate-route-table --association-id $assoc --no-cli-pager
+        done
+        aws ec2 delete-route-table --route-table-id $RT_ID --no-cli-pager
+        echo "✅ Route Table deleted: $RT_NAME ($RT_ID)"
+    else
+        echo "⚠️ Route Table $RT_NAME not found"
+    fi
+done
+```
+
+---
+
+### **5. Delete Subnets**
+
+```bash
+for SUBNET in demo-app-public-subnet-1 demo-app-public-subnet-2 demo-app-public-subnet-3 demo-app-private-subnet-1 demo-app-private-subnet-2 demo-app-private-subnet-3; do
+    echo "Deleting Subnet: $SUBNET"
+    SUBNET_ID=$(aws ec2 describe-subnets \
+        --filters "Name=tag:Name,Values=$SUBNET" \
+        --query "Subnets[0].SubnetId" --output text --no-cli-pager)
+    
+    if [ "$SUBNET_ID" != "None" ] && [ -n "$SUBNET_ID" ]; then
+        aws ec2 delete-subnet --subnet-id $SUBNET_ID --no-cli-pager
+        echo "✅ Subnet deleted: $SUBNET ($SUBNET_ID)"
+    else
+        echo "⚠️ Subnet $SUBNET not found"
+    fi
+done
+```
+
+---
+
+### **6. Delete VPC**
+
+```bash
+echo "Deleting VPC: demo-app-vpc"
+VPC_ID=$(aws ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=demo-app-vpc" \
+    --query "Vpcs[0].VpcId" --output text --no-cli-pager)
+
+if [ "$VPC_ID" != "None" ] && [ -n "$VPC_ID" ]; then
+    aws ec2 delete-vpc --vpc-id $VPC_ID --no-cli-pager
+    echo "✅ VPC deleted: $VPC_ID"
+else
+    echo "⚠️ VPC demo-app-vpc not found"
+fi
+```
+
+---
+
+✅ **Notes:**
+
+* The commands use **`--no-cli-pager`** so you don’t need to press `q` after viewing outputs.
+* The `if [ "$ID" != "None" ]` check ensures commands won’t fail if a resource doesn’t exist.
+* This covers **NAT Gateway, Elastic IP, IGW, Route Tables, Subnets, and VPC**.
