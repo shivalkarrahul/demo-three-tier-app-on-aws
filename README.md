@@ -769,6 +769,87 @@ Placing the database in private subnets enforces **security best practices** whi
 
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
+
+<details>
+<summary>AWS CLI Command (Alternative to Console)</summary>
+
+Save time (and a few clicks) by using CLI instead of the console:  
+
+```bash
+# Create a DB Subnet Group
+echo "Creating DB Subnet Group: demo-app-db-subnet-group"
+DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
+DB_SUBNET_GROUP=$(aws rds create-db-subnet-group \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --db-subnet-group-description "Demo App DB Subnet Group" \
+    --subnet-ids $PRIVATE_SUBNET_1 $PRIVATE_SUBNET_2 $PRIVATE_SUBNET_3 \
+    --tags Key=Name,Value=$DB_SUBNET_GROUP_NAME \
+    --query "DBSubnetGroup.DBSubnetGroupName" --output text --no-cli-pager)
+
+if [ "$DB_SUBNET_GROUP" == "$DB_SUBNET_GROUP_NAME" ]; then
+    echo "✅ DB Subnet Group created: $DB_SUBNET_GROUP"
+else
+    echo "⚠️ Failed to create DB Subnet Group: $DB_SUBNET_GROUP_NAME"
+fi
+```
+
+```bash
+# Create Security Group for RDS
+echo "Creating Security Group: demo-app-db-sg"
+DB_SG_ID=$(aws ec2 create-security-group \
+    --group-name demo-app-db-sg \
+    --description "DB security group for RDS instance" \
+    --vpc-id $VPC_ID \
+    --tag-specifications 'ResourceType=security-group,Tags=[{Key=Name,Value=demo-app-db-sg}]' \
+    --query "GroupId" --output text --no-cli-pager)
+
+if [ -n "$DB_SG_ID" ] && [ "$DB_SG_ID" != "None" ]; then
+    echo "✅ Security Group created: $DB_SG_ID"
+else
+    echo "⚠️ Failed to create Security Group demo-app-db-sg"
+fi
+```
+
+```bash
+# 3️⃣ Create RDS Instance
+echo "Creating RDS Instance: my-demo-db"
+DB_INSTANCE_ID=$(aws rds create-db-instance \
+    --db-instance-identifier my-demo-db \
+    --db-instance-class db.t3.micro \
+    --engine mysql \
+    --engine-version 8.0.42 \
+    --allocated-storage 20 \
+    --master-username admin \
+    --master-user-password "<YOUR_STRONG_PASSWORD>" \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --vpc-security-group-ids $DB_SG_ID \
+    --no-publicly-accessible \
+    --storage-type gp2 \
+    --backup-retention-period 7 \
+    --tags Key=Name,Value=my-demo-db \
+    --query "DBInstance.DBInstanceIdentifier" --output text --no-cli-pager)
+
+if [ "$DB_INSTANCE_ID" == "my-demo-db" ]; then
+    echo "✅ RDS Instance creation started: $DB_INSTANCE_ID"
+else
+    echo "⚠️ Failed to create RDS Instance my-demo-db"
+fi
+```
+
+```bash
+# Wait until RDS is available
+echo "Waiting for RDS Instance my-demo-db to become available..."
+aws rds wait db-instance-available --db-instance-identifier my-demo-db --no-cli-pager
+
+if [ $? -eq 0 ]; then
+    echo "✅ RDS Instance my-demo-db is now available"
+else
+    echo "⚠️ Timeout or failure while waiting for RDS Instance my-demo-db"
+fi
+
+```
+</details>
+
 ---
 
 
