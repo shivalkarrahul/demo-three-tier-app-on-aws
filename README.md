@@ -776,6 +776,23 @@ Placing the database in private subnets enforces **security best practices** whi
 Save time (and a few clicks) by using CLI instead of the console:  
 
 ```bash
+echo "Fetching Private Subnet IDs..."
+PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-private-subnet-1,demo-app-private-subnet-2,demo-app-private-subnet-3" \
+    --query "Subnets[].SubnetId" --output text --no-cli-pager)
+
+echo "Private Subnet IDs found: $PRIVATE_SUBNET_IDS"
+
+# Assign them to variables (assuming 3 subnets)
+PRIVATE_SUBNET_1=$(echo $PRIVATE_SUBNET_IDS | awk '{print $1}')
+PRIVATE_SUBNET_2=$(echo $PRIVATE_SUBNET_IDS | awk '{print $2}')
+PRIVATE_SUBNET_3=$(echo $PRIVATE_SUBNET_IDS | awk '{print $3}')
+
+echo "✅ Using Subnets: $PRIVATE_SUBNET_1, $PRIVATE_SUBNET_2, $PRIVATE_SUBNET_3"
+
+```
+
+```bash
 # Create a DB Subnet Group
 echo "Creating DB Subnet Group: demo-app-db-subnet-group"
 DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
