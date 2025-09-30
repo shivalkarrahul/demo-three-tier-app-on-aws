@@ -305,14 +305,12 @@ This layered setup enforces **security, availability, and scalability**. Public 
 You could make it a bit lighthearted like this:
 
 ---
-
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
 
 ```bash
 echo "Creating VPC: demo-app-vpc"
@@ -329,6 +327,7 @@ fi
 ```
 
 </details>
+---
 
 ### 2. Create Public & Private Subnets
 
@@ -341,8 +340,8 @@ fi
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -375,6 +374,7 @@ for name in "${!PUBLIC_SUBNETS[@]}"; do
 done
 ```
 </details>
+---
 
 #### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
@@ -385,8 +385,8 @@ done
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -419,7 +419,7 @@ for name in "${!PRIVATE_SUBNETS[@]}"; do
 done
 ```
 </details>
-
+---
 
 ### 3. Create & Attach Internet Gateway (IGW)
 1. Go to **Internet Gateways → Create Internet Gateway**.  
@@ -429,7 +429,8 @@ done
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -452,6 +453,7 @@ else
 fi
 ```
 </details>
+---
 
 ### 4. Create & Configure Route Tables
 
@@ -473,7 +475,8 @@ fi
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -506,6 +509,7 @@ fi
 
 ```
 </details>
+---
 
 ### 5. Create NAT Gateways
 
@@ -521,7 +525,8 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
    - **Key:** `Name`
    - **Value:** `demo-app-eip-1`
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -544,6 +549,7 @@ else
 fi
 ```
 </details>
+---
 
 #### 5.2 Create NAT Gateway
 
@@ -558,7 +564,8 @@ fi
 
 ✅ This NAT Gateway will be used for all private subnets.
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -604,6 +611,7 @@ aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
 echo "✅ NAT Gateway is available"
 ```
 </details>
+---
 
 ✅ **Note:** Proceed to the next step (creating private route tables) only after the NAT Gateway shows **Available**.
 
@@ -644,7 +652,8 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 
 ✅ All private subnets now use the same NAT Gateway via this route table.
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -700,6 +709,7 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
 done
 ```
 </details>
+---
 
 ✅ **Note:**
 * We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
@@ -788,7 +798,8 @@ Placing the database in private subnets enforces **security best practices** whi
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -889,7 +900,6 @@ fi
 
 ---
 
-
 ## Part 3: Set Up S3 (1 Min)
 
 <details>
@@ -953,7 +963,8 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -989,7 +1000,6 @@ fi
 
 
 ```
-
 </details>
 
 ---
@@ -1104,7 +1114,8 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
 
-**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
 <summary>Click to expand CLI commands</summary>
