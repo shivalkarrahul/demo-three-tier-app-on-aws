@@ -334,17 +334,19 @@ fi
 
 ```bash
 declare -A PUBLIC_SUBNETS=(
-    ["demo-app-public-subnet-1"]="10.0.1.0/24"
-    ["demo-app-public-subnet-2"]="10.0.2.0/24"
-    ["demo-app-public-subnet-3"]="10.0.3.0/24"
+    ["demo-app-public-subnet-1"]="10.0.1.0/24:us-east-1a"
+    ["demo-app-public-subnet-2"]="10.0.2.0/24:us-east-1b"
+    ["demo-app-public-subnet-3"]="10.0.3.0/24:us-east-1c"
 )
 
 for name in "${!PUBLIC_SUBNETS[@]}"; do
-    echo "Creating Public Subnet: $name"
+    IFS=":" read -r CIDR AZ <<< "${PUBLIC_SUBNETS[$name]}"
+    echo "Creating Public Subnet: $name in $AZ"
+    
     SUBNET_ID=$(aws ec2 create-subnet \
         --vpc-id $VPC_ID \
-        --cidr-block ${PUBLIC_SUBNETS[$name]} \
-        --availability-zone us-east-1${name: -1} \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
         --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
         --query "Subnet.SubnetId" --output text --no-cli-pager)
     
@@ -354,6 +356,7 @@ for name in "${!PUBLIC_SUBNETS[@]}"; do
         echo "⚠️ Failed to create subnet $name"
     fi
 done
+
 ```
 
 #### 2.2  Private Subnets (For App & DB Layers)
@@ -369,17 +372,19 @@ done
 
 ```bash
 declare -A PRIVATE_SUBNETS=(
-    ["demo-app-private-subnet-1"]="10.0.11.0/24"
-    ["demo-app-private-subnet-2"]="10.0.12.0/24"
-    ["demo-app-private-subnet-3"]="10.0.13.0/24"
+    ["demo-app-private-subnet-1"]="10.0.11.0/24:us-east-1a"
+    ["demo-app-private-subnet-2"]="10.0.12.0/24:us-east-1b"
+    ["demo-app-private-subnet-3"]="10.0.13.0/24:us-east-1c"
 )
 
 for name in "${!PRIVATE_SUBNETS[@]}"; do
-    echo "Creating Private Subnet: $name"
+    IFS=":" read -r CIDR AZ <<< "${PRIVATE_SUBNETS[$name]}"
+    echo "Creating Private Subnet: $name in $AZ"
+    
     SUBNET_ID=$(aws ec2 create-subnet \
         --vpc-id $VPC_ID \
-        --cidr-block ${PRIVATE_SUBNETS[$name]} \
-        --availability-zone us-east-1${name: -1} \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
         --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
         --query "Subnet.SubnetId" --output text --no-cli-pager)
     
@@ -389,7 +394,6 @@ for name in "${!PRIVATE_SUBNETS[@]}"; do
         echo "⚠️ Failed to create private subnet $name"
     fi
 done
-
 ```
 
 ### 3. Create & Attach Internet Gateway (IGW)
@@ -650,7 +654,9 @@ else
         --query 'RouteTable.RouteTableId' --output text)
     echo "✅ Private Route Table created: $PRIVATE_RT_ID"
 fi
+```
 
+```bash
 # Create Route to NAT Gateway
 ROUTE_EXISTS=$(aws ec2 describe-route-tables --route-table-ids $PRIVATE_RT_ID --query "RouteTables[0].Routes[?DestinationCidrBlock=='0.0.0.0/0'].NatGatewayId" --output text)
 
@@ -663,7 +669,9 @@ else
         --nat-gateway-id $NAT_ID --no-cli-pager
     echo "✅ Route created via NAT Gateway: $NAT_ID"
 fi
+```
 
+```bash
 # Associate Private Subnets with Route Table
 echo "Associating private subnets with Private Route Table"
 PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets \
@@ -680,7 +688,6 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
         echo "✅ Associated subnet $SUBNET_ID with Private Route Table $PRIVATE_RT_ID"
     fi
 done
-
 ```
 
 </details>
@@ -2269,16 +2276,22 @@ echo "Deleting NAT Gateway: demo-app-nat-gateway-1"
 
 # Get the NAT Gateway ID with the given Name AND State=available
 NAT_ID=$(aws ec2 describe-nat-gateways \
-    --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" "Name=state,Values=available" \
+    --filters "Name=tag:Name,Values=demo-app-nat-gateway-1" "Name=state,Values=available" \
     --query "NatGateways[0].NatGatewayId" \
     --output text --no-cli-pager)
 
 if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
     aws ec2 delete-nat-gateway --nat-gateway-id $NAT_ID --no-cli-pager
-    echo "✅ NAT Gateway deleted: $NAT_ID"
+    echo "✅ NAT Gateway deletion initiated: $NAT_ID"
+
+    # Wait until NAT Gateway is deleted
+    echo "⏳ Waiting for NAT Gateway to be deleted..."
+    aws ec2 wait nat-gateway-deleted --nat-gateway-ids $NAT_ID --no-cli-pager
+    echo "✅ NAT Gateway fully deleted: $NAT_ID"
 else
     echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found in available state"
 fi
+
 ```
 
 ---
