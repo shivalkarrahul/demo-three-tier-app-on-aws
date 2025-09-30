@@ -1715,9 +1715,30 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
 3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
+![App UI ALB ](artifacts/ap-ui-after-lb.png)
+
 ---
 
-## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
+## Part 9 Security Groups Overview
+
+A total of **5 Security Groups** were created to manage access between different components of the application.
+
+| **Security Group**                 | **Purpose**                                | **Inbound Rules**                                                                                                                                                                                                     |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`demo-app-lt-asg-sg`**           | Used by Auto Scaling Group (ASG) instances | - Port **5000** from `demo-app-lb-sg` (ALB)<br>- Port **22** from `demo-app-bastion-host-sg`                                                                                                                          |
+| **`demo-app-bastion-host-sg`**     | Bastion host to SSH into private instances | - Port **22** from `0.0.0.0/0`                                                                                                                                                                                        |
+| **`demo-app-test-ami-builder-sg`** | For building AMIs and test access          | - Port **5000** from `0.0.0.0/0`<br>- Port **22** from `0.0.0.0/0`                                                                                                                                                    |
+| **`demo-app-lb-sg`**               | Application Load Balancer (ALB)            | - Port **80** from `0.0.0.0/0`                                                                                                                                                                                        |
+| **`demo-app-db-sg`**               | RDS MySQL database                         | - Port **3306** from `demo-app-lt-asg-sg` (ASG)<br>- Port **3306** from `demo-app-test-ami-builder-sg` (for initial testing)<br>- Port **3306** from `152.58.11.96/32` (your IP; optional, not really required) |
+
+⚠️ **Note:**
+
+* The rule allowing your **personal IP (`152.58.11.96/32`)** into `demo-app-db-sg` is not manual; it is added by AWS when creating a new SG for RDS.
+* For security best practices, always keep SSH (port 22) restricted to known IPs instead of `0.0.0.0/0`.
+
+---
+
+## Part 10: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
 <details>
 <summary>📖 Theory: Secure Access to Private Resources</summary>
@@ -1769,7 +1790,7 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 ---
 
-## Part 10: Connect From Bastion Host to Private Instance
+## Part 11: Connect From Bastion Host to Private Instance
 
 <details>
 <summary>📖 Theory: Secure Access and Debugging with Bastion Hosts</summary>
@@ -1901,7 +1922,7 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 
 ---
 
-## Part 11:  Resources Summary
+## Part 12:  Resources Summary
 
 demo-app-vpc
 demo-app-public-subnet-1
@@ -1957,7 +1978,7 @@ demo-app-bastion-host-sg
 
 
 ---
-## Part 12: Cleanup – Terminate All Resources
+## Part 13: Cleanup – Terminate All Resources
 
 <details>
 <summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
