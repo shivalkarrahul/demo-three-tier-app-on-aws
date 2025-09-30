@@ -302,6 +302,20 @@ This layered setup enforces **security, availability, and scalability**. Public 
 5. Keep all other settings as **default**.     
 6. Click **Create VPC**.
 
+**AWS CLI Command:**
+
+```bash
+aws ec2 create-vpc \
+    --cidr-block 10.0.0.0/16 \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=demo-app-vpc}]'
+```
+
+```bash
+VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=demo-app-vpc" --query "Vpcs[0].VpcId" --output text)
+echo $VPC_ID
+```
+
+
 ### 2. Create Public & Private Subnets
 
 #### 2.1 Public Subnets (For Load Balancer & NAT Gateways)
@@ -313,6 +327,23 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
+**AWS CLI Command:**
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone us-east-1a \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-public-subnet-1}]'
+```
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1b \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-public-subnet-2}]'
+```
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.3.0/24 --availability-zone us-east-1c \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-public-subnet-3}]'
+```
+
 #### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
@@ -322,6 +353,23 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
 
+**AWS CLI Command:**
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.11.0/24 --availability-zone us-east-1a \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-private-subnet-1}]'
+```
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.12.0/24 --availability-zone us-east-1b \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-private-subnet-2}]'
+```
+
+```bash
+aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.13.0/24 --availability-zone us-east-1c \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=demo-app-private-subnet-3}]'
+```
+
 ### 3. Create & Attach Internet Gateway (IGW)
 1. Go to **Internet Gateways → Create Internet Gateway**.  
 2. Enter:  
@@ -329,6 +377,16 @@ This layered setup enforces **security, availability, and scalability**. Public 
 3. Click **Create**.  
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
+
+**AWS CLI Commands:**
+
+```bash
+IGW_ID=$(aws ec2 create-internet-gateway \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=demo-app-igw}]' \
+    --query 'InternetGateway.InternetGatewayId' --output text)
+
+aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID
+```
 
 ### 4. Create & Configure Route Tables
 
@@ -350,6 +408,33 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
+**AWS CLI Commands:**
+
+```bash
+# Get IDs
+VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=demo-app-vpc" --query "Vpcs[0].VpcId" --output text)
+IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=tag:Name,Values=demo-app-igw" --query "InternetGateways[0].InternetGatewayId" --output text)
+SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-public-subnet-1,demo-app-public-subnet-2,demo-app-public-subnet-3" --query "Subnets[].SubnetId" --output text)
+```
+
+
+```bash
+# Create public route table
+PUBLIC_RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-public-rt}]' --query 'RouteTable.RouteTableId' --output text)
+```
+
+```bash
+# Create route to IGW
+aws ec2 create-route --route-table-id $PUBLIC_RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID
+```
+
+```bash
+# Associate subnets
+for SUBNET_ID in $SUBNET_IDS; do
+    aws ec2 associate-route-table --route-table-id $PUBLIC_RT_ID --subnet-id $SUBNET_ID
+done
+```
+
 ### 5. Create NAT Gateways
 
 In this step, we will create NAT Gateways to allow instances in private subnets to access the internet for updates and downloads.
@@ -367,6 +452,12 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
    - **Key:** `Name`
    - **Value:** `demo-app-eip-1`
 
+**AWS CLI Commands:**
+
+```bash
+EIP_ALLOC_ID=$(aws ec2 allocate-address --domain vpc --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=demo-app-eip-1}]' --query 'AllocationId' --output text)
+```
+
 #### 5.2 Create NAT Gateway
 
 1. Go to **NAT Gateways → Create NAT Gateway**.
@@ -380,10 +471,19 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 ✅ This NAT Gateway will be used for all private subnets.
 
+```bash
+PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
+
+NAT_ID=$(aws ec2 create-nat-gateway --subnet-id $PUBLIC_SUBNET_ID --allocation-id $EIP_ALLOC_ID --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=demo-app-nat-gateway-1}]' --query 'NatGateway.NatGatewayId' --output text)
+
+# Wait until NAT is available
+aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID
+```
+
 </details>
 
 <details>
-<summary>✅ Prod Setup (3 NAT Gateways)</summary>
+<summary>✅ Prod Setup (3 NAT Gateways)[DO NOT FOLLOW THIS]</summary>
 
 This setup uses **one NAT Gateway per public subnet** for high availability and fault tolerance.
 
@@ -463,6 +563,26 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 3. Click **Save Associations**.
 
 ✅ All private subnets now use the same NAT Gateway via this route table.
+
+```bash
+# Create private route table
+PRIVATE_RT_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-private-rt-1}]' --query 'RouteTable.RouteTableId' --output text)
+```
+```bash
+# Create route to NAT Gateway
+aws ec2 create-route --route-table-id $PRIVATE_RT_ID --destination-cidr-block 0.0.0.0/0 --nat-gateway-id $NAT_ID
+```
+
+```bash
+# Associate private subnets
+PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-private-subnet-1,demo-app-private-subnet-2,demo-app-private-subnet-3" --query "Subnets[].SubnetId" --output text)
+```
+
+```bash
+for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
+    aws ec2 associate-route-table --route-table-id $PRIVATE_RT_ID --subnet-id $SUBNET_ID
+done
+```
 
 </details>
 
