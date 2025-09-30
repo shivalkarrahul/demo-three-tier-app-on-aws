@@ -933,7 +933,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
 <details>
-<summary>AWS CLI Command (Alternative to Console)</s
+<summary>AWS CLI Command (Alternative to Console)
 
 ```bash
 BUCKET_NAME="demo-app-backend-s3-bucket-12345"
