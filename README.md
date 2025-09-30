@@ -2826,21 +2826,24 @@ echo "Deleting NAT Gateway: demo-app-nat-gateway-1"
 
 # Get the NAT Gateway ID with the given Name AND State=available
 NAT_ID=$(aws ec2 describe-nat-gateways \
-    --filters "Name=tag:Name,Values=demo-app-nat-gateway-1" "Name=state,Values=available" \
+    --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" \
+    --filter "Name=state,Values=available" \
     --query "NatGateways[0].NatGatewayId" \
     --output text --no-cli-pager)
 
 if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
-    aws ec2 delete-nat-gateway --nat-gateway-id $NAT_ID --no-cli-pager
+    # Initiate deletion
+    aws ec2 delete-nat-gateway --nat-gateway-id "$NAT_ID" --no-cli-pager
     echo "✅ NAT Gateway deletion initiated: $NAT_ID"
 
-    # Wait until NAT Gateway is deleted
+    # Wait until NAT Gateway is fully deleted
     echo "⏳ Waiting for NAT Gateway to be deleted..."
-    aws ec2 wait nat-gateway-deleted --nat-gateway-ids $NAT_ID --no-cli-pager
+    aws ec2 wait nat-gateway-deleted --nat-gateway-ids "$NAT_ID" --no-cli-pager
     echo "✅ NAT Gateway fully deleted: $NAT_ID"
 else
     echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found in available state"
 fi
+
 
 ```
 
