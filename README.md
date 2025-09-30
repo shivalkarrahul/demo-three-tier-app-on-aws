@@ -1644,19 +1644,58 @@ Fill in the details:
 6. Select the target group `demo-app-tg`  
 7. Click **Update**
 
+
 ### 4. Verify Load Balancer and ASG Integration
-1. Go to EC2 Dashboard → **Target Groups** → Select `demo-app-tg`  
-2. Click on **Targets** → Ensure ASG instances appear here  
-3. If instances are not healthy:  
+
+1. Go to **EC2 Dashboard** → **Target Groups** → Select `demo-app-tg`.
+2. Click on **Targets** → The ASG instances will appear here, but they will likely show as **unhealthy**.
+
+   * This happens because:
+
+     * The ASG Security Group (`demo-app-lt-asg-sg`) does not have access from the Load Balancer Security Group (`demo-app-lb-sg`) on port `5000`.
+     * The DB Security Group (`demo-app-db-sg`) does not have access from the ASG Security Group (`demo-app-lt-asg-sg`) on port `3306`.
+
+### ✅ Steps to Fix
+
+1. **Allow ASG demo-app-lt-asg-sg to connect from Load Balancer demo-app-lb-sg**
 
    - Go to **EC2** → **Security Groups** → search the `demo-app-lt-asg-sg` security group.
    - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `5000` from the `demo-app-lb-sg` security group → Save rule.
 
-4. Test Load Balancer URL  
-- Go to **Load Balancers** → `demo-app-lb` → **Details**
-- Copy **DNS Name**  
-- Open a browser → Enter `http://<ALB-DNS-Name>`  
-- Your Flask app should load!
+
+2. **Allow DB demo-app-db-sg to connect from ASG demo-app-lt-asg-sg**
+
+   - Go to **EC2** → **Security Groups** → search the `demo-app-db-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `3306` from the `demo-app-lt-asg-sg` security group → Save rule.
+
+
+3. **Terminate existing ASG instances**
+
+   * Go to **EC2 Console** → **Instances**.
+   * In the search bar, filter by `Name = app-demo-asg-instances`.
+   * Select all → **Instance state → Terminate instance** → Confirm.
+
+4. **Let ASG launch new instances**
+
+   * The Auto Scaling Group will replace the terminated instances.
+   * The new instances will now connect to both the Load Balancer and RDS successfully.
+
+5. **Test the Load Balancer URL**
+
+   * Go to **EC2** → **Load Balancers** → select `demo-app-lb`.
+   * Copy the **DNS Name**.
+   * Open a browser → `http://<ALB-DNS-Name>`.
+   * Your Flask app should load correctly and show.
+
+   ```
+   {
+     "message": "Service is healthy",
+     "status": "ok"
+   }
+   ```
+
+![App UI ALB ](artifacts/app-ui-lb.png)
+
 
 ### 5. Update `index.html`
 Since the frontend is hosted on S3 and the backend is now behind the ALB:  
@@ -1728,14 +1767,6 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
    - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
 10. Launch the instance and copy the **Public IP**.
 
-### ⚠️ Note
-After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
-
-**To fix this:**  
-1. Update the **RDS Security Group** `demo-app-db-sg`to allow inbound access from `demo-app-lt-asg-sg` the new ASG SG.  
-2. Delete the existing ASG instances.  
-3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
-
 ---
 
 ## Part 10: Connect From Bastion Host to Private Instance
@@ -1789,19 +1820,19 @@ scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-ke
 
 ### 2. Update ASG Security Group
 
-* Update the ASG security group `demo-app-lt-asg-sg`
-* Add an **Inbound Rule:**
-
-  * **Port:** 22
-  * **Source:** Custom → select `demo-app-bastion-host-sg`
+   - Go to **EC2** → **Security Groups** → search the `demo-app-lt-asg-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `22` from the `demo-app-bastion-host-sg` security group → Save rule.
 
 ### 3. Connect to the Bastion Host
 
 **Terminal (Linux/Mac):**
 
 ```bash
-chmod 400 demo-app-private-key.pem
-ssh -i demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
+chmod 400 ~/Downloads/demo-app-private-key.pem
+```
+
+```bash
+ssh -i ~/Downloads/demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 ```
 
 **Putty (Windows):**
@@ -1833,6 +1864,19 @@ ssh -i "demo-app-private-key.pem" ubuntu@<PRIVATE_EC2_IP>
 
 ```bash
 sudo apt install net-tools
+```
+2. Check the applications running and their port details. You should see a service running on ort 5000. This is our Flask App running on Port 5000
+
+```bash
+netstat -tulpn
+```
+
+```
+.
+.
+tcp        0      0 0.0.0.0:5000            0.0.0.0:*               LISTEN      572/python3      
+.
+.
 ```
 
 2. Check Flask service logs:
