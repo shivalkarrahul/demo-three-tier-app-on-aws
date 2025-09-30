@@ -932,6 +932,31 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
+<details>
+<summary>AWS CLI Command (Alternative to Console)</s
+
+```bash
+BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+echo "Creating S3 Bucket: $BUCKET_NAME$"
+
+# Create the bucket (replace us-east-1 with your region if different)
+aws s3api create-bucket \
+    --bucket $BUCKET_NAME \
+    --region us-east-1 \
+    --create-bucket-configuration LocationConstraint=us-east-1 \
+    --no-cli-pager >/dev/null 2>&1
+
+# Verify bucket creation
+if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+    echo "✅ S3 Bucket created: $BUCKET_NAME"
+else
+    echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
+fi
+
+```
+
+</details>
+
 ---
 
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads (4 mins)
