@@ -1736,6 +1736,23 @@ A total of **5 Security Groups** were created to manage access between different
 * The rule allowing your **personal IP (`152.58.11.96/32`)** into `demo-app-db-sg` is not manual; it is added by AWS when creating a new SG for RDS.
 * For security best practices, always keep SSH (port 22) restricted to known IPs instead of `0.0.0.0/0`.
 
+#### Screenshots  
+
+##### 1. demo-app-lt-asg-sg Rules
+![demo-app-lt-asg-sg](artifacts/demo-app-lt-asg-sg.png)
+
+##### 2. demo-app-bastion-host-sg Rules
+![demo-app-bastion-host-sg](artifacts/demo-app-bastion-host-sg.png)
+
+##### 3. demo-app-test-ami-builder-sg Rules
+![demo-app-test-ami-builder-sg](artifacts/demo-app-test-ami-builder-sg.png)
+
+##### 4. demo-app-lb-sg Rules
+![demo-app-lb-sg](artifacts/demo-app-lb-sg.png)
+
+##### 5. demo-app-db-sg Rules
+![demo-app-db-sg](artifacts/demo-app-db-sg.png)
+
 ---
 
 ## Part 10: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
