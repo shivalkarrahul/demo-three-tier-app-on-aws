@@ -932,6 +932,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
+
 <details>
 <summary>AWS CLI Command (Alternative to Console)</summary>
 
@@ -953,10 +954,9 @@ else
     echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
 fi
 
-```
-
 </details>
 
+```
 ---
 
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads (4 mins)
