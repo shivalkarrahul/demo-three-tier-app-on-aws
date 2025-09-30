@@ -939,7 +939,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 ```bash
 
 BUCKET_NAME="demo-app-backend-s3-bucket-12345"
-echo "Creating S3 Bucket: $BUCKET_NAME$"
+echo "Creating S3 Bucket: $BUCKET_NAME"
 
 # Create the bucket (replace us-east-1 with your region if different)
 aws s3api create-bucket \
