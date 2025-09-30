@@ -31,9 +31,18 @@ def initialize_database():
         )
     conn.commit()
     conn.close()
+
 # Connect to RDS
 def get_db_connection():
     return pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD, database=RDS_DATABASE)
+
+# --------------------
+# Health Check
+# --------------------
+@app.route("/", methods=["GET"])
+def healthcheck():
+    return jsonify({"status": "ok", "message": "Service is healthy"}), 200
+
 # API to Insert User into RDS
 @app.route("/insert", methods=["POST"])
 def insert():
@@ -45,6 +54,7 @@ def insert():
     conn.commit()
     conn.close()
     return jsonify({"message": "User inserted successfully!"})
+
 # API to Fetch Users from RDS
 @app.route("/fetch", methods=["GET"])
 def fetch():
@@ -54,18 +64,21 @@ def fetch():
         users = cursor.fetchall()
     conn.close()
     return jsonify({"users": users})
+
 # API to Upload File to S3
 @app.route("/upload", methods=["POST"])
 def upload():
     file = request.files["file"]
     s3_client.upload_fileobj(file, S3_BUCKET, file.filename)
     return jsonify({"message": "File uploaded successfully!"})
+
 # API to List Files from S3
 @app.route("/list_files", methods=["GET"])
 def list_files():
     objects = s3_client.list_objects_v2(Bucket=S3_BUCKET)
     files = [obj["Key"] for obj in objects.get("Contents", [])]
     return jsonify({"files": files})
+
 # API to Get File Metadata from DynamoDB
 @app.route("/get_file_metadata", methods=["GET"])
 def get_file_metadata():

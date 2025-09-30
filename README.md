@@ -1,20 +1,218 @@
-# Three-Tier Application on AWS
+# From Hello World to Real World: A Hands-On Journey into Event-Driven Three-Tier Architecture on AWS
 
-This repo provides a **hands-on guide to deploy a three-tier application on AWS**. It covers:
+**Presenter:** Rahul Shivalkar
 
-* **Network Layer:** VPC, public & private subnets, route tables.
-* **Application Layer:** Flask backend on EC2 with Load Balancer & Auto Scaling.
-* **Data Layer:** RDS MySQL for structured data, DynamoDB for metadata.
-* **Storage & Notifications:** S3 for files, SNS for notifications.
-* **Secure Access:** IAM roles and Bastion Host.
+**Event:** AWS Cloud Club - MIT ADTU and AWS Cloud Club MIT-WPU
 
-By following this repo, you’ll learn how to **build, deploy, and scale a complete three-tier application on AWS**.
+This intensive, hands-on workshop is designed for developers and cloud enthusiasts ready to move beyond basic setups and deploy a truly **scalable, secure, and production-ready three-tier application on AWS**.
+
+**Workshop Flow:**
+
+1. **Network Foundation:**
+
+   * Build a robust custom VPC with Public and Private Subnets.
+   * Configure NAT Gateways and a secure Bastion Host for management access.
+
+2. **Backend Deployment & HA:**
+
+   * Deploy a Flask backend application.
+   * Ensure High Availability (HA) using an Application Load Balancer (ALB) distributing traffic across an Auto Scaling Group (ASG).
+
+3. **Data Security & Event-Driven Integration:**
+
+   * Secure the data layer by placing RDS (MySQL) in private subnets.
+   * Implement an **event-driven pipeline**:
+
+     * File uploads to S3 trigger SNS notifications.
+     * AWS Lambda functions process metadata and store it in DynamoDB.
+
+**Outcome:**
+By the end of this workshop, attendees will have the practical skills and confidence to **design, deploy, and scale complex applications** using core AWS best practices in **networking, security, and serverless integration**.
 
 ---
 
-## 📊 Architecture Diagram
+<details>
+<summary>Presentation</summary>
 
-![Architecture Diagram](artifacts/demo-three-tier-app-on-aws.svg)
+## Agenda
+
+1. Introduction: Why event-driven, three-tier architectures matter
+2. Three-Tier Architecture Overview
+3. AWS Services & Event-Driven Design
+4. Lambda & Serverless Integration
+5. Storage & Data Flow
+6. Application Layer: Flask on EC2
+7. Monitoring & Notifications
+8. Demo & Key Learnings
+
+---
+
+## Introduction
+
+* Many applications start as simple scripts or “Hello World” apps.
+* To be **production-ready**, they need to be scalable, decoupled, and event-driven.
+* Event-driven design allows services to **react automatically to events**, reducing manual intervention.
+* We focus on AWS services that make it easy to **build, monitor, and scale** applications efficiently.
+
+---
+
+## Three-Tier Architecture Overview
+
+The **architecture is divided into three primary layers**:
+
+1. **Presentation Layer (Frontend)**
+
+   * Handles user interaction and requests.
+   * Deployed via Application Load Balancer (ALB) routing traffic to the backend.
+
+2. **Application Layer (Backend & Event-Driven Processing)**
+
+   * Flask backend application deployed on EC2 Auto Scaling Group for High Availability (HA).
+   * Event-driven integration components:
+
+     * **S3**: for file uploads
+     * **SNS**: for notifications
+     * **Lambda**: for processing events and metadata
+     * **DynamoDB**: stores processed metadata and supports serverless data operations
+
+3. **Data Layer (Relational Database)**
+
+   * **RDS (MySQL)** deployed in private subnets for secure and persistent storage.
+
+**Note:** DynamoDB is used as part of the event-driven application workflow, complementing the main relational database but does not constitute a separate tier.
+
+**Architecture Diagram:**
+![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
+
+---
+
+## Slide: AWS Services & Roles
+
+| AWS Service                           | Role / Purpose in the Architecture                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| **VPC**                               | Provides an isolated network for the application. Hosts public and private subnets.  |
+| **Public Subnets**                    | Hosts ALB and Bastion Host. Enables controlled access from the Internet.             |
+| **Private Subnets**                   | Hosts EC2 backend instances, RDS database, and Lambda (via VPC endpoints if needed). |
+| **NAT Gateway**                       | Allows private subnet instances to access the Internet securely (e.g., for updates). |
+| **Bastion Host**                      | Secure access point to manage private EC2 instances.                                 |
+| **EC2 (Auto Scaling Group)**          | Runs the Flask backend application with High Availability.                           |
+| **Application Load Balancer (ALB)**   | Distributes incoming traffic across backend EC2 instances.                           |
+| **RDS (MySQL)**                       | Primary relational database for application data, deployed in private subnets.       |
+| **S3**                                | Stores uploaded files; triggers event-driven processing.                             |
+| **SNS (Simple Notification Service)** | Sends notifications on S3 events to Lambda or other subscribers.                     |
+| **Lambda**                            | Processes S3-triggered events, extracts metadata, and stores it in DynamoDB.         |
+| **DynamoDB**                          | Stores processed metadata for serverless, scalable storage.                          |
+| **Security Groups**                   | Controls inbound and outbound traffic for EC2, RDS, ALB, and Lambda.                 |
+| **IAM Roles**                         | Provides permissions for Lambda, EC2, RDS, and other services to interact securely.  |
+| **CloudWatch**                        | Monitors application, logs, and triggers alarms for metrics.                         |
+
+**Summary:**
+This setup ensures a **secure, scalable, and event-driven three-tier architecture**, combining **traditional relational data storage** with **serverless event processing**.
+
+---
+
+## Application Layer: Flask on EC2
+
+* Flask backend runs on EC2, serving API endpoints.
+* Handles CRUD operations on RDS (users, products, orders).
+* Accepts file uploads to S3.
+* Integrates with Lambda for event-driven processing.
+* Ensures **security and isolation** via IAM roles.
+
+**Key Advantage:** Combines **traditional server-based architecture** with serverless event-driven components.
+
+---
+
+## Event-Driven Design with Lambda
+
+**Event Flow:**
+`User → S3 → Lambda → DynamoDB → SNS → User`
+
+**Steps:**
+
+1. **Trigger Event:** File uploaded to S3 bucket.
+2. **Processing:** Lambda function validates and processes the file.
+3. **Database Update:** Updates DynamoDB metadata to track status.
+4. **Notification:** Sends alerts to users/admins via SNS.
+
+**Benefits:**
+
+* Immediate response to events.
+* Reduces load on EC2 backend.
+* Improves reliability by decoupling components.
+
+---
+
+## Storage & Data Flow
+
+* **S3 Bucket:** Stores uploaded files securely.
+* **Lambda Function:** Acts as a processor and orchestrator.
+* **DynamoDB Table:** Keeps metadata and event logs for tracking.
+* **SNS Topic:** Sends real-time notifications to stakeholders.
+
+**Outcome:** A **highly responsive, event-driven system** with minimal manual intervention.
+
+---
+
+## Monitoring & Notifications
+
+* **CloudWatch Logs & Metrics:** Monitor EC2, Lambda, and RDS.
+* **SNS Alerts:** Notifies developers or admins of failures or key events.
+
+**Benefits:**
+
+* Quick troubleshooting.
+* Proactive system monitoring.
+* Reduces downtime and manual checks.
+
+---
+
+## Demo Flow
+
+1. **User uploads a file → S3 bucket**
+
+   * The file is securely stored in S3 for processing.
+
+2. **Lambda function triggers → processes the file**
+
+   * Extracts metadata or transforms data as needed.
+
+3. **RDS updates → relational data storage**
+
+   * Stores structured relational data (e.g., new users via Flask APIs).
+
+4. **DynamoDB updates → metadata and processing status**
+
+   * Serverless storage for quick access to processing results and metadata.
+
+5. **SNS sends notification → user/admin receives an email alert**
+
+   * Alerts stakeholders that file processing is complete.
+
+6. **Flask frontend shows updated data → reflects processed files**
+
+   * Reads from RDS/DynamoDB to show real-time status to users.
+
+---
+
+## Key Takeaways
+
+* Hybrid architecture using **EC2 + Lambda**.
+* Event-driven design ensures **automatic, real-time processing**.
+* Decoupled services allow **independent scaling** and reliability.
+* Demonstrates a **production-ready system** suitable for enterprise applications.
+
+<p align="left"><b>🔒 Presentation section ends here — continue with hands-on steps ⬇️</b></p>
+
+</details>
+
+---
+
+
+
+## Hands-On Lab: Deploying the Three-Tier AWS Application
+
+> **Context:** All the following steps are performed in the **us-east-1** (N. Virginia) region.
 
 ---
 
@@ -45,7 +243,10 @@ This guide is intended for students and developers who want to **learn hands-on 
 
 ---
 
-## Part 1: Network Setup
+## Architecture Diagram - Three-Tier Architecture Overview
+![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
+
+## Part 1: Network Setup (7 Mins)
 
 <details>
 <summary>📖 Theory: Understanding the Network Setup</summary>
@@ -93,31 +294,135 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
-2. Click **Create VPC**.  
-3. Enter:  
-   - **Name:** `demo-app-vpc`  
-   - **IPv4 CIDR Block:** `10.0.0.0/16`  
-4. Click **Create VPC**.
+2. Click **Create VPC**. 
+3. Select `VPC only`option under **Resources to create** 
+4. Enter:  
+   - **Name tag:** `demo-app-vpc`  
+   - **IPv4 CIDR Block:** `10.0.0.0/16`
+5. Keep all other settings as **default**.     
+6. Click **Create VPC**.
+
+You could make it a bit lighthearted like this:
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+echo "Creating VPC: demo-app-vpc"
+VPC_ID=$(aws ec2 create-vpc \
+    --cidr-block 10.0.0.0/16 \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=demo-app-vpc}]' \
+    --query "Vpc.VpcId" --output text --no-cli-pager)
+
+if [ -n "$VPC_ID" ]; then
+    echo "✅ VPC created: $VPC_ID"
+else
+    echo "⚠️ Failed to create VPC demo-app-vpc"
+fi
+```
+
+</details>
+
+---
 
 ### 2. Create Public & Private Subnets
 
-#### Public Subnets (For Load Balancer & NAT Gateways)
+#### 2.1 Public Subnets (For Load Balancer & NAT Gateways)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
-3. Create three public subnets:  
+3. Create three public subnets: (Use the **“Add subnet”** option to create **3 subnets at a time**:)  
    - `demo-app-public-subnet-1` → `10.0.1.0/24` → **us-east-1a**  
    - `demo-app-public-subnet-2` → `10.0.2.0/24` → **us-east-1b**  
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-#### Private Subnets (For App & DB Layers)
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+declare -A PUBLIC_SUBNETS=(
+    ["demo-app-public-subnet-1"]="10.0.1.0/24:us-east-1a"
+    ["demo-app-public-subnet-2"]="10.0.2.0/24:us-east-1b"
+    ["demo-app-public-subnet-3"]="10.0.3.0/24:us-east-1c"
+)
+
+for name in "${!PUBLIC_SUBNETS[@]}"; do
+    IFS=":" read -r CIDR AZ <<< "${PUBLIC_SUBNETS[$name]}"
+    echo "Creating Public Subnet: $name in $AZ"
+    
+    SUBNET_ID=$(aws ec2 create-subnet \
+        --vpc-id $VPC_ID \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
+        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
+        --query "Subnet.SubnetId" --output text --no-cli-pager)
+    
+    if [ -n "$SUBNET_ID" ]; then
+        echo "✅ Subnet created: $name ($SUBNET_ID)"
+    else
+        echo "⚠️ Failed to create subnet $name"
+    fi
+done
+```
+</details>
+
+---
+
+#### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
-3. Create three private subnets:  
+3. Create three private subnets: (Use the **“Add subnet”** option to create **3 subnets at a time**:)  
    - `demo-app-private-subnet-1` → `10.0.11.0/24` → **us-east-1a**  
    - `demo-app-private-subnet-2` → `10.0.12.0/24` → **us-east-1b**  
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+declare -A PRIVATE_SUBNETS=(
+    ["demo-app-private-subnet-1"]="10.0.11.0/24:us-east-1a"
+    ["demo-app-private-subnet-2"]="10.0.12.0/24:us-east-1b"
+    ["demo-app-private-subnet-3"]="10.0.13.0/24:us-east-1c"
+)
+
+for name in "${!PRIVATE_SUBNETS[@]}"; do
+    IFS=":" read -r CIDR AZ <<< "${PRIVATE_SUBNETS[$name]}"
+    echo "Creating Private Subnet: $name in $AZ"
+    
+    SUBNET_ID=$(aws ec2 create-subnet \
+        --vpc-id $VPC_ID \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
+        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
+        --query "Subnet.SubnetId" --output text --no-cli-pager)
+    
+    if [ -n "$SUBNET_ID" ]; then
+        echo "✅ Private Subnet created: $name ($SUBNET_ID)"
+    else
+        echo "⚠️ Failed to create private subnet $name"
+    fi
+done
+```
+</details>
+
+---
 
 ### 3. Create & Attach Internet Gateway (IGW)
 1. Go to **Internet Gateways → Create Internet Gateway**.  
@@ -127,9 +432,36 @@ This layered setup enforces **security, availability, and scalability**. Public 
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+echo "Creating Internet Gateway: demo-app-igw"
+IGW_ID=$(aws ec2 create-internet-gateway \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=demo-app-igw}]' \
+    --query "InternetGateway.InternetGatewayId" --output text --no-cli-pager)
+
+if [ -n "$IGW_ID" ]; then
+    echo "✅ IGW created: $IGW_ID"
+    echo "Attaching IGW to VPC: $VPC_ID"
+    aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
+    echo "✅ IGW attached to VPC"
+else
+    echo "⚠️ Failed to create Internet Gateway"
+fi
+```
+</details>
+
+---
+
 ### 4. Create & Configure Route Tables
 
-#### Public Route Table (For Public Subnets)
+#### 4.1 Public Route Table (For Public Subnets)
 1. Go to **Route Tables → Create Route Table**.  
 2. Enter:  
    - **Name:** `demo-app-public-rt`  
@@ -147,84 +479,157 @@ This layered setup enforces **security, availability, and scalability**. Public 
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+echo "Creating Public Route Table: demo-app-public-rt"
+PUBLIC_RT_ID=$(aws ec2 create-route-table \
+    --vpc-id $VPC_ID \
+    --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-public-rt}]' \
+    --query "RouteTable.RouteTableId" --output text --no-cli-pager)
+
+if [ -n "$PUBLIC_RT_ID" ]; then
+    echo "✅ Public Route Table created: $PUBLIC_RT_ID"
+
+    # Add route to IGW
+    aws ec2 create-route --route-table-id $PUBLIC_RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID --no-cli-pager
+    echo "✅ Route added to Internet Gateway"
+
+    # Associate with public subnets
+    for name in "${!PUBLIC_SUBNETS[@]}"; do
+        SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=$name" --query "Subnets[0].SubnetId" --output text --no-cli-pager)
+        aws ec2 associate-route-table --subnet-id $SUBNET_ID --route-table-id $PUBLIC_RT_ID --no-cli-pager
+        echo "✅ Public Subnet $name associated with Route Table"
+    done
+else
+    echo "⚠️ Failed to create public route table"
+fi
+
+```
+</details>
+
+---
+
 ### 5. Create NAT Gateways
 
 In this step, we will create NAT Gateways to allow instances in private subnets to access the internet for updates and downloads.
 
-<details>
-<summary>✅ Demo Setup (1 NAT Gateway)</summary>
-
 This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
-#### Allocate Elastic IP
+#### 5.1 Allocate Elastic IP
 
 1. Go to **Elastic IPs** in AWS Console.
 2. Click **Allocate Elastic IP → Allocate** (allocate **1 Elastic IP**).
+3. Click **Tags → Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-eip-1`
 
-#### Create NAT Gateway
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+```bash
+# 1️⃣ Allocate Elastic IP for NAT Gateway
+echo "Allocating Elastic IP for NAT Gateway: demo-app-eip-1"
+EIP_ALLOC_ID=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=demo-app-eip-1" --query "Addresses[0].AllocationId" --output text)
+
+if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
+    echo "⚠️ Elastic IP already exists: $EIP_ALLOC_ID"
+else
+    EIP_ALLOC_ID=$(aws ec2 allocate-address \
+        --domain vpc \
+        --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=demo-app-eip-1}]' \
+        --query 'AllocationId' --output text)
+    echo "✅ Elastic IP allocated: $EIP_ALLOC_ID"
+fi
+```
+</details>
+
+---
+
+#### 5.2 Create NAT Gateway
 
 1. Go to **NAT Gateways → Create NAT Gateway**.
 2. Enter:
 
    * **Name:** `demo-app-nat-gateway-1`
    * **Subnet:** `demo-app-public-subnet-1`
-   * **Elastic IP:** Select the Elastic IP you allocated
+   * **Elastic IP:** Select the `demo-app-eip-1` Elastic IP you allocated
 3. Click **Create NAT Gateway**.
 4. Wait until the status shows **Available**.
 
 ✅ This NAT Gateway will be used for all private subnets.
 
-</details>
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
-<summary>✅ Prod Setup (3 NAT Gateways)</summary>
+<summary>Click to expand CLI commands</summary>
 
-This setup uses **one NAT Gateway per public subnet** for high availability and fault tolerance.
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
-#### Allocate Elastic IPs
+```bash
+# Fetch Public Subnet ID
+echo "Fetching Public Subnet ID: demo-app-public-subnet-1"
+PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-public-subnet-1" \
+    --query "Subnets[0].SubnetId" --output text)
 
-1. Go to **Elastic IPs** in AWS Console.
-2. Click **Allocate Elastic IP → Allocate** **3 times** (one for each NAT Gateway).
+if [ "$PUBLIC_SUBNET_ID" == "None" ] || [ -z "$PUBLIC_SUBNET_ID" ]; then
+    echo "❌ Public subnet demo-app-public-subnet-1 not found. Aborting NAT Gateway creation."
+    exit 1
+else
+    echo "✅ Public Subnet ID: $PUBLIC_SUBNET_ID"
+fi
+```
 
-#### Create NAT Gateways
+```bash
+# Create NAT Gateway
+echo "Creating NAT Gateway: demo-app-nat-gateway-1"
+NAT_ID=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" --query "NatGateways[?State=='available'].NatGatewayId | [0]" --output text)
 
-**NAT Gateway 1**
+if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
+    echo "⚠️ NAT Gateway already exists and is available: $NAT_ID"
+else
+    NAT_ID=$(aws ec2 create-nat-gateway \
+        --subnet-id $PUBLIC_SUBNET_ID \
+        --allocation-id $EIP_ALLOC_ID \
+        --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=demo-app-nat-gateway-1}]' \
+        --query 'NatGateway.NatGatewayId' --output text)
+    echo "✅ NAT Gateway created: $NAT_ID"
+fi
+```
 
-* Name: `demo-app-nat-gateway-1`
-* Subnet: `demo-app-public-subnet-1`
-* Elastic IP: first Elastic IP
-* Click **Create**, wait until **Available**
-
-**NAT Gateway 2**
-
-* Name: `demo-app-nat-gateway-2`
-* Subnet: `demo-app-public-subnet-2`
-* Elastic IP: second Elastic IP
-* Click **Create**, wait until **Available**
-
-**NAT Gateway 3**
-
-* Name: `demo-app-nat-gateway-3`
-* Subnet: `demo-app-public-subnet-3`
-* Elastic IP: third Elastic IP
-* Click **Create**, wait until **Available**
-
-✅ Each NAT Gateway will be associated with its respective private subnet.
-
+```bash
+# Wait until NAT Gateway is available
+echo "Waiting for NAT Gateway to become available..."
+aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
+echo "✅ NAT Gateway is available"
+```
 </details>
 
-✅ **Note:** Proceed to the next step (creating private route tables) only after all NAT Gateways show **Available**.
+---
+
+✅ **Note:** Proceed to the next step (creating private route tables) only after the NAT Gateway shows **Available**.
 
 ### 6. Create Route Tables for Private Subnets
 
 In this step, we will create route tables to direct traffic from private subnets to the internet via NAT Gateways.
 
-<details>
-<summary>✅ Demo Setup (1 Route Table)</summary>
 
 This setup uses **one NAT Gateway** for all private subnets → only **one route table** is needed.
 
-#### Create Route Table
+#### 6.1 Create Route Table
 
 1. Go to **Route Tables → Create Route Table**.
 2. Enter:
@@ -233,7 +638,7 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
    * **VPC:** `demo-app-vpc`
 3. Click **Create**.
 
-#### Edit Routes
+#### 6.2 Edit Routes
 
 1. Select `demo-app-private-rt-1` → **Edit Routes**.
 2. Add Route:
@@ -242,7 +647,7 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
    * **Target:** NAT → `demo-app-nat-gateway-1`
 3. Click **Save Routes**.
 
-#### Associate Subnets
+#### 6.3 Associate Subnets
 
 1. Go to **Subnet Associations → Edit Subnet Associations**.
 2. Select:
@@ -254,78 +659,74 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 
 ✅ All private subnets now use the same NAT Gateway via this route table.
 
-</details>
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
-<summary>✅ Prod Setup (3 Route Tables)</summary>
+<summary>Click to expand CLI commands</summary>
 
-This setup uses **one NAT Gateway per private subnet**, requiring **three route tables** for high availability.
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
-#### Route Table for Private Subnet 1
+```bash
+echo "Creating Private Route Table: demo-app-private-rt-1"
+PRIVATE_RT_ID=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=demo-app-private-rt-1" --query "RouteTables[0].RouteTableId" --output text)
 
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
+if [ "$PRIVATE_RT_ID" != "None" ] && [ -n "$PRIVATE_RT_ID" ]; then
+    echo "⚠️ Private Route Table already exists: $PRIVATE_RT_ID"
+else
+    PRIVATE_RT_ID=$(aws ec2 create-route-table \
+        --vpc-id $VPC_ID \
+        --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-private-rt-1}]' \
+        --query 'RouteTable.RouteTableId' --output text)
+    echo "✅ Private Route Table created: $PRIVATE_RT_ID"
+fi
+```
 
-   * **Name:** `demo-app-private-rt-1`
-   * **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
+```bash
+# Create Route to NAT Gateway
+ROUTE_EXISTS=$(aws ec2 describe-route-tables --route-table-ids $PRIVATE_RT_ID --query "RouteTables[0].Routes[?DestinationCidrBlock=='0.0.0.0/0'].NatGatewayId" --output text)
 
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-1`
-5. Associate **private-subnet-1**.
+if [ "$ROUTE_EXISTS" == "$NAT_ID" ]; then
+    echo "⚠️ Route to NAT Gateway already exists in Private Route Table $PRIVATE_RT_ID"
+else
+    aws ec2 create-route \
+        --route-table-id $PRIVATE_RT_ID \
+        --destination-cidr-block 0.0.0.0/0 \
+        --nat-gateway-id $NAT_ID --no-cli-pager
+    echo "✅ Route created via NAT Gateway: $NAT_ID"
+fi
+```
 
-#### Route Table for Private Subnet 2
+```bash
+# Associate Private Subnets with Route Table
+echo "Associating private subnets with Private Route Table"
+PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-private-subnet-1,demo-app-private-subnet-2,demo-app-private-subnet-3" \
+    --query "Subnets[].SubnetId" --output text)
+echo "Private Subnet IDs: $PRIVATE_SUBNET_IDS"
 
-<details>
-<summary>Expand for Steps</summary>
-
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
-
-   * Name: `demo-app-private-rt-2`
-   * VPC: `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
-
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-2`
-5. Associate **private-subnet-2**.
-
+for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
+    ASSOCIATED=$(aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=$SUBNET_ID" --query "RouteTables[0].RouteTableId" --output text)
+    if [ "$ASSOCIATED" == "$PRIVATE_RT_ID" ]; then
+        echo "⚠️ Subnet $SUBNET_ID already associated with Private Route Table $PRIVATE_RT_ID"
+    else
+        aws ec2 associate-route-table --route-table-id $PRIVATE_RT_ID --subnet-id $SUBNET_ID --no-cli-pager
+        echo "✅ Associated subnet $SUBNET_ID with Private Route Table $PRIVATE_RT_ID"
+    fi
+done
+```
 </details>
 
-#### Route Table for Private Subnet 3
-
-<details>
-<summary>Expand for Steps</summary>
-
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
-
-   * Name: `demo-app-private-rt-3`
-   * VPC: `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
-
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-3`
-5. Associate **private-subnet-3**.
-
-</details>
-
-✅ Each private subnet now has its **own NAT Gateway via separate route tables**.
-
-</details>
+---
 
 ✅ **Note:**
-
-* **Demo readers:** use only `demo-app-private-rt-1` for all private subnets.
-* **Prod readers:** use three route tables, one per private subnet.
+* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
+* NAT Gateways incur charges — one is enough for demos.
 * After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
 
 ---
 
-## Part 2: Set Up RDS
+## Part 2: Set Up RDS (3 Mins)
 
 <details>
 <summary>📖 Theory: The Data Layer</summary>
@@ -376,17 +777,19 @@ Placing the database in private subnets enforces **security best practices** whi
 2. Click **Create database**.  
 3. Choose **Standard create**.  
 4. Select **MySQL** as the database engine.  
+5. Select **Engine version** as `MySQL 8.0.42`
 5. Select **Free tier** to avoid charges.
 
 ### 2. Configure Database Settings
 1. Set **DB instance identifier:** `my-demo-db`  
-2. Set **Master username:** `admin`  
+2. Set **Master username:** `admin`
+3. Select **Credentials management** as **Self managed**  
 3. Set **Master password:** Choose a strong password and **note it down** somewhere safe.
 
 ### 3. Configure Storage
 1. **Storage type:** General Purpose (SSD)  
 2. **Allocated storage:** 20 GiB  
-3. Keep **storage auto-scaling enabled** in Additional storage configuration.
+3. Keep **storage auto-scaling enabled** under Additional storage configuration.
 
 ### 4. Configure Connectivity
 1. **VPC:** Select the VPC created earlier (`demo-app-vpc`).  
@@ -402,10 +805,110 @@ Placing the database in private subnets enforces **security best practices** whi
 
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+Save time (and a few clicks) by using CLI instead of the console:  
+
+```bash
+echo "Fetching Private Subnet IDs..."
+PRIVATE_SUBNET_IDS=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-private-subnet-1,demo-app-private-subnet-2,demo-app-private-subnet-3" \
+    --query "Subnets[].SubnetId" --output text --no-cli-pager)
+
+echo "Private Subnet IDs found: $PRIVATE_SUBNET_IDS"
+
+# Assign them to variables (assuming 3 subnets)
+PRIVATE_SUBNET_1=$(echo $PRIVATE_SUBNET_IDS | awk '{print $1}')
+PRIVATE_SUBNET_2=$(echo $PRIVATE_SUBNET_IDS | awk '{print $2}')
+PRIVATE_SUBNET_3=$(echo $PRIVATE_SUBNET_IDS | awk '{print $3}')
+
+echo "✅ Using Subnets: $PRIVATE_SUBNET_1, $PRIVATE_SUBNET_2, $PRIVATE_SUBNET_3"
+
+```
+
+```bash
+# Create a DB Subnet Group
+echo "Creating DB Subnet Group: demo-app-db-subnet-group"
+DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
+DB_SUBNET_GROUP=$(aws rds create-db-subnet-group \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --db-subnet-group-description "Demo App DB Subnet Group" \
+    --subnet-ids $PRIVATE_SUBNET_1 $PRIVATE_SUBNET_2 $PRIVATE_SUBNET_3 \
+    --tags Key=Name,Value=$DB_SUBNET_GROUP_NAME \
+    --query "DBSubnetGroup.DBSubnetGroupName" --output text --no-cli-pager)
+
+if [ "$DB_SUBNET_GROUP" == "$DB_SUBNET_GROUP_NAME" ]; then
+    echo "✅ DB Subnet Group created: $DB_SUBNET_GROUP"
+else
+    echo "⚠️ Failed to create DB Subnet Group: $DB_SUBNET_GROUP_NAME"
+fi
+```
+
+```bash
+# Create Security Group for RDS
+echo "Creating Security Group: demo-app-db-sg"
+DB_SG_ID=$(aws ec2 create-security-group \
+    --group-name demo-app-db-sg \
+    --description "DB security group for RDS instance" \
+    --vpc-id $VPC_ID \
+    --tag-specifications 'ResourceType=security-group,Tags=[{Key=Name,Value=demo-app-db-sg}]' \
+    --query "GroupId" --output text --no-cli-pager)
+
+if [ -n "$DB_SG_ID" ] && [ "$DB_SG_ID" != "None" ]; then
+    echo "✅ Security Group created: $DB_SG_ID"
+else
+    echo "⚠️ Failed to create Security Group demo-app-db-sg"
+fi
+```
+
+```bash
+# 3️⃣ Create RDS Instance
+echo "Creating RDS Instance: my-demo-db"
+DB_INSTANCE_ID=$(aws rds create-db-instance \
+    --db-instance-identifier my-demo-db \
+    --db-instance-class db.t3.micro \
+    --engine mysql \
+    --engine-version 8.0.42 \
+    --allocated-storage 20 \
+    --master-username admin \
+    --master-user-password "<YOUR_STRONG_PASSWORD>" \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --vpc-security-group-ids $DB_SG_ID \
+    --no-publicly-accessible \
+    --storage-type gp2 \
+    --backup-retention-period 7 \
+    --tags Key=Name,Value=my-demo-db \
+    --query "DBInstance.DBInstanceIdentifier" --output text --no-cli-pager)
+
+if [ "$DB_INSTANCE_ID" == "my-demo-db" ]; then
+    echo "✅ RDS Instance creation started: $DB_INSTANCE_ID"
+else
+    echo "⚠️ Failed to create RDS Instance my-demo-db"
+fi
+```
+
+```bash
+# Wait until RDS is available
+echo "Waiting for RDS Instance my-demo-db to become available..."
+aws rds wait db-instance-available --db-instance-identifier my-demo-db --no-cli-pager
+
+if [ $? -eq 0 ]; then
+    echo "✅ RDS Instance my-demo-db is now available"
+else
+    echo "⚠️ Timeout or failure while waiting for RDS Instance my-demo-db"
+fi
+
+```
+</details>
+
 ---
 
-
-## Part 3: Set Up S3
+## Part 3: Set Up S3 (1 Min)
 
 <details>
 <summary>📖 Theory: The Storage Layer</summary>
@@ -451,20 +954,65 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 2. Click **Create bucket**.
 3. Enter a unique bucket name, for example:  
    `demo-app-backend-s3-bucket-1234`  
-   🚨 **Important:** S3 bucket names must be globally unique across all AWS accounts.
-4. Choose the **same region** as your VPC (e.g., `us-east-1`).
-5. Click **Next**.
+   
+   🚨 **Important:**  
+   - S3 bucket names must be globally unique across all AWS accounts.  
+   - You may use a different name if this one is not available.  
+   - **Note:** Keep a record of this bucket name as it will be required later.  
+   - It is recommended to add a random string at the end of the bucket name `demo-app-backend-s3-bucket-1234-<some-random-string>` to avoid conflicts or confusion.
 
-### 2. Configure Bucket Settings
-1. Keep **Block Public Access enabled** (recommended for security).
-2. Enable **Bucket Versioning** (optional) – useful to keep previous versions of uploaded files.
-3. Leave other settings as default and click **Create bucket**.
+4. Choose the **same region** as your VPC (e.g., `us-east-1`).
+5. Keep **Block Public Access enabled** (recommended for security).
+6. Disable **Bucket Versioning** (optional – useful to keep previous versions of uploaded files.)
+7. Leave other settings as default and click **Create bucket**.
+8. Click **Create bucket**.  
+
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+```bash
+
+BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+REGION="us-east-1"
+
+echo "Creating S3 Bucket: $BUCKET_NAME in $REGION"
+
+if [ "$REGION" == "us-east-1" ]; then
+    # us-east-1 special case
+    aws s3api create-bucket \
+        --bucket $BUCKET_NAME \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+else
+    # all other regions need LocationConstraint
+    aws s3api create-bucket \
+        --bucket $BUCKET_NAME \
+        --region $REGION \
+        --create-bucket-configuration LocationConstraint=$REGION \
+        --no-cli-pager >/dev/null 2>&1
+fi
+
+# Verify bucket creation
+if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+    echo "✅ S3 Bucket created: $BUCKET_NAME"
+else
+    echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
+fi
+
+
+```
+</details>
+
 ---
 
-## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
+## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads (4 mins)
 
 <details>
 <summary>📖 Theory: Decoupled Messaging and Events</summary>
@@ -526,10 +1074,15 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 5. Click **Create subscription**.
 6. Open your email and confirm the subscription (click the link from AWS SNS).
 
+> **Note:** You should see the status as **Confirmed** for your subscription
+
+
 ### 3. Update SNS Topic Policy to Allow S3 to Publish
 1. In SNS Console, click `demo-app-sns-topic`.
 2. Click **Edit → Access policy**.
 3. Replace the existing policy with:
+
+> **Note:** In the following policy, replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID.
 
 ```json
 {
@@ -554,8 +1107,6 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 }
 ```
 
-> **Note:** Replace `YOUR_AWS_ACCOUNT_ID` with your AWS Account ID.
-
 4. Click **Save changes**.
 
 ### 4. Configure S3 to Trigger SNS on File Upload
@@ -570,9 +1121,99 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+
+```bash
+SNS_TOPIC_NAME="demo-app-sns-topic"
+S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+EVENT_NAME="demo-app-s3-object-upload-notification"
+
+#Create SNS Topic
+echo "Creating SNS Topic: $SNS_TOPIC_NAME"
+
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+
+if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
+    echo "⚠️ SNS Topic already exists: $SNS_TOPIC_ARN"
+else
+    SNS_TOPIC_ARN=$(aws sns create-topic --name $SNS_TOPIC_NAME --query 'TopicArn' --output text)
+    echo "✅ SNS Topic created: $SNS_TOPIC_ARN"
+fi
+
+# Subscribe Email to SNS Topic
+EMAIL="your-email@example.com"
+echo "Subscribing email $EMAIL to SNS Topic $SNS_TOPIC_NAME"
+
+SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[?Endpoint=='$EMAIL'].SubscriptionArn" --output text)
+
+if [ "$SUBSCRIPTION_ARN" != "None" ] && [ -n "$SUBSCRIPTION_ARN" ]; then
+    echo "⚠️ Email already subscribed: $EMAIL"
+else
+    aws sns subscribe --topic-arn $SNS_TOPIC_ARN --protocol email --notification-endpoint $EMAIL
+    echo "✅ Subscription request sent. Confirm the subscription from your email: $EMAIL"
+fi
+
+# Update SNS Topic Policy to Allow S3 to Publish
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+echo "Updating SNS Topic Policy to allow S3 to publish"
+
+SNS_POLICY=$(cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "AllowS3ToPublish",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SNS:Publish",
+      "Resource": "$SNS_TOPIC_ARN",
+      "Condition": {
+        "StringEquals": {
+          "aws:SourceAccount": "$AWS_ACCOUNT_ID"
+        }
+      }
+    }
+  ]
+}
+EOF
+)
+
+aws sns set-topic-attributes --topic-arn $SNS_TOPIC_ARN --attribute-name Policy --attribute-value "$SNS_POLICY"
+echo "✅ SNS Topic policy updated to allow S3 to publish"
+
+# Configure S3 Bucket Event Notification to Trigger SNS
+
+echo "Configuring S3 Bucket $S3_BUCKET_NAME to trigger SNS Topic on object create"
+
+aws s3api put-bucket-notification-configuration \
+    --bucket $S3_BUCKET_NAME \
+    --notification-configuration "{
+        \"TopicConfigurations\": [
+            {
+                \"Id\": \"$EVENT_NAME\",
+                \"TopicArn\": \"$SNS_TOPIC_ARN\",
+                \"Events\": [\"s3:ObjectCreated:*\"] 
+            }
+        ]
+    }"
+echo "✅ S3 bucket configured to send SNS notifications on object upload"
+
+```
+
+</details>
+
 ---
 
-## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
+## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage (5 Mins)
 
 <details>
 <summary>📖 Theory: Serverless Data Processing and Storage</summary>
@@ -634,25 +1275,145 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 4. Leave all other settings as default.
 5. Click **Create Table**.
 
-> **Important:** You don’t need to manually define other attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB.
+> **Important:** You don’t need to manually define other required attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB later.
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+# Create DynamoDB Table
+echo "Creating DynamoDB Table: demo-app-file-metadata-dynamodb"
+DDB_TABLE=$(aws dynamodb describe-table \
+    --table-name demo-app-file-metadata-dynamodb \
+    --query "Table.TableName" --output text 2>/dev/null)
+
+if [ "$DDB_TABLE" == "demo-app-file-metadata-dynamodb" ]; then
+    echo "⚠️ DynamoDB Table already exists: $DDB_TABLE"
+else
+    aws dynamodb create-table \
+        --table-name demo-app-file-metadata-dynamodb \
+        --attribute-definitions AttributeName=file_name,AttributeType=S \
+        --key-schema AttributeName=file_name,KeyType=HASH \
+        --billing-mode PAY_PER_REQUEST \
+        --tags Key=Name,Value=demo-app-file-metadata-dynamodb \
+        --no-cli-pager
+    echo "✅ DynamoDB Table created: demo-app-file-metadata-dynamodb"
+fi
+```
+
+</details>
+
+---
 
 ### 2. Create an IAM Role for Lambda
 1. Go to **IAM Console → Roles → Create role**.
 2. Select **AWS Service → Lambda → Next**.
-3. Attach the following policies:
+3. Search and attach the following policies:
    - `AmazonS3ReadOnlyAccess` (To read files from S3)  
    - `AmazonDynamoDBFullAccess` (To write metadata to DynamoDB)  
    - `AWSLambdaBasicExecutionRole` (For CloudWatch logging)
-4. Create the role and note the **Role ARN**.
+4. Click on Next.
 5. Name the role: `demo-app-lambda-iam-role`.
+6. Create the role and note the **Role ARN**.
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+#Create IAM Role for Lambda
+echo "Creating IAM Role: demo-app-lambda-iam-role"
+ROLE_ARN=$(aws iam get-role --role-name demo-app-lambda-iam-role --query 'Role.Arn' --output text 2>/dev/null)
+
+if [ -n "$ROLE_ARN" ]; then
+    echo "⚠️ IAM Role already exists: $ROLE_ARN"
+else
+    TRUST_POLICY='{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }]
+    }'
+    ROLE_ARN=$(aws iam create-role \
+        --role-name demo-app-lambda-iam-role \
+        --assume-role-policy-document "$TRUST_POLICY" \
+        --query 'Role.Arn' --output text)
+    echo "✅ IAM Role created: $ROLE_ARN"
+
+    # Attach policies
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    echo "✅ Attached S3, DynamoDB & Lambda basic execution policies"
+fi
+```
+
+</details>
+
+---
+
 
 ### 3. Create a Lambda Function
 1. Go to **Lambda Console → Create function**.
 2. Choose **Author from scratch**.
 3. Enter **Function Name:** `demo-app-metadata-lambda`.
-4. Select **Python 3.x** as Runtime.
-5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`).
+4. Select **Python 3.13** as Runtime.
+5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`) under **Change default execution role**.
 6. Click **Create Function**.
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+# Create Lambda Function
+echo "Creating Lambda Function: demo-app-metadata-lambda"
+LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
+
+if [ -n "$LAMBDA_ARN" ]; then
+    echo "⚠️ Lambda function already exists: $LAMBDA_ARN"
+else
+   # Create a minimal empty Lambda zip
+   echo "def lambda_handler(event, context): pass" > lambda_function.py
+   zip lambda_function.zip lambda_function.py
+
+   # Create Lambda function
+   aws lambda create-function \
+      --function-name demo-app-metadata-lambda \
+      --runtime python3.13 \
+      --role "$ROLE_ARN" \
+      --handler lambda_function.lambda_handler \
+      --zip-file fileb://lambda_function.zip \
+      --timeout 30 \
+      --memory-size 128 \
+      --tags Name=demo-app-metadata-lambda \
+      --no-cli-pager
+
+   echo "✅ Lambda function created: demo-app-metadata-lambda"
+fi
+```
+
+</details>
+
+---
 
 ### 4. Subscribe Lambda to Existing SNS Topic
 1. Go to **SNS Console → Your SNS Topic (`demo-app-sns-topic`)**.
@@ -660,7 +1421,56 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 3. Protocol: **AWS Lambda**.
 4. Select the Lambda Function you created (`demo-app-metadata-lambda`).
 5. Click **Create Subscription**.
-6. Ensure Lambda permissions allow SNS to invoke the function (IAM might require adding SNS invoke permissions).
+6. Return to the SNS Topic `demo-app-sns-topic` and verify that there are now **2 subscriptions**, both showing the **Status: Subscribed**.
+
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+
+# Fetch Lambda ARN
+LAMBDA_ARN=$(aws lambda get-function \
+    --function-name demo-app-metadata-lambda \
+    --query 'Configuration.FunctionArn' --output text --no-cli-pager)
+
+if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
+    echo "❌ Lambda function not found. Create it first."
+    exit 1
+else
+    echo "✅ Lambda ARN: $LAMBDA_ARN"
+fi
+
+# Subscribe Lambda to SNS Topic
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
+else
+    SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[?Endpoint=='$LAMBDA_ARN'].SubscriptionArn" --output text)
+
+    if [ -n "$SUBSCRIPTION_ARN" ]; then
+        echo "⚠️ Lambda already subscribed to SNS Topic: $SUBSCRIPTION_ARN"
+    else
+        aws sns subscribe \
+            --topic-arn "$SNS_TOPIC_ARN" \
+            --protocol lambda \
+            --notification-endpoint "$LAMBDA_ARN" \
+            --no-cli-pager
+        echo "✅ Lambda subscribed to SNS Topic: $SNS_TOPIC_ARN"
+    fi
+fi
+```
+
+</details>
+
+---
 
 ### 5. Update Lambda Code to Process SNS Events
 1. Go to **Lambda → `demo-app-metadata-lambda` → Code**.
@@ -722,18 +1532,17 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 2. You should receive an email notification from SNS.
 3. Go to **Lambda → demo-app-metadata-lambda → Monitor → View CloudWatch Logs**.
 4. Open the latest log stream.
-5. You should see a log entry like:
-
-```
-Extracted File: <your file name> from Bucket: <your bucket name>
-```
+   - You should see a log entry like:  
+     `Extracted File: <your file name> from Bucket: <your bucket name>`
+5. Go to **DynamoDB → Explore Items**, select the table `demo-app-file-metadata-dynamodb`, and click **Run**.
+   - You should see **one entry** corresponding to the file you just uploaded.
 
 ✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
 ---
 
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
-
+(20 Mins)
 <details>
 <summary>📖 Theory: The Application Layer and Service Integration</summary>
 
@@ -785,38 +1594,59 @@ The **application layer** is the glue that ties everything together — frontend
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
 2. Select **AWS Service → EC2 → Next**.
-3. Attach policies:  
+3. Search and attach the following policies:  
    - `AmazonS3FullAccess`  
    - `AmazonDynamoDBReadOnlyAccess`
-4. Name the role: `demo-app-s3-dynamo-iam-role` → Click **Create**.
+4. Click on Next.   
+5. Name the role: `demo-app-s3-dynamo-iam-role`
+6. Click **Create**.
 
 ### 2. Launch a Test and AMI Builder EC2 Instance
 1. Open AWS EC2 Console → **Launch Instance**.
 2. Enter **Instance Name:** `demo-app-test-ami-builder`.
-3. Choose AMI: Ubuntu 24.04 LTS (or latest).
+3. Choose AMI: Ubuntu Server 24.04 LTS (HVM), SSD Volume Type .
 4. Instance Type: `t2.micro` (free-tier) or as required.
-5. Key Pair: Create or select an existing key pair (download `.pem` for terminal, `.ppk` for Putty).  
+5. Key Pair: Create or select an existing key pair (download `.pem` for terminal(Linux/Mac), `.ppk` for Putty(Windows)).  
    Name: `demo-app-private-key`.
-6. Network: Select your VPC → Subnet: `demo-app-public-subnet-1`.
-7. Enable **Auto-assign Public IP**.
+6. Network → Edit : Select your `demo-app-vpc` VPC → Subnet: `demo-app-public-subnet-1`.
+7. Enable `Auto-assign Public IP`.
 8. Security Group: Create or select:  
    - Name: `demo-app-test-ami-builder-sg`  
-   - Allow SSH (22) from your IP  
-   - Allow 5000 from your IP (Flask app)
-9. Attach IAM role: `demo-app-s3-dynamo-iam-role`.
+   - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
+   - Allow 5000 from Anywhere
+9. Under **Advanced details** → **IAM instance profile** Attach IAM role: `demo-app-s3-dynamo-iam-role`.
 10. Launch the instance and copy the **Public IP**.
+
+### ⚠️ Note
+
+Make sure **Auto-assign Public IP** is enabled; otherwise, you won’t be able to access the instance from the internet unless you manually associate an Elastic IP.
 
 ### 3. Connect to the Test AMI Builder
 
-**Terminal:**  
+1. Go to the EC2 instance you just launched.
+2. Under the **Details** section, find the **Public IPv4 address** and copy it.  
+   - This is the IP you will use to connect to the instance.
+3. Based on your workstation OS, choose one of the following:
+
+**For macOS/Linux (Terminal):**  
 ```bash
+# Set the correct permissions for your private key
 chmod 400 /path/to/your/key/demo-app-private-key.pem
+
+# Connect to your EC2 instance
 ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<EC2_PUBLIC_IP>
-```
+````
 
-**Putty:** use the `.ppk` file.
+**For Windows (Putty):**
 
-Your instance is ready for package installation, app deployment, testing, and AMI creation.
+1. Open **Putty**, enter the **Public IPv4 address** in the Host Name field.
+2. Under **SSH → Auth**, browse and select your `.ppk` key file.
+3. Click **Open** to connect.
+4. Enter Ubuntu username
+
+> ⚠️ **Note:** If SSH or port 22 is not working even after all correct configurations, you can temporarily allow SSH (port 22) from **all IPs (0.0.0.0/0)** in your security group to troubleshoot. Remember to tighten it later for security.
+
+✅ Once connected, your instance is ready for **package installation, application deployment, testing, and AMI creation**.
 
 ### 4. Install Dependencies
 
@@ -890,6 +1720,13 @@ def initialize_database():
 def get_db_connection():
     return pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD, database=RDS_DATABASE)
 
+# --------------------
+# Health Check
+# --------------------
+@app.route("/", methods=["GET"])
+def healthcheck():
+    return jsonify({"status": "ok", "message": "Service is healthy"}), 200
+
 # API Routes
 @app.route("/insert", methods=["POST"])
 def insert():
@@ -938,10 +1775,24 @@ if __name__ == "__main__":
 
 ### 6. Deploy HTML + JavaScript Frontend on S3
 
-1. Create S3 Bucket for frontend (e.g., `demo-app-frontend-s3-bucket-6789`).
-2. Disable **Block public access**.
-3. Enable **Static website hosting** → Index document: `index.html`.
-4. Set **Bucket Policy**:
+1. Open **AWS Console → Navigate to S3**.
+2. Click **Create bucket**.
+3. Enter a unique bucket name, for example:  
+   `demo-app-backend-s3-bucket-1234`  
+   
+   🚨 **Important:**  
+   - S3 bucket names must be globally unique across all AWS accounts.  
+   - You may use a different name if this one is not available.  
+   - **Note:** Keep a record of this bucket name as it will be required later.  
+   - It is recommended to add a random string at the end of the bucket name `demo-app-backend-s3-bucket-6789-<some-random-string>` to avoid conflicts or confusion.
+
+4. Choose the **same region** as your VPC (e.g., `us-east-1`).
+5. Disable **Block public access**. Tick the checkbox `I acknowledge that the current settings might result in this bucket and the objects within becoming public.`
+6. Disable **Bucket Versioning** (optional – useful to keep previous versions of uploaded files.)
+7. Leave other settings as default and click **Create bucket**.
+8. Click **Create bucket**.  
+9. Go to the Bucket → Properties → Static website hosting → Edit → Enable **Static website hosting** → Index document: `index.html`.
+4. Go to the Bucket → Permissions → Edit **Bucket Policy**: and paste the following. Change Resource ARN to match with you bucket name → Save changes
 
 ```json
 {
@@ -957,15 +1808,123 @@ if __name__ == "__main__":
 }
 ```
 
-5. Upload `index.html` and update `API_BASE` with EC2 IP:Port.
+5. **Download the `index.html` file** from the repo:
+   [Frontend `index.html`](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws/blob/dev/frontend/index.html)
+
+6. **Edit the file** to update the backend API endpoint:
+
+   * Open `index.html` in a text editor.
+   * Find the line with:
+
+     ```javascript
+     const API_BASE = "http://<EC2IP>:5000";
+     ```
+   * Replace `<EC2IP>` with your EC2 Public IP and keep the port unchanged, for example:
+
+     ```javascript
+     const API_BASE = "http://192.199.100.111:5000";
+     ```
+
+7. **Save the file** after updating the API endpoint.
+
+8. **Upload the updated `index.html`** to your frontend hosting S3 Bucket (`demo-app-frontend-s3-bucket-6789`):
+
+   * Go to your frontend S3 bucket → Upload → Select `index.html` → Upload.
+
 
 ### 7. Start the Flask Application
+
+1. **SSH into your EC2 instance** (Test AMI Builder) if not already connected.
+2. **Navigate to the Flask application directory** and set up the environment:
+
+```bash
+cd /home/ubuntu/flask-app
+python3 -m venv venv        # Create virtual environment
+source venv/bin/activate    # Activate virtual environment
+```
+
+3. **Start the Flask application**:
 
 ```bash
 python3 app.py
 ```
 
-> If connection fails due to RDS security group, allow inbound 3306 from `demo-app-test-ami-builder-sg`.
+4. **Expected logs** when the Flask app fails to start:
+
+```
+Traceback (most recent call last):
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 661, in connect
+    sock = socket.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    raise exceptions[0]
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/flask-app/app.py", line 90, in <module>
+    initialize_database()
+  File "/home/ubuntu/flask-app/app.py", line 22, in initialize_database
+    conn = pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 365, in __init__
+    self.connect()
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 723, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'my-demo-db.c66qvyoujzwv.us-east-1.rds.amazonaws.com' (timed out)")
+```
+
+> ⚠️ The connection to RDS fails, it is likely due to security group rules.
+> To resolve this:
+>
+> * Go to **EC2** → **Security Groups** → search the `demo-app-db-sg` security group.
+> * **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `3306` from the `demo-app-test-ami-builder-sg` security group → Save rule.
+> * After updating the rules, retry starting the Flask application.
+
+```bash
+python3 app.py
+```
+
+5. **Expected logs** when the Flask app starts successfully:
+
+```
+(venv) ubuntu@ip-10-0-1-100:~/flask-app$ python3 app.py
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.0.1.100:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 805-847-091
+```
+
+5. **Test the frontend**:
+   * Go to your frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`) → Properties → Copy the Bucket website endpoint URL.
+   
+   * Open this S3 website URL in your browser.
+
+   * The frontend should now communicate with your Flask backend running on EC2.
+
+> ✅ Now your frontend is connected to your backend services and ready for interaction.
+
+
+And You should be able to:
+
+* **Insert User** in RDS
+* **Fetch Users** from RDS
+* **Upload File** to S3
+* **List Files** in S3
+* **Fetch File Metadata** from DynamoDB
+
+After successfully deploying the frontend to S3 and accessing the S3 bucket website endpoint, you should see the application UI
+
+![App UI ](artifacts/app-ui-s3.png)
 
 ### 8. Configure Flask as a Systemd Service
 
@@ -1004,6 +1963,10 @@ sudo systemctl status flask-app
 
 ```bash
 sudo reboot
+```
+
+5. Connect back to the instance and start the application
+```bash
 sudo systemctl status flask-app
 ```
 
@@ -1011,7 +1974,7 @@ sudo systemctl status flask-app
 
 ---
 
-## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
+## Part 7: Create an AMI, Launch Template, and Auto Scaling Group (10 Mins)
 
 <details>
 <summary>📖 Theory: Immutable Infrastructure and Automated Scaling</summary>
@@ -1069,11 +2032,14 @@ sudo systemctl stop flask-app
 #### 1.2 Create an AMI from the Running Instance
 
 1. Go to AWS Console → **EC2 Dashboard**
-2. Select the running instance
+2. Select the running instance `demo-app-test-ami-builder`
 3. Click **Actions → Image and templates → Create Image**
 4. Provide an **Image Name** (e.g., `demo-app-ami`)
 5. Enable **No Reboot** (optional but recommended)
-6. Click **Create Image**
+6. Click **Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-ami` 
+7. Click **Create Image**
 
 #### 1.3 Verify AMI Creation
 
@@ -1092,11 +2058,11 @@ A Launch Template defines how instances are launched with predefined configurati
 #### 2.2 Configure Launch Template
 
 * **Template Name:** `demo-app-launch-template`
-* **AMI ID:** Select the AMI created above (`demo-app-ami`)
+* **AMI ID:** Select the AMI created above (`demo-app-ami`) from **MyAMIs**
 * **Instance Type:** `t2.micro` (or as per requirement)
 * **Key pair name:** `demo-app-private-key`
 * **Subnet:** Do not select (ASG will select subnets)
-* **Security Group:** Do not specify now (configure later)
+* **Security Group:** Select **Create security group** and do not specify rules now (configure them later), just specify the name now
 
   * Name: `demo-app-lt-asg-sg`
   * Description: Access from Bastion Host and LB
@@ -1129,25 +2095,36 @@ The ASG will automatically manage EC2 instances to ensure availability.
 
 * **ASG Name:** `demo-app-asg`
 * **Launch Template:** Select `demo-app-launch-template`
+* Click **Next**
 * **VPC and Subnets:**
 
   * VPC: `demo-app-vpc`
   * Subnets (Private): `demo-app-private-subnet-1`, `demo-app-private-subnet-2`, `demo-app-private-subnet-3`
 
-#### 3.3 Set Scaling Policies
+* Click **Next** and go to **Configure group size and scaling - optional** page
 
-* **Desired Capacity:** 2
-* **Min Instances:** 2
-* **Max Instances:** 3
-* **Automatic scaling:** Target tracking scaling policy
+#### 3.3 Configure group size and scaling - optional 
 
-#### 3.4 Add Tags
+* **Desired Capacity:** = 2
+* **Min Instances:** = 1
+* **Max Instances:** = 3
+* **Automatic scaling:** = Target tracking scaling policy
+* **Scaling policy name** = **Target Tracking Policy**
+* **Metric type** = Average CPU Utilization
+* **Target value** = 80
+* **Instance warmup** = 300 
 
-* **Key:** Name
+* Click **Next** and go to **Add tags - optional** page
 
-* **Value:** app-demo-asg-instances
+#### 3.4 Add tags - optional
 
-* Review & Click **Create ASG**
+* **Key:** `Name`
+
+* **Value:** `app-demo-asg-instances`
+
+* Click **Next** and go to **Review** page
+
+* Review & Click **Create Auto Scaling group**
 
 ### 4. Verify ASG Setup
 
@@ -1159,7 +2136,7 @@ The ASG will automatically manage EC2 instances to ensure availability.
 #### 4.2 Verify New Instances
 
 * Check the **Launch Time** of the instances to confirm they are newly created
-* Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances
+* Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances. Select one instance → Action → Security →Modify IAM Role. Here you should be able to see `demo-app-s3-dynamo-iam-role` attached to the instance.
 
 ---
 
@@ -1214,7 +2191,10 @@ Fill in the details:
 - **Port:** 5000 (Flask app port)  
 - **VPC:** `demo-app-vpc`  
 - **Health check protocol:** HTTP  
-- **Health check path:** `/`  
+- **Health check path:** `/`
+- Click **Add new tag**:  
+   - **Key:** `Name`
+   - **Value:** `demo-app-tg` 
 
 - Click **Next**  
 - **Do not manually register targets** (Auto Scaling will handle this)  
@@ -1228,7 +2208,8 @@ Fill in the details:
    - **Security group name:** `demo-app-lb-sg`  
    - **Description:** `demo-app-lb-sg for public access`  
    - **VPC:** `demo-app-vpc`  
-   - **Inbound Rule:** Port 80, Source: Anywhere  
+   - **Inbound Rule:** Port 80, Source: Anywhere-IPV4  
+3. Click **Create security group**   
 
 #### 2.2 Create the ALB
 1. Go to EC2 Dashboard → **Load Balancers** → **Create Load Balancer**  
@@ -1239,11 +2220,10 @@ Fill in the details:
 - **Scheme:** Internet-facing  
 - **IP address type:** IPv4  
 - **VPC:** `demo-app-vpc`  
-- **Availability Zones:** Select public subnets:  
-  `demo-app-public-subnet-1`, `demo-app-public-subnet-2`, `demo-app-public-subnet-3`
+- **Availability Zones:** Select public subnets: tick check-boxes `us-east-1a (use1-az1)`, `us-east-1b (use1-az2)`, `us-east-1c (use1-az4)` and select `demo-app-public-subnet-1`, `demo-app-public-subnet-2`, `demo-app-public-subnet-3` resepetively.
 
 **Configure Security Groups:**  
-- Use the SG created above: `demo-app-lb-sg`  
+- Use the SG created above: `demo-app-lb-sg` and remove the `default` SG.
 
 **Configure Listeners and Routing:**  
 - **Listener protocol:** HTTP  
@@ -1261,32 +2241,118 @@ Fill in the details:
 6. Select the target group `demo-app-tg`  
 7. Click **Update**
 
-### 4. Verify Load Balancer and ASG Integration
-1. Go to EC2 Dashboard → **Target Groups** → Select `demo-app-tg`  
-2. Click on **Targets** → Ensure ASG instances appear here  
-3. If instances are not healthy:  
-   - Go to ASG SG `demo-app-lt-asg-sg`  
-   - **Edit Inbound Rules**  
-   - Add rule:  
-     - **Port Range:** 5000  
-     - **Source:** Custom → select `demo-app-lb-sg`  
-   - Save rules  
 
-4. Test Load Balancer URL  
-- Go to **Load Balancers → demo-app-lb**  
-- Copy **DNS Name**  
-- Open a browser → Enter `http://<ALB-DNS-Name>`  
-- Your Flask app should load!
+### 4. Verify Load Balancer and ASG Integration
+
+1. Go to **EC2 Dashboard** → **Target Groups** → Select `demo-app-tg`.
+2. Click on **Targets** → The ASG instances will appear here, but they will likely show as **unhealthy**.
+
+   * This happens because:
+
+     * The ASG Security Group (`demo-app-lt-asg-sg`) does not have access from the Load Balancer Security Group (`demo-app-lb-sg`) on port `5000`.
+     * The DB Security Group (`demo-app-db-sg`) does not have access from the ASG Security Group (`demo-app-lt-asg-sg`) on port `3306`.
+
+### ✅ Steps to Fix
+
+1. **Allow ASG demo-app-lt-asg-sg to connect from Load Balancer demo-app-lb-sg**
+
+   - Go to **EC2** → **Security Groups** → search the `demo-app-lt-asg-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `5000` from the `demo-app-lb-sg` security group → Save rule.
+
+
+2. **Allow DB demo-app-db-sg to connect from ASG demo-app-lt-asg-sg**
+
+   - Go to **EC2** → **Security Groups** → search the `demo-app-db-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `3306` from the `demo-app-lt-asg-sg` security group → Save rule.
+
+
+3. **Terminate existing ASG instances**
+
+   * Go to **EC2 Console** → **Instances**.
+   * In the search bar, filter by `Name = app-demo-asg-instances`.
+   * Select all → **Instance state → Terminate instance** → Confirm.
+
+4. **Let ASG launch new instances**
+
+   * The Auto Scaling Group will replace the terminated instances.
+   * The new instances will now connect to both the Load Balancer and RDS successfully.
+
+5. **Test the Load Balancer URL**
+
+   * Go to **EC2** → **Load Balancers** → select `demo-app-lb`.
+   * Copy the **DNS Name**.
+   * Open a browser → `http://<ALB-DNS-Name>`.
+   * Your Flask app should load correctly and show.
+
+   ```
+   {
+     "message": "Service is healthy",
+     "status": "ok"
+   }
+   ```
+
+![App UI ALB ](artifacts/app-ui-lb.png)
+
 
 ### 5. Update `index.html`
 Since the frontend is hosted on S3 and the backend is now behind the ALB:  
-1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>:80`  
+1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>`
+
+   * Find the line with:
+
+     ```javascript
+     const API_BASE =
+     ```
+   * Replace `<EC2IP>:5000` with your Load Balancer DNS, for example:
+
+     ```javascript
+     const API_BASE = "http://demo-app-alb-1294615632.us-east-1.elb.amazonaws.com";
+     ```
+
 2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
 3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
+![App UI ALB ](artifacts/app-ui-after-lb.png)
+
 ---
 
-## Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
+## Part 9 Security Groups Overview
+
+A total of **5 Security Groups** were created to manage access between different components of the application.
+
+| **Security Group**                 | **Purpose**                                | **Inbound Rules**                                                                                                                                                                                                     |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`demo-app-lt-asg-sg`**           | Used by Auto Scaling Group (ASG) instances | - Port **5000** from `demo-app-lb-sg` (ALB)<br>- Port **22** from `demo-app-bastion-host-sg`                                                                                                                          |
+| **`demo-app-bastion-host-sg`**     | Bastion host to SSH into private instances | - Port **22** from `0.0.0.0/0`                                                                                                                                                                                        |
+| **`demo-app-test-ami-builder-sg`** | For building AMIs and test access          | - Port **5000** from `0.0.0.0/0`<br>- Port **22** from `0.0.0.0/0`                                                                                                                                                    |
+| **`demo-app-lb-sg`**               | Application Load Balancer (ALB)            | - Port **80** from `0.0.0.0/0`                                                                                                                                                                                        |
+| **`demo-app-db-sg`**               | RDS MySQL database                         | - Port **3306** from `demo-app-lt-asg-sg` (ASG)<br>- Port **3306** from `demo-app-test-ami-builder-sg` (for initial testing)<br>- Port **3306** from `152.58.11.96/32` (your IP; optional, not really required) |
+
+⚠️ **Note:**
+
+* The rule allowing your **personal IP (`152.58.11.96/32`)** into `demo-app-db-sg` is not manual; it is added by AWS when creating a new SG for RDS.
+* For security best practices, always keep SSH (port 22) restricted to known IPs instead of `0.0.0.0/0`.
+
+#### Screenshots  
+
+##### 1. demo-app-lt-asg-sg Rules
+![demo-app-lt-asg-sg](artifacts/demo-app-lt-asg-sg.png)
+
+##### 2. demo-app-bastion-host-sg Rules
+![demo-app-bastion-host-sg](artifacts/demo-app-bastion-host-sg.png)
+
+##### 3. demo-app-test-ami-builder-sg Rules
+![demo-app-test-ami-builder-sg](artifacts/demo-app-test-ami-builder-sg.png)
+
+##### 4. demo-app-lb-sg Rules
+![demo-app-lb-sg](artifacts/demo-app-lb-sg.png)
+
+##### 5. demo-app-db-sg Rules
+![demo-app-db-sg](artifacts/demo-app-db-sg.png)
+
+---
+
+## Part 10: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet
 
 <details>
 <summary>📖 Theory: Secure Access to Private Resources</summary>
@@ -1322,49 +2388,23 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 </details>
 
----
-
-### 1. Launch an EC2 Instance (Bastion Host)
-1. Go to AWS Management Console → **EC2** → **Launch Instance**  
-2. Enter an instance name: `demo-app-bastion-host`  
-
-**Choose AMI:**  
-- Ubuntu 24.04 LTS (or latest available)
-
-**Choose Instance Type:**  
-- t2.micro (free-tier) or as required  
-
-**Create/Select Key Pair:**  
-- If no key exists, create a new one, download, and keep it safe  
-- **Name:** demo-app-private-key  
-- Download `.ppk` for Putty  
-- Download `.pem` for Terminal  
-
-### 2. Configure Networking
-- **Network:** Select the VPC where the Bastion Host should be deployed  
-- **Subnet:** Select a Public Subnet (`demo-app-public-subnet-1`)  
-- **Auto-Assign Public IP:** Enabled  
-
-### 3. Set Up Security Group
-- Create a new SG or use an existing one:  
-  - **Name:** `demo-app-bastion-host-sg`  
-  - **Inbound Rule:** Allow SSH (port 22) from your IP (or 0.0.0.0/0 for testing; restrict in production)  
-
-### 4. Launch the Instance
-- Click **Launch Instance** and wait for it to start  
-- Copy the **Public IP Address** of the Bastion Host  
-
-### ⚠️ Note
-After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
-
-**To fix this:**  
-1. Update the **RDS Security Group** to allow inbound access from the new ASG SG.  
-2. Delete the existing ASG instances.  
-3. Let the ASG launch new instances — they will now connect to RDS successfully and the application will work correctly.
+### 2. Launch an EC2 Instance (Bastion Host)
+1. Open AWS EC2 Console → **Launch Instance**.
+2. Enter **Instance Name:** `demo-app-bastion-host`.
+3. Choose AMI: Ubuntu Server 24.04 LTS (HVM), SSD Volume Type .
+4. Instance Type: `t2.micro` (free-tier) or as required.
+5. Key Pair: Create or select an existing key pair (download `.pem` for terminal(Linux/Mac), `.ppk` for Putty(Windows)).  
+   Name: `demo-app-private-key`.
+6. Network → Edit : Select your `demo-app-vpc` VPC → Subnet: `demo-app-public-subnet-1`.
+7. Enable `Auto-assign Public IP`.
+8. Security Group: Create or select:  
+   - Name: `demo-app-bastion-host-sg`  
+   - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
+10. Launch the instance and copy the **Public IP**.
 
 ---
 
-## Part 10: Connect From Bastion Host to Private Instance
+## Part 11: Connect From Bastion Host to Private Instance
 
 <details>
 <summary>📖 Theory: Secure Access and Debugging with Bastion Hosts</summary>
@@ -1415,19 +2455,19 @@ scp -vvv -i ~/Downloads/demo-app-private-key.pem ~/Downloads/demo-app-private-ke
 
 ### 2. Update ASG Security Group
 
-* Update the ASG security group `demo-app-lt-asg-sg`
-* Add an **Inbound Rule:**
-
-  * **Port:** 22
-  * **Source:** Custom → select `demo-app-bastion-host-sg`
+   - Go to **EC2** → **Security Groups** → search the `demo-app-lt-asg-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `22` from the `demo-app-bastion-host-sg` security group → Save rule.
 
 ### 3. Connect to the Bastion Host
 
 **Terminal (Linux/Mac):**
 
 ```bash
-chmod 400 demo-app-private-key.pem
-ssh -i demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
+chmod 400 ~/Downloads/demo-app-private-key.pem
+```
+
+```bash
+ssh -i ~/Downloads/demo-app-private-key.pem ubuntu@<BASTION_PUBLIC_IP>
 ```
 
 **Putty (Windows):**
@@ -1460,6 +2500,19 @@ ssh -i "demo-app-private-key.pem" ubuntu@<PRIVATE_EC2_IP>
 ```bash
 sudo apt install net-tools
 ```
+2. Check the applications running and their port details. You should see a service running on ort 5000. This is our Flask App running on Port 5000
+
+```bash
+netstat -tulpn
+```
+
+```
+.
+.
+tcp        0      0 0.0.0.0:5000            0.0.0.0:*               LISTEN      572/python3      
+.
+.
+```
 
 2. Check Flask service logs:
 
@@ -1483,7 +2536,63 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 
 ---
 
-## Part 11: Cleanup – Terminate All Resources
+## Part 12:  Resources Summary
+
+demo-app-vpc
+demo-app-public-subnet-1
+demo-app-public-subnet-2
+demo-app-public-subnet-3
+demo-app-private-subnet-1
+demo-app-private-subnet-2
+demo-app-private-subnet-3
+demo-app-igw
+demo-app-public-rt
+demo-app-eip-1
+demo-app-nat-gateway-1
+demo-app-private-rt-1
+demo-app-private-rt-2
+demo-app-private-rt-3
+
+
+my-demo-db
+demo-app-db-sg
+
+demo-app-backend-s3-bucket-1234
+demo-app-s3-object-upload-notification
+demo-app-sns-topic
+demo-app-file-metadata-dynamodb
+demo-app-lambda-iam-role
+demo-app-metadata-lambda
+demo-app-lambda-iam-role
+
+demo-app-s3-dynamo-iam-role
+demo-app-test-ami-builder
+demo-app-private-key
+demo-app-test-ami-builder-sg
+
+demo-app-frontend-s3-bucket-6789
+
+demo-app-ami
+demo-app-launch-template
+demo-app-lt-asg-sg
+demo-app-asg
+demo-app-tg
+demo-app-lb-sg
+demo-app-alb
+
+demo-app-bastion-host
+demo-app-bastion-host-sg
+
+
+
+
+
+
+> This summary gives a complete overview of all AWS resources created during the workshop. In the next section, we will clean up all resources to avoid unnecessary charges.
+
+
+---
+## Part 13: Cleanup – Terminate All Resources
 
 <details>
 <summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
@@ -1528,49 +2637,324 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 ### Steps:
 
-1. **Terminate EC2 Instances**
+### 🧹 DynamoDB Table and Lambda Resources (AWS CLI)
 
-   * Go to **EC2 → Instances**.
-   * Select all instances (including Bastion host and application instances) and click **Terminate Instance**.
+```bash
+ROLE_NAME="demo-app-lambda-iam-role"
+# Delete SNS subscriptions and topic
+SNS_TOPIC_ARN=$(aws sns list-topics \
+    --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" \
+    --output text)
 
-2. **Delete Auto Scaling Group & Launch Template**
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "⚠️ SNS Topic demo-app-sns-topic not found. Skipping deletion."
+else
+    echo "Deleting subscriptions for SNS Topic: $SNS_TOPIC_ARN"
+    SUB_ARN_LIST=$(aws sns list-subscriptions-by-topic \
+        --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[].SubscriptionArn" --output text)
 
-   * Go to **EC2 → Auto Scaling Groups**.
-   * Delete the Auto Scaling Group.
-   * Go to **Launch Templates** and delete the corresponding launch template.
+    for SUB_ARN in $SUB_ARN_LIST; do
+        if [ "$SUB_ARN" != "PendingConfirmation" ]; then
+            aws sns unsubscribe --subscription-arn "$SUB_ARN" --no-cli-pager
+            echo "✅ Unsubscribed: $SUB_ARN"
+        else
+            echo "⚠️ Subscription is PendingConfirmation, skipping: $SUB_ARN"
+        fi
+    done
 
-3. **Deregister AMI**
+    aws sns delete-topic --topic-arn "$SNS_TOPIC_ARN" --no-cli-pager
+    echo "✅ SNS Topic deleted: $SNS_TOPIC_ARN"
+fi
 
-   * Go to **EC2 → AMIs**.
-   * Select your AMI and click **Deregister**.
-   * Delete associated snapshots to free up storage.
+# Delete Lambda Function
+LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
 
-4. **Delete RDS Database**
+if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
+    echo "⚠️ Lambda function demo-app-metadata-lambda not found. Skipping deletion."
+else
+    aws lambda delete-function --function-name demo-app-metadata-lambda --no-cli-pager
+    echo "✅ Lambda function deleted: demo-app-metadata-lambda"
+fi
 
-   * Go to **RDS → Databases**.
-   * Select your database and choose **Delete**.
-   * Optionally, skip final snapshot if not needed.
+# Delete IAM Role for Lambda
+ROLE_EXISTS=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output text 2>/dev/null)
 
-5. **Delete S3 Buckets**
+if [ -z "$ROLE_EXISTS" ] || [ "$ROLE_EXISTS" == "None" ]; then
+    echo "⚠️ IAM Role $ROLE_NAME not found. Skipping deletion."
+else
+    # Detach all attached policies
+    POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE_NAME" --query 'AttachedPolicies[].PolicyArn' --output text)
+    for POLICY_ARN in $POLICIES; do
+        aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN" --no-cli-pager
+        echo "✅ Detached policy: $POLICY_ARN"
+    done
 
-   * Go to **S3 → Buckets**.
-   * Empty all buckets and delete them.
+    # Delete the role
+    aws iam delete-role --role-name "$ROLE_NAME" --no-cli-pager
+    echo "✅ IAM Role deleted: $ROLE_NAME"
+fi
 
-6. **Delete DynamoDB Table**
+```
 
-   * Go to **DynamoDB → Tables**.
-   * Select the table used for file metadata and delete it.
 
-7. **Delete SNS Topics**
+### 🧹 Cleanup SNS Resources (AWS CLI)
 
-   * Go to **SNS → Topics**.
-   * Delete any topics created for notifications.
+```bash
+SNS_TOPIC_NAME="demo-app-sns-topic"
+S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 
-8. **Delete Security Groups and VPC**
+# Delete S3 Bucket Notification
+echo "Removing event notifications from S3 bucket: $S3_BUCKET_NAME"
 
-   * Go to **VPC → Security Groups** and delete custom security groups.
-   * Delete subnets, Internet Gateway, and finally the VPC itself.
+aws s3api put-bucket-notification-configuration \
+    --bucket $S3_BUCKET_NAME \
+    --notification-configuration '{}' --no-cli-pager
 
-> ⚠️ Make sure to double-check before deleting resources to avoid accidentally removing something important.
+echo "✅ Event notifications removed from S3 bucket: $S3_BUCKET_NAME"
+
+# Unsubscribe all emails from SNS Topic
+
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+
+if [ "$SNS_TOPIC_ARN" == "None" ] || [ -z "$SNS_TOPIC_ARN" ]; then
+    echo "⚠️ SNS Topic $SNS_TOPIC_NAME not found"
+else
+    echo "Fetching subscriptions for SNS Topic: $SNS_TOPIC_NAME"
+    SUBSCRIPTION_ARNS=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[].SubscriptionArn" --output text)
+
+   for SUB_ARN in $SUBSCRIPTION_ARNS; do
+      if [ "$SUB_ARN" == "PendingConfirmation" ]; then
+         echo "⚠️ Subscription pending confirmation, cannot unsubscribe: $SUB_ARN"
+         continue
+      fi
+
+      aws sns unsubscribe --subscription-arn $SUB_ARN --no-cli-pager
+      echo "✅ Unsubscribed: $SUB_ARN"
+   done
+
+
+    # Delete SNS Topic
+    aws sns delete-topic --topic-arn $SNS_TOPIC_ARN --no-cli-pager
+    echo "✅ SNS Topic deleted: $SNS_TOPIC_NAME ($SNS_TOPIC_ARN)"
+fi
+
+```
+
+### 🧹 Cleanup Backend S3 Resources (AWS CLI)
+
+```bash
+BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+REGION="us-east-1"
+
+echo "Deleting all objects from S3 Bucket: $BUCKET_NAME"
+
+aws s3 rm s3://$BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
+
+echo "Deleting S3 Bucket: $BUCKET_NAME"
+aws s3api delete-bucket \
+    --bucket $BUCKET_NAME \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+
+# Verify deletion
+if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+    echo "⚠️ Failed to delete S3 Bucket: $BUCKET_NAME"
+else
+    echo "✅ S3 Bucket deleted: $BUCKET_NAME"
+fi
+
+```
+
+
+### 🧹 Cleanup RDS Resources (AWS CLI)
+
+```bash
+DB_INSTANCE_ID="my-demo-db"
+DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
+DB_SECURITY_GROUP_NAME="demo-app-db-sg"
+REGION="us-east-1"
+
+echo "Deleting RDS Instance: $DB_INSTANCE_ID"
+
+# Delete RDS instance without final snapshot
+aws rds delete-db-instance \
+    --db-instance-identifier $DB_INSTANCE_ID \
+    --skip-final-snapshot \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+
+# Wait until instance is deleted
+aws rds wait db-instance-deleted \
+    --db-instance-identifier $DB_INSTANCE_ID \
+    --region $REGION
+echo "✅ RDS Instance deleted: $DB_INSTANCE_ID"
+
+# Delete DB Subnet Group
+echo "Deleting DB Subnet Group: $DB_SUBNET_GROUP_NAME"
+aws rds delete-db-subnet-group \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+echo "✅ DB Subnet Group deleted: $DB_SUBNET_GROUP_NAME"
+
+# Delete Security Group
+echo "Deleting Security Group: $DB_SECURITY_GROUP_NAME"
+DB_SG_ID=$(aws ec2 describe-security-groups \
+    --filters Name=group-name,Values=$DB_SECURITY_GROUP_NAME \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION)
+
+if [ "$DB_SG_ID" != "None" ]; then
+    aws ec2 delete-security-group \
+        --group-id $DB_SG_ID \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+    echo "✅ Security Group deleted: $DB_SECURITY_GROUP_NAME ($DB_SG_ID)"
+else
+    echo "⚠️ Security Group not found: $DB_SECURITY_GROUP_NAME"
+fi
+```
+
+
+### 🧹 Cleanup VPC Resources (AWS CLI)
+
+### **1. Delete NAT Gateway**
+
+```bash
+echo "Deleting NAT Gateway: demo-app-nat-gateway-1"
+
+# Get the NAT Gateway ID with the given Name AND State=available
+NAT_ID=$(aws ec2 describe-nat-gateways \
+    --filters "Name=tag:Name,Values=demo-app-nat-gateway-1" "Name=state,Values=available" \
+    --query "NatGateways[0].NatGatewayId" \
+    --output text --no-cli-pager)
+
+if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
+    aws ec2 delete-nat-gateway --nat-gateway-id $NAT_ID --no-cli-pager
+    echo "✅ NAT Gateway deletion initiated: $NAT_ID"
+
+    # Wait until NAT Gateway is deleted
+    echo "⏳ Waiting for NAT Gateway to be deleted..."
+    aws ec2 wait nat-gateway-deleted --nat-gateway-ids $NAT_ID --no-cli-pager
+    echo "✅ NAT Gateway fully deleted: $NAT_ID"
+else
+    echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found in available state"
+fi
+
+```
 
 ---
+
+### **2. Release Elastic IP**
+
+```bash
+echo "Releasing Elastic IP: demo-app-eip-1"
+EIP_ALLOC_ID=$(aws ec2 describe-addresses \
+    --filters "Name=tag:Name,Values=demo-app-eip-1" \
+    --query "Addresses[0].AllocationId" \
+    --output text --no-cli-pager)
+
+if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
+    aws ec2 release-address --allocation-id $EIP_ALLOC_ID --no-cli-pager
+    echo "✅ Elastic IP released: $EIP_ALLOC_ID"
+else
+    echo "⚠️ Elastic IP demo-app-eip-1 not found"
+fi
+```
+
+---
+
+### **3. Detach & Delete Internet Gateway**
+
+```bash
+echo "Deleting Internet Gateway: demo-app-igw"
+IGW_ID=$(aws ec2 describe-internet-gateways \
+    --filters "Name=tag:Name,Values=demo-app-igw" \
+    --query "InternetGateways[0].InternetGatewayId" \
+    --output text --no-cli-pager)
+
+if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
+    VPC_ID=$(aws ec2 describe-internet-gateways --internet-gateway-ids $IGW_ID \
+        --query "InternetGateways[0].Attachments[0].VpcId" --output text --no-cli-pager)
+    aws ec2 detach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
+    aws ec2 delete-internet-gateway --internet-gateway-id $IGW_ID --no-cli-pager
+    echo "✅ Internet Gateway deleted: $IGW_ID"
+else
+    echo "⚠️ Internet Gateway demo-app-igw not found"
+fi
+```
+
+---
+
+### **4. Delete Public & Private Route Tables**
+
+```bash
+for RT_NAME in demo-app-public-rt demo-app-private-rt-1; do
+    echo "Deleting Route Table: $RT_NAME"
+    RT_ID=$(aws ec2 describe-route-tables \
+        --filters "Name=tag:Name,Values=$RT_NAME" \
+        --query "RouteTables[0].RouteTableId" \
+        --output text --no-cli-pager)
+
+    if [ "$RT_ID" != "None" ] && [ -n "$RT_ID" ]; then
+        # Disassociate any associated subnets
+        ASSOCIATIONS=$(aws ec2 describe-route-tables --route-table-ids $RT_ID \
+            --query "RouteTables[0].Associations[?Main==\`false\`].RouteTableAssociationId" \
+            --output text --no-cli-pager)
+        for assoc in $ASSOCIATIONS; do
+            aws ec2 disassociate-route-table --association-id $assoc --no-cli-pager
+        done
+        aws ec2 delete-route-table --route-table-id $RT_ID --no-cli-pager
+        echo "✅ Route Table deleted: $RT_NAME ($RT_ID)"
+    else
+        echo "⚠️ Route Table $RT_NAME not found"
+    fi
+done
+```
+
+---
+
+### **5. Delete Subnets**
+
+```bash
+for SUBNET in demo-app-public-subnet-1 demo-app-public-subnet-2 demo-app-public-subnet-3 demo-app-private-subnet-1 demo-app-private-subnet-2 demo-app-private-subnet-3; do
+    echo "Deleting Subnet: $SUBNET"
+    SUBNET_ID=$(aws ec2 describe-subnets \
+        --filters "Name=tag:Name,Values=$SUBNET" \
+        --query "Subnets[0].SubnetId" --output text --no-cli-pager)
+    
+    if [ "$SUBNET_ID" != "None" ] && [ -n "$SUBNET_ID" ]; then
+        aws ec2 delete-subnet --subnet-id $SUBNET_ID --no-cli-pager
+        echo "✅ Subnet deleted: $SUBNET ($SUBNET_ID)"
+    else
+        echo "⚠️ Subnet $SUBNET not found"
+    fi
+done
+```
+
+---
+
+### **6. Delete VPC**
+
+```bash
+echo "Deleting VPC: demo-app-vpc"
+VPC_ID=$(aws ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=demo-app-vpc" \
+    --query "Vpcs[0].VpcId" --output text --no-cli-pager)
+
+if [ "$VPC_ID" != "None" ] && [ -n "$VPC_ID" ]; then
+    aws ec2 delete-vpc --vpc-id $VPC_ID --no-cli-pager
+    echo "✅ VPC deleted: $VPC_ID"
+else
+    echo "⚠️ VPC demo-app-vpc not found"
+fi
+```
+
+---
+
+✅ **Notes:**
+
+* The commands use **`--no-cli-pager`** so you don’t need to press `q` after viewing outputs.
+* The `if [ "$ID" != "None" ]` check ensures commands won’t fail if a resource doesn’t exist.
+* This covers **NAT Gateway, Elastic IP, IGW, Route Tables, Subnets, and VPC**.
