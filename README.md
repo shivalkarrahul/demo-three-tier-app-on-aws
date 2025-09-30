@@ -302,7 +302,13 @@ This layered setup enforces **security, availability, and scalability**. Public 
 5. Keep all other settings as **default**.     
 6. Click **Create VPC**.
 
-**AWS CLI Command:**
+You could make it a bit lighthearted like this:
+
+---
+
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 echo "Creating VPC: demo-app-vpc"
@@ -330,7 +336,9 @@ fi
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-**AWS CLI Command:**
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 declare -A PUBLIC_SUBNETS=(
@@ -368,7 +376,9 @@ done
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
 
-**AWS CLI Command:**
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 declare -A PRIVATE_SUBNETS=(
@@ -404,7 +414,9 @@ done
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
 
-**AWS CLI Commands:**
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 echo "Creating Internet Gateway: demo-app-igw"
@@ -442,7 +454,9 @@ fi
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
-**AWS CLI Commands:**
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 echo "Creating Public Route Table: demo-app-public-rt"
@@ -474,9 +488,6 @@ fi
 
 In this step, we will create NAT Gateways to allow instances in private subnets to access the internet for updates and downloads.
 
-<details>
-<summary>✅ Demo Setup (1 NAT Gateway)</summary>
-
 This setup uses **a single NAT Gateway** for all private subnets to save costs.
 
 #### 5.1 Allocate Elastic IP
@@ -487,7 +498,9 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
    - **Key:** `Name`
    - **Value:** `demo-app-eip-1`
 
-**AWS CLI Commands:**
+**AWS CLI Command (Alternative to Console):**
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
 ```bash
 # 1️⃣ Allocate Elastic IP for NAT Gateway
@@ -557,57 +570,12 @@ aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
 echo "✅ NAT Gateway is available"
 ```
 
-</details>
-
-<details>
-<summary>✅ Prod Setup (3 NAT Gateways)[DO NOT FOLLOW THIS]</summary>
-
-This setup uses **one NAT Gateway per public subnet** for high availability and fault tolerance.
-
-#### 5.1 Allocate Elastic IPs
-
-1. Go to **Elastic IPs** in AWS Console.
-2. Click **Allocate Elastic IP → Allocate** **3 times** (one for each NAT Gateway).
-3. For each Elastic IP, click **Tags → Add new tag**:  
-   - **Key:** `Name`  
-   - **Value:** `demo-app-eip-1`, `demo-app-eip-2`, and `demo-app-eip-3` respectively
-
-
-#### 5.2 Create NAT Gateways
-
-**NAT Gateway 1**
-
-* Name: `demo-app-nat-gateway-1`
-* Subnet: `demo-app-public-subnet-1`
-* Elastic IP: `demo-app-eip-1` first Elastic IP
-* Click **Create**, wait until **Available**
-
-**NAT Gateway 2**
-
-* Name: `demo-app-nat-gateway-2`
-* Subnet: `demo-app-public-subnet-2`
-* Elastic IP: `demo-app-eip-2` second Elastic IP
-* Click **Create**, wait until **Available**
-
-**NAT Gateway 3**
-
-* Name: `demo-app-nat-gateway-3`
-* Subnet: `demo-app-public-subnet-3`
-* Elastic IP: `demo-app-eip-3` third Elastic IP
-* Click **Create**, wait until **Available**
-
-✅ Each NAT Gateway will be associated with its respective private subnet.
-
-</details>
-
-✅ **Note:** Proceed to the next step (creating private route tables) only after all NAT Gateways show **Available**.
+✅ **Note:** Proceed to the next step (creating private route tables) only after the NAT Gateway shows **Available**.
 
 ### 6. Create Route Tables for Private Subnets
 
 In this step, we will create route tables to direct traffic from private subnets to the internet via NAT Gateways.
 
-<details>
-<summary>✅ Demo Setup (1 Route Table)</summary>
 
 This setup uses **one NAT Gateway** for all private subnets → only **one route table** is needed.
 
@@ -690,63 +658,9 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
 done
 ```
 
-</details>
-
-<details>
-<summary>✅ Prod Setup (3 Route Tables) [DO NOT FOLLOW THIS]</summary>
-
-This setup uses **one NAT Gateway per private subnet**, requiring **three route tables** for high availability.
-
-#### 6.1 Route Table for Private Subnet 1
-
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
-
-   * **Name:** `demo-app-private-rt-1`
-   * **VPC:** `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
-
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-1`
-5. Associate **private-subnet-1**.
-
-#### 6.2 Route Table for Private Subnet 2
-
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
-
-   * Name: `demo-app-private-rt-2`
-   * VPC: `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
-
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-2`
-5. Associate **private-subnet-2**.
-
-#### 6.3 Route Table for Private Subnet 3
-
-1. Go to **Route Tables → Create Route Table**.
-2. Enter:
-
-   * Name: `demo-app-private-rt-3`
-   * VPC: `demo-app-vpc`
-3. Click **Create**.
-4. Edit Routes → Add Route:
-
-   * Destination: `0.0.0.0/0`
-   * Target: NAT → `demo-app-nat-gateway-3`
-5. Associate **private-subnet-3**.
-
-✅ Each private subnet now has its **own NAT Gateway via separate route tables**.
-
-</details>
-
 ✅ **Note:**
-
-* **Demo readers:** use only `demo-app-private-rt-1` for all private subnets.
-* **Prod readers:** use three route tables, one per private subnet.
+* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
+* NAT Gateways incur charges — one is enough for demos.
 * After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
 
 ---
