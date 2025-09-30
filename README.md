@@ -1081,6 +1081,93 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
+
+<details>
+<summary>AWS CLI Command (Alternative to Console)</summary>
+
+
+```bash
+SNS_TOPIC_NAME="demo-app-sns-topic"
+S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+EVENT_NAME="demo-app-s3-object-upload-notification"
+
+#Create SNS Topic
+echo "Creating SNS Topic: $SNS_TOPIC_NAME"
+
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+
+if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
+    echo "⚠️ SNS Topic already exists: $SNS_TOPIC_ARN"
+else
+    SNS_TOPIC_ARN=$(aws sns create-topic --name $SNS_TOPIC_NAME --query 'TopicArn' --output text)
+    echo "✅ SNS Topic created: $SNS_TOPIC_ARN"
+fi
+
+# Subscribe Email to SNS Topic
+EMAIL="your-email@example.com"
+echo "Subscribing email $EMAIL to SNS Topic $SNS_TOPIC_NAME"
+
+SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[?Endpoint=='$EMAIL'].SubscriptionArn" --output text)
+
+if [ "$SUBSCRIPTION_ARN" != "None" ] && [ -n "$SUBSCRIPTION_ARN" ]; then
+    echo "⚠️ Email already subscribed: $EMAIL"
+else
+    aws sns subscribe --topic-arn $SNS_TOPIC_ARN --protocol email --notification-endpoint $EMAIL
+    echo "✅ Subscription request sent. Confirm the subscription from your email: $EMAIL"
+fi
+
+# Update SNS Topic Policy to Allow S3 to Publish
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+echo "Updating SNS Topic Policy to allow S3 to publish"
+
+SNS_POLICY=$(cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "AllowS3ToPublish",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SNS:Publish",
+      "Resource": "$SNS_TOPIC_ARN",
+      "Condition": {
+        "StringEquals": {
+          "aws:SourceAccount": "$AWS_ACCOUNT_ID"
+        }
+      }
+    }
+  ]
+}
+EOF
+)
+
+aws sns set-topic-attributes --topic-arn $SNS_TOPIC_ARN --attribute-name Policy --attribute-value "$SNS_POLICY"
+echo "✅ SNS Topic policy updated to allow S3 to publish"
+
+# Configure S3 Bucket Event Notification to Trigger SNS
+
+echo "Configuring S3 Bucket $S3_BUCKET_NAME to trigger SNS Topic on object create"
+
+aws s3api put-bucket-notification-configuration \
+    --bucket $S3_BUCKET_NAME \
+    --notification-configuration "{
+        \"TopicConfigurations\": [
+            {
+                \"Id\": \"$EVENT_NAME\",
+                \"TopicArn\": \"$SNS_TOPIC_ARN\",
+                \"Events\": [\"s3:ObjectCreated:*\"] 
+            }
+        ]
+    }"
+echo "✅ S3 bucket configured to send SNS notifications on object upload"
+
+```
+
+</details>
+
 ---
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage (5 Mins)
@@ -2340,6 +2427,49 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ---
 
 ### Steps:
+
+### 🧹 Cleanup SNS Resources (AWS CLI)
+
+```bash
+SNS_TOPIC_NAME="demo-app-sns-topic"
+S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+
+# Delete S3 Bucket Notification
+echo "Removing event notifications from S3 bucket: $S3_BUCKET_NAME"
+
+aws s3api put-bucket-notification-configuration \
+    --bucket $S3_BUCKET_NAME \
+    --notification-configuration '{}' --no-cli-pager
+
+echo "✅ Event notifications removed from S3 bucket: $S3_BUCKET_NAME"
+
+# Unsubscribe all emails from SNS Topic
+
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+
+if [ "$SNS_TOPIC_ARN" == "None" ] || [ -z "$SNS_TOPIC_ARN" ]; then
+    echo "⚠️ SNS Topic $SNS_TOPIC_NAME not found"
+else
+    echo "Fetching subscriptions for SNS Topic: $SNS_TOPIC_NAME"
+    SUBSCRIPTION_ARNS=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[].SubscriptionArn" --output text)
+
+   for SUB_ARN in $SUBSCRIPTION_ARNS; do
+      if [ "$SUB_ARN" == "PendingConfirmation" ]; then
+         echo "⚠️ Subscription pending confirmation, cannot unsubscribe: $SUB_ARN"
+         continue
+      fi
+
+      aws sns unsubscribe --subscription-arn $SUB_ARN --no-cli-pager
+      echo "✅ Unsubscribed: $SUB_ARN"
+   done
+
+
+    # Delete SNS Topic
+    aws sns delete-topic --topic-arn $SNS_TOPIC_ARN --no-cli-pager
+    echo "✅ SNS Topic deleted: $SNS_TOPIC_NAME ($SNS_TOPIC_ARN)"
+fi
+
+```
 
 ### 🧹 Cleanup Backend S3 Resources (AWS CLI)
 
