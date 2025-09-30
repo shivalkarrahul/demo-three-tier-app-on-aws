@@ -1283,8 +1283,8 @@ pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'my-demo-
 > ⚠️ The connection to RDS fails, it is likely due to security group rules.
 > To resolve this:
 >
-> * Go to **EC2** → **Security Groups** → search the **demo-app-db-sg** security group.
-> * **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range **3306** from the **demo-app-test-ami-builder-sg** security group → Save rule.
+> * Go to **EC2** → **Security Groups** → search the `demo-app-db-sg` security group.
+> * **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `3306` from the `demo-app-test-ami-builder-sg` security group → Save rule.
 > * After updating the rules, retry starting the Flask application.
 
 ```bash
@@ -1366,6 +1366,10 @@ sudo systemctl status flask-app
 
 ```bash
 sudo reboot
+```
+
+5. Connect back to the instance and start the application
+```bash
 sudo systemctl status flask-app
 ```
 
@@ -1373,7 +1377,7 @@ sudo systemctl status flask-app
 
 ---
 
-## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
+## Part 7: Create an AMI, Launch Template, and Auto Scaling Group (10 Mins)
 
 <details>
 <summary>📖 Theory: Immutable Infrastructure and Automated Scaling</summary>
@@ -1431,7 +1435,7 @@ sudo systemctl stop flask-app
 #### 1.2 Create an AMI from the Running Instance
 
 1. Go to AWS Console → **EC2 Dashboard**
-2. Select the running instance
+2. Select the running instance `demo-app-test-ami-builder`
 3. Click **Actions → Image and templates → Create Image**
 4. Provide an **Image Name** (e.g., `demo-app-ami`)
 5. Enable **No Reboot** (optional but recommended)
@@ -1644,22 +1648,31 @@ Fill in the details:
 1. Go to EC2 Dashboard → **Target Groups** → Select `demo-app-tg`  
 2. Click on **Targets** → Ensure ASG instances appear here  
 3. If instances are not healthy:  
-   - Go to ASG SG `demo-app-lt-asg-sg`  
-   - **Edit Inbound Rules**  
-   - Add rule:  
-     - **Port Range:** 5000  
-     - **Source:** Custom → select `demo-app-lb-sg`  
-   - Save rules  
+
+   - Go to **EC2** → **Security Groups** → search the `demo-app-lt-asg-sg` security group.
+   - **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range `5000` from the `demo-app-lb-sg` security group → Save rule.
 
 4. Test Load Balancer URL  
-- Go to **Load Balancers → demo-app-lb**  
+- Go to **Load Balancers** → `demo-app-lb` → **Details**
 - Copy **DNS Name**  
 - Open a browser → Enter `http://<ALB-DNS-Name>`  
 - Your Flask app should load!
 
 ### 5. Update `index.html`
 Since the frontend is hosted on S3 and the backend is now behind the ALB:  
-1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>:80`  
+1. Update `API_BASE` in `index.html` to point to `http://<ALB-DNS-Name>`
+
+   * Find the line with:
+
+     ```javascript
+     const API_BASE =
+     ```
+   * Replace `<EC2IP>:5000` with your Load Balancer DNS, for example:
+
+     ```javascript
+     const API_BASE = "http://demo-app-alb-1294615632.us-east-1.elb.amazonaws.com";
+     ```
+
 2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
 3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
@@ -1701,37 +1714,19 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 </details>
 
----
-
-### 1. Launch an EC2 Instance (Bastion Host)
-1. Go to AWS Management Console → **EC2** → **Launch Instance**  
-2. Enter an instance name: `demo-app-bastion-host`  
-
-**Choose AMI:**  
-- Ubuntu 24.04 LTS (or latest available)
-
-**Choose Instance Type:**  
-- t2.micro (free-tier) or as required  
-
-**Create/Select Key Pair:**  
-- If no key exists, create a new one, download, and keep it safe  
-- **Name:** demo-app-private-key  
-- Download `.ppk` for Putty  
-- Download `.pem` for Terminal  
-
-### 2. Configure Networking
-- **Network:** Select the VPC `demo-app-vpc` where the Bastion Host should be deployed  
-- **Subnet:** Select a Public Subnet (`demo-app-public-subnet-1`)  
-- **Auto-Assign Public IP:** Enabled  
-
-### 3. Set Up Security Group
-- Create a new SG or use an existing one:  
-  - **Name:** `demo-app-bastion-host-sg`  
-  - **Inbound Rule:** Allow SSH (port 22) from your IP (or 0.0.0.0/0 for testing; restrict in production)  
-
-### 4. Launch the Instance
-- Click **Launch Instance** and wait for it to start  
-- Copy the **Public IP Address** of the Bastion Host  
+### 2. Launch an EC2 Instance (Bastion Host)
+1. Open AWS EC2 Console → **Launch Instance**.
+2. Enter **Instance Name:** `demo-app-bastion-host`.
+3. Choose AMI: Ubuntu Server 24.04 LTS (HVM), SSD Volume Type .
+4. Instance Type: `t2.micro` (free-tier) or as required.
+5. Key Pair: Create or select an existing key pair (download `.pem` for terminal(Linux/Mac), `.ppk` for Putty(Windows)).  
+   Name: `demo-app-private-key`.
+6. Network → Edit : Select your `demo-app-vpc` VPC → Subnet: `demo-app-public-subnet-1`.
+7. Enable `Auto-assign Public IP`.
+8. Security Group: Create or select:  
+   - Name: `demo-app-bastion-host-sg`  
+   - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
+10. Launch the instance and copy the **Public IP**.
 
 ### ⚠️ Note
 After creating the Auto Scaling Group (ASG) with a new Launch Template and SG, the ASG instances may fail to connect to the RDS because the new SG is not allowed in the RDS SG.  
