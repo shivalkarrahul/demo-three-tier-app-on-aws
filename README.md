@@ -306,13 +306,6 @@ You could make it a bit lighthearted like this:
 
 ---
 
-
-111
-You can make the expandable AWS CLI section more visible and inviting by **adding a short, playful intro line before the collapse/expand block** and giving the section a clear heading. For example:
-
----
-
-
 **AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
 
 <details>
