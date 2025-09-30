@@ -493,7 +493,7 @@ else
 fi
 
 ```
-</detail>
+</details>
 
 ### 5. Create NAT Gateways
 
@@ -529,7 +529,7 @@ else
     echo "✅ Elastic IP allocated: $EIP_ALLOC_ID"
 fi
 ```
-</detail>
+</details>
 
 #### 5.2 Create NAT Gateway
 
