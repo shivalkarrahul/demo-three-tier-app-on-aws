@@ -246,7 +246,7 @@ This guide is intended for students and developers who want to **learn hands-on 
 ## Architecture Diagram - Three-Tier Architecture Overview
 ![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
 
-## Part 1: Network Setup
+## Part 1: Network Setup (7 Mins)
 
 <details>
 <summary>📖 Theory: Understanding the Network Setup</summary>
@@ -525,7 +525,7 @@ This setup uses **one NAT Gateway per private subnet**, requiring **three route 
 
 ---
 
-## Part 2: Set Up RDS
+## Part 2: Set Up RDS (3 Mins)
 
 <details>
 <summary>📖 Theory: The Data Layer</summary>
@@ -607,7 +607,7 @@ Placing the database in private subnets enforces **security best practices** whi
 ---
 
 
-## Part 3: Set Up S3
+## Part 3: Set Up S3 (1 Min)
 
 <details>
 <summary>📖 Theory: The Storage Layer</summary>
@@ -662,7 +662,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 4. Choose the **same region** as your VPC (e.g., `us-east-1`).
 5. Keep **Block Public Access enabled** (recommended for security).
-6. Enable **Bucket Versioning** (optional) – useful to keep previous versions of uploaded files.
+6. Disable **Bucket Versioning** (optional – useful to keep previous versions of uploaded files.)
 7. Leave other settings as default and click **Create bucket**.
 8. Click **Create bucket**.  
 
@@ -671,7 +671,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 ---
 
-## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
+## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads (4 mins)
 
 <details>
 <summary>📖 Theory: Decoupled Messaging and Events</summary>
@@ -782,7 +782,7 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 ---
 
-## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
+## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage (5 Mins)
 
 <details>
 <summary>📖 Theory: Serverless Data Processing and Storage</summary>
@@ -945,7 +945,7 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 ---
 
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
-
+(20 Mins)
 <details>
 <summary>📖 Theory: The Application Layer and Service Integration</summary>
 
@@ -1011,14 +1011,18 @@ The **application layer** is the glue that ties everything together — frontend
 4. Instance Type: `t2.micro` (free-tier) or as required.
 5. Key Pair: Create or select an existing key pair (download `.pem` for terminal(Linux/Mac), `.ppk` for Putty(Windows)).  
    Name: `demo-app-private-key`.
-6. Network → Edit : Select your VPC → Subnet: `demo-app-public-subnet-1`.
-7. Enable **Auto-assign Public IP**.
+6. Network → Edit : Select your `demo-app-vpc` VPC → Subnet: `demo-app-public-subnet-1`.
+7. Enable `Auto-assign Public IP`.
 8. Security Group: Create or select:  
    - Name: `demo-app-test-ami-builder-sg`  
-   - Allow SSH (22) from Anywhere-IPv4
-   - Allow 5000 from Anywhere-IPv4
+   - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
+   - Allow 5000 from Anywhere
 9. Under **Advanced details** → **IAM instance profile** Attach IAM role: `demo-app-s3-dynamo-iam-role`.
 10. Launch the instance and copy the **Public IP**.
+
+### ⚠️ Note
+
+Make sure **Auto-assign Public IP** is enabled; otherwise, you won’t be able to access the instance from the internet unless you manually associate an Elastic IP.
 
 ### 3. Connect to the Test AMI Builder
 
@@ -1046,11 +1050,6 @@ ssh -i /path/to/your/key/demo-app-private-key.pem ubuntu@<EC2_PUBLIC_IP>
 > ⚠️ **Note:** If SSH or port 22 is not working even after all correct configurations, you can temporarily allow SSH (port 22) from **all IPs (0.0.0.0/0)** in your security group to troubleshoot. Remember to tighten it later for security.
 
 ✅ Once connected, your instance is ready for **package installation, application deployment, testing, and AMI creation**.
-
-```
-
----
-
 
 ### 4. Install Dependencies
 
@@ -1179,10 +1178,24 @@ if __name__ == "__main__":
 
 ### 6. Deploy HTML + JavaScript Frontend on S3
 
-1. Create S3 Bucket for frontend (e.g., `demo-app-frontend-s3-bucket-6789`).
-2. Disable **Block public access**.
-3. Go to the Bucket → Properties → Static website hosting → Edit → Enable **Static website hosting** → Index document: `index.html`.
-4. Go to the Bucket → Permissions → Edit **Bucket Policy**: and paste the folloing. Change Resource ARN to match with you bucket name → Save changes
+1. Open **AWS Console → Navigate to S3**.
+2. Click **Create bucket**.
+3. Enter a unique bucket name, for example:  
+   `demo-app-backend-s3-bucket-1234`  
+   
+   🚨 **Important:**  
+   - S3 bucket names must be globally unique across all AWS accounts.  
+   - You may use a different name if this one is not available.  
+   - **Note:** Keep a record of this bucket name as it will be required later.  
+   - It is recommended to add a random string at the end of the bucket name `demo-app-backend-s3-bucket-6789-<some-random-string>` to avoid conflicts or confusion.
+
+4. Choose the **same region** as your VPC (e.g., `us-east-1`).
+5. Disable **Block public access**. Tick the checkbox `I acknowledge that the current settings might result in this bucket and the objects within becoming public.`
+6. Disable **Bucket Versioning** (optional – useful to keep previous versions of uploaded files.)
+7. Leave other settings as default and click **Create bucket**.
+8. Click **Create bucket**.  
+9. Go to the Bucket → Properties → Static website hosting → Edit → Enable **Static website hosting** → Index document: `index.html`.
+4. Go to the Bucket → Permissions → Edit **Bucket Policy**: and paste the following. Change Resource ARN to match with you bucket name → Save changes
 
 ```json
 {
@@ -1239,18 +1252,46 @@ source venv/bin/activate    # Activate virtual environment
 python3 app.py
 ```
 
-> ⚠️ If the connection to RDS fails, it is likely due to security group rules.
+4. **Expected logs** when the Flask app fails to start:
+
+```
+Traceback (most recent call last):
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 661, in connect
+    sock = socket.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 852, in create_connection
+    raise exceptions[0]
+  File "/usr/lib/python3.12/socket.py", line 837, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ubuntu/flask-app/app.py", line 90, in <module>
+    initialize_database()
+  File "/home/ubuntu/flask-app/app.py", line 22, in initialize_database
+    conn = pymysql.connect(host=RDS_HOST, user=RDS_USER, password=RDS_PASSWORD)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 365, in __init__
+    self.connect()
+  File "/home/ubuntu/flask-app/venv/lib/python3.12/site-packages/pymysql/connections.py", line 723, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'my-demo-db.c66qvyoujzwv.us-east-1.rds.amazonaws.com' (timed out)")
+```
+
+> ⚠️ The connection to RDS fails, it is likely due to security group rules.
 > To resolve this:
 >
-> * Go to the **demo-app-db-sg** security group.
-> * Allow **inbound traffic on port 3306** from the **demo-app-test-ami-builder-sg** security group.
+> * Go to **EC2** → **Security Groups** → search the **demo-app-db-sg** security group.
+> * **Inbound rule** → **Edit inbound rule** → **Add rule** → Port range **3306** from the **demo-app-test-ami-builder-sg** security group → Save rule.
 > * After updating the rules, retry starting the Flask application.
 
 ```bash
 python3 app.py
 ```
 
-4. **Expected logs** when the Flask app starts successfully:
+5. **Expected logs** when the Flask app starts successfully:
 
 ```
 (venv) ubuntu@ip-10-0-1-100:~/flask-app$ python3 app.py
@@ -1283,6 +1324,10 @@ And You should be able to:
 * **Upload File** to S3
 * **List Files** in S3
 * **Fetch File Metadata** from DynamoDB
+
+After successfully deploying the frontend to S3 and accessing the S3 bucket website endpoint, you should see the application UI
+
+![App UI ](artifacts/app-ui-s3.png)
 
 ### 8. Configure Flask as a Systemd Service
 
@@ -1817,7 +1862,63 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 
 ---
 
-## Part 11: Cleanup – Terminate All Resources
+## Part 11:  Resources Summary
+
+demo-app-vpc
+demo-app-public-subnet-1
+demo-app-public-subnet-2
+demo-app-public-subnet-3
+demo-app-private-subnet-1
+demo-app-private-subnet-2
+demo-app-private-subnet-3
+demo-app-igw
+demo-app-public-rt
+demo-app-eip-1
+demo-app-nat-gateway-1
+demo-app-private-rt-1
+demo-app-private-rt-2
+demo-app-private-rt-3
+
+
+my-demo-db
+demo-app-db-sg
+
+demo-app-backend-s3-bucket-1234
+demo-app-s3-object-upload-notification
+demo-app-sns-topic
+demo-app-file-metadata-dynamodb
+demo-app-lambda-iam-role
+demo-app-metadata-lambda
+demo-app-lambda-iam-role
+
+demo-app-s3-dynamo-iam-role
+demo-app-test-ami-builder
+demo-app-private-key
+demo-app-test-ami-builder-sg
+
+demo-app-frontend-s3-bucket-6789
+
+demo-app-ami
+demo-app-launch-template
+demo-app-lt-asg-sg
+demo-app-asg
+demo-app-tg
+demo-app-lb-sg
+demo-app-alb
+
+demo-app-bastion-host
+demo-app-bastion-host-sg
+
+
+
+
+
+
+> This summary gives a complete overview of all AWS resources created during the workshop. In the next section, we will clean up all resources to avoid unnecessary charges.
+
+
+---
+## Part 12: Cleanup – Terminate All Resources
 
 <details>
 <summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
