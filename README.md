@@ -327,6 +327,7 @@ fi
 ```
 
 </details>
+
 ---
 
 ### 2. Create Public & Private Subnets
@@ -374,6 +375,7 @@ for name in "${!PUBLIC_SUBNETS[@]}"; do
 done
 ```
 </details>
+
 ---
 
 #### 2.2  Private Subnets (For App & DB Layers)
@@ -419,6 +421,7 @@ for name in "${!PRIVATE_SUBNETS[@]}"; do
 done
 ```
 </details>
+
 ---
 
 ### 3. Create & Attach Internet Gateway (IGW)
@@ -453,6 +456,7 @@ else
 fi
 ```
 </details>
+
 ---
 
 ### 4. Create & Configure Route Tables
@@ -509,6 +513,7 @@ fi
 
 ```
 </details>
+
 ---
 
 ### 5. Create NAT Gateways
@@ -549,6 +554,7 @@ else
 fi
 ```
 </details>
+
 ---
 
 #### 5.2 Create NAT Gateway
@@ -611,6 +617,7 @@ aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
 echo "✅ NAT Gateway is available"
 ```
 </details>
+
 ---
 
 ✅ **Note:** Proceed to the next step (creating private route tables) only after the NAT Gateway shows **Available**.
@@ -709,6 +716,7 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
 done
 ```
 </details>
+
 ---
 
 ✅ **Note:**
