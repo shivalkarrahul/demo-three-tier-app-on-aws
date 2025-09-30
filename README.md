@@ -306,8 +306,17 @@ You could make it a bit lighthearted like this:
 
 ---
 
+
+111
+You can make the expandable AWS CLI section more visible and inviting by **adding a short, playful intro line before the collapse/expand block** and giving the section a clear heading. For example:
+
+---
+
+
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -339,8 +348,11 @@ fi
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
+
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -380,8 +392,11 @@ done
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
 
+
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -421,8 +436,10 @@ done
 4. Select `demo-app-igw` → Click **Actions → Attach to VPC**.  
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -463,8 +480,10 @@ fi
    - ✅ `demo-app-public-subnet-3`  
 9. Click **Save Associations**.
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -509,8 +528,10 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
    - **Key:** `Name`
    - **Value:** `demo-app-eip-1`
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -544,8 +565,10 @@ fi
 
 ✅ This NAT Gateway will be used for all private subnets.
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -628,8 +651,10 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 
 ✅ All private subnets now use the same NAT Gateway via this route table.
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 > Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
 
@@ -770,8 +795,10 @@ Placing the database in private subnets enforces **security best practices** whi
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 Save time (and a few clicks) by using CLI instead of the console:  
 
@@ -933,8 +960,10 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 ```bash
 
@@ -1082,8 +1111,10 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
 
+**AWS CLI Command (Alternative to Console – Save some clicks! 🖱️💨)**
+
 <details>
-<summary>AWS CLI Command (Alternative to Console)</summary>
+<summary>Click to expand CLI commands</summary>
 
 
 ```bash
