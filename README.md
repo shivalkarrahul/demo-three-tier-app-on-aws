@@ -1715,7 +1715,7 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 2. Re-upload `index.html` to the frontend S3 bucket (e.g., `demo-app-frontend-s3-bucket-6789`)  
 3. Access the S3 website URL and verify the frontend connects to the backend via the ALB
 
-![App UI ALB ](artifacts/ap-ui-after-lb.png)
+![App UI ALB ](artifacts/app-ui-after-lb.png)
 
 ---
 
