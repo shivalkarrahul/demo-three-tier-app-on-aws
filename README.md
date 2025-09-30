@@ -939,14 +939,24 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 ```bash
 
 BUCKET_NAME="demo-app-backend-s3-bucket-12345"
-echo "Creating S3 Bucket: $BUCKET_NAME"
+REGION="us-east-1"
 
-# Create the bucket (replace us-east-1 with your region if different)
-aws s3api create-bucket \
-    --bucket $BUCKET_NAME \
-    --region us-east-1 \
-    --create-bucket-configuration LocationConstraint=us-east-1 \
-    --no-cli-pager >/dev/null 2>&1
+echo "Creating S3 Bucket: $BUCKET_NAME in $REGION"
+
+if [ "$REGION" == "us-east-1" ]; then
+    # us-east-1 special case
+    aws s3api create-bucket \
+        --bucket $BUCKET_NAME \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+else
+    # all other regions need LocationConstraint
+    aws s3api create-bucket \
+        --bucket $BUCKET_NAME \
+        --region $REGION \
+        --create-bucket-configuration LocationConstraint=$REGION \
+        --no-cli-pager >/dev/null 2>&1
+fi
 
 # Verify bucket creation
 if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
@@ -954,6 +964,7 @@ if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
 else
     echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
 fi
+
 
 ```
 
@@ -2329,6 +2340,81 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ---
 
 ### Steps:
+
+### 🧹 Cleanup Backend S3 Resources (AWS CLI)
+
+```bash
+BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+REGION="us-east-1"
+
+echo "Deleting all objects from S3 Bucket: $BUCKET_NAME"
+
+aws s3 rm s3://$BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
+
+echo "Deleting S3 Bucket: $BUCKET_NAME"
+aws s3api delete-bucket \
+    --bucket $BUCKET_NAME \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+
+# Verify deletion
+if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+    echo "⚠️ Failed to delete S3 Bucket: $BUCKET_NAME"
+else
+    echo "✅ S3 Bucket deleted: $BUCKET_NAME"
+fi
+
+```
+
+
+### 🧹 Cleanup RDS Resources (AWS CLI)
+
+```bash
+DB_INSTANCE_ID="my-demo-db"
+DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
+DB_SECURITY_GROUP_NAME="demo-app-db-sg"
+REGION="us-east-1"
+
+echo "Deleting RDS Instance: $DB_INSTANCE_ID"
+
+# Delete RDS instance without final snapshot
+aws rds delete-db-instance \
+    --db-instance-identifier $DB_INSTANCE_ID \
+    --skip-final-snapshot \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+
+# Wait until instance is deleted
+aws rds wait db-instance-deleted \
+    --db-instance-identifier $DB_INSTANCE_ID \
+    --region $REGION
+echo "✅ RDS Instance deleted: $DB_INSTANCE_ID"
+
+# Delete DB Subnet Group
+echo "Deleting DB Subnet Group: $DB_SUBNET_GROUP_NAME"
+aws rds delete-db-subnet-group \
+    --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+    --region $REGION \
+    --no-cli-pager >/dev/null 2>&1
+echo "✅ DB Subnet Group deleted: $DB_SUBNET_GROUP_NAME"
+
+# Delete Security Group
+echo "Deleting Security Group: $DB_SECURITY_GROUP_NAME"
+DB_SG_ID=$(aws ec2 describe-security-groups \
+    --filters Name=group-name,Values=$DB_SECURITY_GROUP_NAME \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION)
+
+if [ "$DB_SG_ID" != "None" ]; then
+    aws ec2 delete-security-group \
+        --group-id $DB_SG_ID \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+    echo "✅ Security Group deleted: $DB_SECURITY_GROUP_NAME ($DB_SG_ID)"
+else
+    echo "⚠️ Security Group not found: $DB_SECURITY_GROUP_NAME"
+fi
+```
 
 
 ### 🧹 Cleanup VPC Resources (AWS CLI)
