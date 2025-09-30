@@ -1277,6 +1277,40 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 
 > **Important:** You don’t need to manually define other required attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB later.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+# Create DynamoDB Table
+echo "Creating DynamoDB Table: demo-app-file-metadata-dynamodb"
+DDB_TABLE=$(aws dynamodb describe-table \
+    --table-name demo-app-file-metadata-dynamodb \
+    --query "Table.TableName" --output text 2>/dev/null)
+
+if [ "$DDB_TABLE" == "demo-app-file-metadata-dynamodb" ]; then
+    echo "⚠️ DynamoDB Table already exists: $DDB_TABLE"
+else
+    aws dynamodb create-table \
+        --table-name demo-app-file-metadata-dynamodb \
+        --attribute-definitions AttributeName=file_name,AttributeType=S \
+        --key-schema AttributeName=file_name,KeyType=HASH \
+        --billing-mode PAY_PER_REQUEST \
+        --tags Key=Name,Value=demo-app-file-metadata-dynamodb \
+        --no-cli-pager
+    echo "✅ DynamoDB Table created: demo-app-file-metadata-dynamodb"
+fi
+```
+
+</details>
+
+---
+
 ### 2. Create an IAM Role for Lambda
 1. Go to **IAM Console → Roles → Create role**.
 2. Select **AWS Service → Lambda → Next**.
@@ -1288,6 +1322,49 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 5. Name the role: `demo-app-lambda-iam-role`.
 6. Create the role and note the **Role ARN**.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+#Create IAM Role for Lambda
+echo "Creating IAM Role: demo-app-lambda-iam-role"
+ROLE_ARN=$(aws iam get-role --role-name demo-app-lambda-iam-role --query 'Role.Arn' --output text 2>/dev/null)
+
+if [ -n "$ROLE_ARN" ]; then
+    echo "⚠️ IAM Role already exists: $ROLE_ARN"
+else
+    TRUST_POLICY='{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }]
+    }'
+    ROLE_ARN=$(aws iam create-role \
+        --role-name demo-app-lambda-iam-role \
+        --assume-role-policy-document "$TRUST_POLICY" \
+        --query 'Role.Arn' --output text)
+    echo "✅ IAM Role created: $ROLE_ARN"
+
+    # Attach policies
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    echo "✅ Attached S3, DynamoDB & Lambda basic execution policies"
+fi
+```
+
+</details>
+
+---
+
 
 ### 3. Create a Lambda Function
 1. Go to **Lambda Console → Create function**.
@@ -1297,6 +1374,47 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 5. Choose **Use an existing role** and select the IAM role created earlier (`demo-app-lambda-iam-role`) under **Change default execution role**.
 6. Click **Create Function**.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+# Create Lambda Function
+echo "Creating Lambda Function: demo-app-metadata-lambda"
+LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
+
+if [ -n "$LAMBDA_ARN" ]; then
+    echo "⚠️ Lambda function already exists: $LAMBDA_ARN"
+else
+   # Create a minimal empty Lambda zip
+   echo "def lambda_handler(event, context): pass" > lambda_function.py
+   zip lambda_function.zip lambda_function.py
+
+   # Create Lambda function
+   aws lambda create-function \
+      --function-name demo-app-metadata-lambda \
+      --runtime python3.13 \
+      --role "$ROLE_ARN" \
+      --handler lambda_function.lambda_handler \
+      --zip-file fileb://lambda_function.zip \
+      --timeout 30 \
+      --memory-size 128 \
+      --tags Name=demo-app-metadata-lambda \
+      --no-cli-pager
+
+   echo "✅ Lambda function created: demo-app-metadata-lambda"
+fi
+```
+
+</details>
+
+---
+
 ### 4. Subscribe Lambda to Existing SNS Topic
 1. Go to **SNS Console → Your SNS Topic (`demo-app-sns-topic`)**.
 2. Click **Create Subscription**.
@@ -1305,6 +1423,54 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 5. Click **Create Subscription**.
 6. Return to the SNS Topic `demo-app-sns-topic` and verify that there are now **2 subscriptions**, both showing the **Status: Subscribed**.
 
+---
+🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+
+
+```bash
+
+# Fetch Lambda ARN
+LAMBDA_ARN=$(aws lambda get-function \
+    --function-name demo-app-metadata-lambda \
+    --query 'Configuration.FunctionArn' --output text --no-cli-pager)
+
+if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
+    echo "❌ Lambda function not found. Create it first."
+    exit 1
+else
+    echo "✅ Lambda ARN: $LAMBDA_ARN"
+fi
+
+# Subscribe Lambda to SNS Topic
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
+else
+    SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[?Endpoint=='$LAMBDA_ARN'].SubscriptionArn" --output text)
+
+    if [ -n "$SUBSCRIPTION_ARN" ]; then
+        echo "⚠️ Lambda already subscribed to SNS Topic: $SUBSCRIPTION_ARN"
+    else
+        aws sns subscribe \
+            --topic-arn "$SNS_TOPIC_ARN" \
+            --protocol lambda \
+            --notification-endpoint "$LAMBDA_ARN" \
+            --no-cli-pager
+        echo "✅ Lambda subscribed to SNS Topic: $SNS_TOPIC_ARN"
+    fi
+fi
+```
+
+</details>
+
+---
 
 ### 5. Update Lambda Code to Process SNS Events
 1. Go to **Lambda → `demo-app-metadata-lambda` → Code**.
@@ -2470,6 +2636,67 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ---
 
 ### Steps:
+
+### 🧹 DynamoDB Table and Lambda Resources (AWS CLI)
+
+```bash
+ROLE_NAME="demo-app-lambda-iam-role"
+# Delete SNS subscriptions and topic
+SNS_TOPIC_ARN=$(aws sns list-topics \
+    --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" \
+    --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "⚠️ SNS Topic demo-app-sns-topic not found. Skipping deletion."
+else
+    echo "Deleting subscriptions for SNS Topic: $SNS_TOPIC_ARN"
+    SUB_ARN_LIST=$(aws sns list-subscriptions-by-topic \
+        --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[].SubscriptionArn" --output text)
+
+    for SUB_ARN in $SUB_ARN_LIST; do
+        if [ "$SUB_ARN" != "PendingConfirmation" ]; then
+            aws sns unsubscribe --subscription-arn "$SUB_ARN" --no-cli-pager
+            echo "✅ Unsubscribed: $SUB_ARN"
+        else
+            echo "⚠️ Subscription is PendingConfirmation, skipping: $SUB_ARN"
+        fi
+    done
+
+    aws sns delete-topic --topic-arn "$SNS_TOPIC_ARN" --no-cli-pager
+    echo "✅ SNS Topic deleted: $SNS_TOPIC_ARN"
+fi
+
+# Delete Lambda Function
+LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
+
+if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
+    echo "⚠️ Lambda function demo-app-metadata-lambda not found. Skipping deletion."
+else
+    aws lambda delete-function --function-name demo-app-metadata-lambda --no-cli-pager
+    echo "✅ Lambda function deleted: demo-app-metadata-lambda"
+fi
+
+# Delete IAM Role for Lambda
+ROLE_EXISTS=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.RoleName' --output text 2>/dev/null)
+
+if [ -z "$ROLE_EXISTS" ] || [ "$ROLE_EXISTS" == "None" ]; then
+    echo "⚠️ IAM Role $ROLE_NAME not found. Skipping deletion."
+else
+    # Detach all attached policies
+    POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE_NAME" --query 'AttachedPolicies[].PolicyArn' --output text)
+    for POLICY_ARN in $POLICIES; do
+        aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN" --no-cli-pager
+        echo "✅ Detached policy: $POLICY_ARN"
+    done
+
+    # Delete the role
+    aws iam delete-role --role-name "$ROLE_NAME" --no-cli-pager
+    echo "✅ IAM Role deleted: $ROLE_NAME"
+fi
+
+```
+
 
 ### 🧹 Cleanup SNS Resources (AWS CLI)
 
