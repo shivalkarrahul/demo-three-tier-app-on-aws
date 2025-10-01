@@ -27,7 +27,9 @@ if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
 
     # Check Topic Policy contains S3 publish permission
     POLICY=$(aws sns get-topic-attributes --topic-arn "$SNS_TOPIC_ARN" --query "Attributes.Policy" --output text)
-    if echo "$POLICY" | grep -q '"Service": "s3.amazonaws.com"'; then
+
+    # Use jq to parse
+    if echo "$POLICY" | jq -e '.Statement[] | select(.Principal.Service=="s3.amazonaws.com")' >/dev/null; then
         echo "✅ SNS Topic policy allows S3 to publish"
     else
         echo "❌ SNS Topic policy does NOT allow S3 to publish"
