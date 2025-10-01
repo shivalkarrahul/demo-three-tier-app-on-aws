@@ -237,9 +237,10 @@ This guide is intended for students and developers who want to **learn hands-on 
 - [Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet](#part-6-deploy-a-flask-application-on-test-ami-builder-ec2-with-rds--s3-dynamodb-integration-in-public-subnet)
 - [Part 7: Create an AMI, Launch Template, and Auto Scaling Group](#part-7-create-an-ami-launch-template-and-auto-scaling-group)
 - [Part 8: Attach Load Balancer to Auto Scaling Group (ASG)](#part-8-attach-load-balancer-to-auto-scaling-group-asg)
-- [Part 9: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-9-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
-- [Part 10: Connect From Bastion Host to Private Instance](#part-10-connect-from-bastion-host-to-private-instance)
-- [Part 11: Cleanup – Terminate All Resources](#part-11-cleanup--terminate-all-resources)
+- [Part 9: Security Groups Overview](#part-9-security-groups-overview)
+- [Part 10: Create a Bastion Host in Public Subnet to Access Instances in Private Subnet](#part-10-create-a-bastion-host-in-public-subnet-to-access-instances-in-private-subnet)
+- [Part 11: Connect From Bastion Host to Private Instance](#part-11-connect-from-bastion-host-to-private-instance)
+- [Part 12: Cleanup – Terminate All Resources](#part-12-cleanup--terminate-all-resources)
 
 ---
 
@@ -684,8 +685,6 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
 done
 ```
 
----
-
 </details>
 
 ---
@@ -722,8 +721,11 @@ chmod +x 1-validate-vpc.sh
 
 ## Part 2: Set Up RDS
 
-<details>
-<summary>📖 Theory: The Data Layer</summary>
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
+
 
 In this step, we create a **MySQL RDS instance** to store the application’s data.  
 
@@ -766,6 +768,11 @@ Placing the database in private subnets enforces **security best practices** whi
 
 ---
 
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 ### 1. Create an RDS Instance
 1. Open **AWS Management Console → RDS**.  
 2. Click **Create database**.  
@@ -799,15 +806,14 @@ Placing the database in private subnets enforces **security best practices** whi
 
 ✅ **At this point, your MySQL RDS instance is ready and securely placed in your private subnets.**
 
+</details>
 
 ---
 
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
 
-<details>
-<summary>Click to expand CLI commands</summary>
-
-Save time (and a few clicks) by using CLI instead of the console:  
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
 ```bash
 echo "Fetching Private Subnet IDs..."
@@ -903,10 +909,8 @@ fi
 
 ---
 
-### 6. Validate RDS Resources ✅
-
-<details>
-<summary>Click to expand CLI commands</summary>
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
@@ -2655,63 +2659,8 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 
 ---
 
-## Part 12:  Resources Summary
-
-demo-app-vpc
-demo-app-public-subnet-1
-demo-app-public-subnet-2
-demo-app-public-subnet-3
-demo-app-private-subnet-1
-demo-app-private-subnet-2
-demo-app-private-subnet-3
-demo-app-igw
-demo-app-public-rt
-demo-app-eip-1
-demo-app-nat-gateway-1
-demo-app-private-rt-1
-demo-app-private-rt-2
-demo-app-private-rt-3
-
-
-my-demo-db
-demo-app-db-sg
-
-demo-app-backend-s3-bucket-1234
-demo-app-s3-object-upload-notification
-demo-app-sns-topic
-demo-app-file-metadata-dynamodb
-demo-app-lambda-iam-role
-demo-app-metadata-lambda
-demo-app-lambda-iam-role
-
-demo-app-s3-dynamo-iam-role
-demo-app-test-ami-builder
-demo-app-private-key
-demo-app-test-ami-builder-sg
-
-demo-app-frontend-s3-bucket-6789
-
-demo-app-ami
-demo-app-launch-template
-demo-app-lt-asg-sg
-demo-app-asg
-demo-app-tg
-demo-app-lb-sg
-demo-app-alb
-
-demo-app-bastion-host
-demo-app-bastion-host-sg
-
-
-
-
-
-
-> This summary gives a complete overview of all AWS resources created during the workshop. In the next section, we will clean up all resources to avoid unnecessary charges.
-
-
 ---
-## Part 13: Cleanup – Terminate All Resources
+## Part 12: Cleanup – Terminate All Resources
 
 <details>
 <summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
