@@ -933,8 +933,11 @@ chmod +x 2-validate-rds.sh
 
 ## Part 3: Set Up S3
 
-<details>
-<summary>📖 Theory: The Storage Layer</summary>
+
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
 
 In this step, we create an **Amazon S3 bucket** to store files uploaded by users.  
 
@@ -971,6 +974,10 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 </details>
 
 ---
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
 
 ### 1. Create an S3 Bucket
 1. Open **AWS Console → Navigate to S3**.
@@ -993,12 +1000,14 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 ✅ Your S3 bucket is now ready to store backend files for the demo application.
 
+</details>
 
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
 ```bash
 
@@ -1029,16 +1038,14 @@ else
     echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
 fi
 
-
 ```
+
 </details>
 
 ---
 
-### 2. Validate S3 Resources ✅
-
-<details>
-<summary>Click to expand CLI commands</summary>
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
