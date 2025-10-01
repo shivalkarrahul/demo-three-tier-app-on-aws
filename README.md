@@ -1669,8 +1669,11 @@ chmod +x 5-validate-dynamodb-lambda.sh
 ---
 
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
-<details>
-<summary>📖 Theory: The Application Layer and Service Integration</summary>
+
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
 
 In this step, we **deploy the backend Flask application** on a test **EC2 instance** with full integration to **RDS, S3, and DynamoDB**.  
 
@@ -1716,6 +1719,11 @@ The **application layer** is the glue that ties everything together — frontend
 </details>
 
 ---
+
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
 
 ### 1. Create an IAM Role for S3 and DynamoDB Access
 1. Open AWS IAM Console → **Roles → Create Role**.
@@ -2096,6 +2104,409 @@ sudo systemctl status flask-app
 ```
 
 ✅ Your Flask app is now running as a **persistent, auto-starting systemd service**, integrated with **RDS, S3, and DynamoDB**, and connected to the frontend hosted on S3.
+
+</details>
+
+---
+
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
+
+</details>
+
+```bash
+# Create IAM Role for EC2 with S3 + DynamoDB Access
+echo "Creating IAM Role: demo-app-s3-dynamo-iam-role"
+
+# Check if role already exists
+ROLE_NAME="demo-app-s3-dynamo-iam-role"
+ROLE_EXISTS=$(aws iam get-role --role-name $ROLE_NAME --query "Role.RoleName" --output text 2>/dev/null)
+
+if [ "$ROLE_EXISTS" == "$ROLE_NAME" ]; then
+    echo "⚠️ IAM Role already exists: $ROLE_NAME"
+else
+    # Create Trust Policy for EC2
+    TRUST_POLICY=$(cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "ec2.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+)
+
+    # Create the role
+    aws iam create-role \
+        --role-name $ROLE_NAME \
+        --assume-role-policy-document "$TRUST_POLICY" \
+        --tags Key=Name,Value=$ROLE_NAME \
+        --no-cli-pager
+
+    echo "✅ IAM Role created: $ROLE_NAME"
+
+    # Attach required policies
+    aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:policy/AmazonS3FullAccess
+    aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:policy/AmazonDynamoDBReadOnlyAccess
+    echo "✅ Policies attached: AmazonS3FullAccess, AmazonDynamoDBReadOnlyAccess"
+fi
+```
+
+```bash
+#!/bin/bash
+
+INSTANCE_NAME="demo-app-test-ami-builder"
+KEY_NAME="demo-app-private-key"
+SG_NAME="demo-app-test-ami-builder-sg"
+ROLE_NAME="demo-app-s3-dynamo-iam-role"
+AMI_ID="ami-0360c520857e3138f"
+
+# 1. Create Key Pair if not exists
+echo "🔑 Checking Key Pair: $KEY_NAME"
+if aws ec2 describe-key-pairs --key-names $KEY_NAME --query "KeyPairs[*].KeyName" --output text 2>/dev/null | grep -q $KEY_NAME; then
+    echo "⚠️ Key Pair already exists: $KEY_NAME"
+else
+    aws ec2 create-key-pair --key-name $KEY_NAME \
+        --query "KeyMaterial" --output text > $KEY_NAME.pem
+    chmod 400 $KEY_NAME.pem
+    echo "✅ Key Pair created and saved: $KEY_NAME.pem"
+fi
+
+# 2. Get VPC and Subnet IDs
+VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=demo-app-vpc" --query "Vpcs[0].VpcId" --output text)
+SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=demo-app-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
+
+if [ "$VPC_ID" == "None" ] || [ "$SUBNET_ID" == "None" ]; then
+    echo "❌ VPC or Subnet not found. Make sure demo-app-vpc and demo-app-public-subnet-1 exist."
+    exit 1
+fi
+
+# 3. Create Security Group if not exists
+echo "🛡️ Checking Security Group: $SG_NAME"
+SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$SG_NAME" "Name=vpc-id,Values=$VPC_ID" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+
+if [ "$SG_ID" == "None" ]; then
+    SG_ID=$(aws ec2 create-security-group --group-name $SG_NAME \
+        --description "Security Group for Test/Ami Builder Instance" \
+        --vpc-id $VPC_ID --query "GroupId" --output text)
+    echo "✅ Security Group created: $SG_NAME ($SG_ID)"
+
+    # Add Inbound Rules
+    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+    aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 5000 --cidr 0.0.0.0/0
+    echo "✅ Inbound rules added: SSH(22), App(5000)"
+else
+    echo "⚠️ Security Group already exists: $SG_NAME ($SG_ID)"
+fi
+
+# 4. Get IAM Instance Profile ARN
+PROFILE_ARN=$(aws iam get-instance-profile --instance-profile-name $ROLE_NAME --query "InstanceProfile.Arn" --output text 2>/dev/null)
+if [ -z "$PROFILE_ARN" ] || [ "$PROFILE_ARN" == "None" ]; then
+    echo "❌ IAM Instance Profile not found. Make sure role $ROLE_NAME is created and added to instance profile."
+    exit 1
+fi
+
+# 5. Launch EC2 Instance
+
+echo "🚀 Launching EC2 Instance: $INSTANCE_NAME"
+INSTANCE_ID=$(aws ec2 run-instances \
+    --image-id $AMI_ID \
+    --instance-type t2.micro \
+    --key-name $KEY_NAME \
+    --subnet-id $SUBNET_ID \
+    --associate-public-ip-address \
+    --security-group-ids $SG_ID \
+    --iam-instance-profile Name=$ROLE_NAME \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+    --query "Instances[0].InstanceId" --output text)
+
+echo "⏳ Waiting for instance to be running..."
+aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+
+# 6. Get Public IP
+PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+    --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+
+echo "✅ EC2 Instance launched: $INSTANCE_NAME ($INSTANCE_ID)"
+echo "🌍 Public IP: $PUBLIC_IP"
+echo "🔑 Connect: ssh -i $KEY_NAME.pem ubuntu@$PUBLIC_IP"
+
+# Make sure key permissions are correct
+chmod 400 $KEY_NAME.pem
+
+# Wait a bit for EC2 to finish initializing
+echo "⏳ Waiting for EC2 SSH to be ready..."
+sleep 30
+
+# Install dependencies via SSH
+ssh -o StrictHostKeyChecking=no -i $KEY_NAME.pem ubuntu@$PUBLIC_IP << 'EOF'
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3 python3-pip python3-venv git vim
+
+# Set up Python virtual environment
+cd /home/ubuntu
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python packages
+pip install flask pymysql boto3 flask-cors
+EOF
+
+echo "✅ Dependencies installed on EC2 instance: $PUBLIC_IP"
+```
+
+
+```bash
+export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
+```
+
+```bash
+export RDS_USER="admin"
+```
+
+```bash
+export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"
+```
+
+```bash
+export S3_BACKEND_BUCKET="demo-app-backend-s3-bucket-12345"
+```
+
+```bash
+export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
+```
+
+```bash
+export KEY_NAME="demo-app-private-key"
+```
+
+```bash
+export S3_FRONTEND_BUCKET="demo-app-backend-s3-bucket-12345"
+```
+
+
+```bash
+#!/bin/bash
+
+# Ensure environment variables are set
+: "${RDS_HOST:?Please export RDS_HOST before running the script}"
+: "${RDS_USER:?Please export RDS_USER before running the script}"
+: "${RDS_PASSWORD:?Please export RDS_PASSWORD before running the script}"
+: "${S3_BACKEND_BUCKET:?Please export S3_BACKEND_BUCKET before running the script}"
+: "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP before running the script}"
+: "${KEY_NAME:?Please export KEY_NAME before running the script}"  # without .pem
+
+# 2. Download app.py from GitHub
+if rm -f app.py 2>/dev/null; then
+    echo "🗑️ Removed existing app.py"
+else
+    echo "ℹ️ No existing app.py found, continuing..."
+fi
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/backend/app.py
+
+# 3. Replace placeholders in app.py
+sed -i "s/CHANGE_ME_RDS_HOST/${RDS_HOST}/g" app.py
+sed -i "s/CHANGE_ME_RDS_USER/${RDS_USER}/g" app.py
+sed -i "s/CHANGE_ME_RDS_PASSWORD/${RDS_PASSWORD}/g" app.py
+sed -i "s/CHANGE_ME_BACKEND_S3_BUCKET/${S3_BACKEND_BUCKET}/g" app.py
+
+# 4. Copy app.py to the EC2 instance
+ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "mkdir -p /home/ubuntu/flask-app"
+```
+
+```bash
+scp -i "$KEY_NAME.pem" app.py ubuntu@$EC2_PUBLIC_IP:/home/ubuntu/flask-app/
+```
+
+
+```bash
+ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "ls -l /home/ubuntu/flask-app"
+
+```
+
+```bash
+echo "✅ app.py copied to EC2 instance: $EC2_PUBLIC_IP:/home/ubuntu/flask-app"
+```
+
+```bash
+#!/bin/bash
+
+# Ensure environment variables are set
+: "${S3_FRONTEND_BUCKET:?Please export S3_FRONTEND_BUCKET before running the script}"
+: "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP before running the script}"
+REGION="us-east-1"
+echo "🚀 Deploying frontend to S3 bucket: $S3_FRONTEND_BUCKET"
+
+# 1. Check if bucket exists
+BUCKET_EXISTS=$(aws s3api head-bucket --bucket "$S3_FRONTEND_BUCKET" 2>/dev/null && echo "yes" || echo "no")
+
+# 2. Create the bucket
+if [ "$BUCKET_EXISTS" == "yes" ]; then
+    echo "⚠️ Bucket already exists: $S3_FRONTEND_BUCKET"
+else
+    echo "⏳ Creating S3 bucket: $S3_FRONTEND_BUCKET in region $REGION"
+    if [ "$REGION" == "us-east-1" ]; then
+        aws s3api create-bucket --bucket "$S3_FRONTEND_BUCKET" --region "$REGION" --no-cli-pager
+    else
+        aws s3api create-bucket --bucket "$S3_FRONTEND_BUCKET" --region "$REGION" \
+            --create-bucket-configuration LocationConstraint=$REGION --no-cli-pager
+    fi
+    echo "✅ Bucket created: $S3_FRONTEND_BUCKET"
+fi
+
+aws s3api put-public-access-block \
+    --bucket "$S3_FRONTEND_BUCKET" \
+    --public-access-block-configuration BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false
+
+
+# 3. Enable static website hosting
+aws s3 website s3://"$S3_FRONTEND_BUCKET"/ --index-document index.html
+
+# 4. Download index.html from Github
+
+if rm -f index.html 2>/dev/null; then
+    echo "🗑️ Removed existing index.html"
+else
+    echo "ℹ️ No existing index.html found, continuing..."
+fi
+echo "⏳ Downloading index.html from Github"
+
+curl -s -L https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/frontend/index.html -o index.html
+
+# 5. Replace placeholder API_BASE with EC2_PUBLIC_IP
+sed -i "s|http://<EC2IP>:5000|http://$EC2_PUBLIC_IP:5000|g" index.html
+
+# 6. Upload index.html to S3
+aws s3 cp index.html s3://"$S3_FRONTEND_BUCKET"/index.html
+
+# 7. Attach bucket policy for public read access
+POLICY=$(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::$S3_FRONTEND_BUCKET/*"
+        }
+    ]
+}
+EOF
+)
+
+aws s3api put-bucket-policy --bucket "$S3_FRONTEND_BUCKET" --policy "$POLICY" --no-cli-pager
+
+echo "✅ Frontend deployed and accessible at:"
+echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
+```
+
+
+```bash
+Script 6
+
+#!/bin/bash
+
+# Variables
+DB_SG_NAME="demo-app-db-sg"             # RDS security group name
+APP_SG_NAME="demo-app-test-ami-builder-sg"  # EC2 security group name
+REGION="us-east-1"
+
+echo "🚀 Updating DB Security Group ($DB_SG_NAME) to allow EC2 SG ($APP_SG_NAME) access on port 3306"
+
+# Get SG IDs from names
+DB_SG_ID=$(aws ec2 describe-security-groups --region $REGION --filters Name=group-name,Values="$DB_SG_NAME" --query "SecurityGroups[0].GroupId" --output text)
+APP_SG_ID=$(aws ec2 describe-security-groups --region $REGION --filters Name=group-name,Values="$APP_SG_NAME" --query "SecurityGroups[0].GroupId" --output text)
+
+# Check if rule already exists
+EXISTING_RULE=$(aws ec2 describe-security-groups \
+    --group-ids "$DB_SG_ID" \
+    --query "SecurityGroups[0].IpPermissions[?FromPort==\`3306\` && ToPort==\`3306\` && UserIdGroupPairs[0].GroupId=='$APP_SG_ID']" \
+    --output text)
+
+if [ -n "$EXISTING_RULE" ]; then
+    echo "⚠️ Rule already exists: $APP_SG_NAME can access $DB_SG_NAME on port 3306"
+else
+    # Add ingress rule
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$DB_SG_ID" \
+        --protocol tcp \
+        --port 3306 \
+        --source-group "$APP_SG_ID" \
+        --region $REGION --no-cli-pager
+    echo "✅ Ingress rule added: $APP_SG_NAME can now access $DB_SG_NAME on port 3306"
+fi
+```
+
+
+```bash
+export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
+```
+
+```bash
+export KEY_NAME="demo-app-private-key"
+```
+
+```bash
+Script 8
+#!/bin/bash
+
+# Ensure environment variables are set
+: "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP before running the script}"
+: "${KEY_NAME:?Please export KEY_NAME before running the script}" 
+
+APP_DIR="/home/ubuntu/flask-app"
+VENV_DIR="/home/ubuntu/venv"
+
+echo "🚀 Deploying Flask backend to EC2: $EC2_PUBLIC_IP"
+
+# 2. Ensure global venv exists and install dependencies
+ssh -i "$KEY_NAME.pem" ubuntu@$EC2_PUBLIC_IP <<EOF
+if [ ! -d "$VENV_DIR" ]; then
+    echo "⏳ Creating global Python venv at $VENV_DIR"
+    python3 -m venv $VENV_DIR
+fi
+
+# 6. Start Flask app on EC2 using global venv
+ssh -i "$KEY_NAME.pem" ubuntu@$EC2_PUBLIC_IP <<EOF
+echo "⏳ Starting Flask app"
+cd $APP_DIR
+source $VENV_DIR/bin/activate
+nohup python app.py > flask.log 2>&1 &
+echo "✅ Flask backend is running. Logs: $APP_DIR/flask.log"
+EOF
+
+echo "✅ Deployment completed. Access your backend at http://$EC2_PUBLIC_IP:5000"
+```
+
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/6-validate-flask-application.sh
+
+# Make it executable
+chmod +x 6-validate-flask-application.sh
+
+# Run the script
+./6-validate-flask-application.sh
+
+```
+
+</details>
 
 ---
 
@@ -2688,6 +3099,146 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ---
 
 ### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+
+<details> <summary>Part 5: DynamoDB Table and Lambda Resources Cleanup (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
+Change value of S3_FRONTEND_BUCKET variable with your S3_FRONTEND_BUCKET Name
+
+```bash
+export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
+```
+
+```bash
+#!/bin/bash
+set -e
+
+# -----------------------------
+# Targeted Cleanup Script
+# -----------------------------
+
+# Ensure required environment variables
+: "${S3_FRONTEND_BUCKET:?Please export S3_FRONTEND_BUCKET}"
+
+INSTANCE_NAME="demo-app-test-ami-builder"
+DB_SG_NAME="demo-app-db-sg"
+APP_SG_NAME="demo-app-test-ami-builder-sg"
+ROLE_NAME="demo-app-s3-dynamo-iam-role"
+INSTANCE_PROFILE_NAME="$ROLE_NAME"
+KEY_NAME="demo-app-private-key"
+REGION="us-east-1"
+
+echo "🧹 Starting targeted cleanup..."
+
+# -----------------------------
+# 1️⃣ Terminate EC2 instance
+# -----------------------------
+INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
+    --query "Reservations[0].Instances[0].InstanceId" --output text 2>/dev/null)
+
+if [ -n "$INSTANCE_ID" ] && [ "$INSTANCE_ID" != "None" ]; then
+    echo "🛑 Terminating EC2 instance: $INSTANCE_NAME ($INSTANCE_ID)"
+    aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+    aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
+    echo "✅ EC2 instance terminated"
+else
+    echo "ℹ️ No EC2 instance found: $INSTANCE_NAME"
+fi
+
+# -----------------------------
+# 2️⃣ Delete key pair
+# -----------------------------
+if aws ec2 describe-key-pairs --key-names $KEY_NAME &>/dev/null; then
+    echo "🗑️ Deleting key pair: $KEY_NAME"
+    aws ec2 delete-key-pair --key-name $KEY_NAME
+    rm -f $KEY_NAME.pem
+    echo "✅ Key pair deleted"
+else
+    echo "ℹ️ No key pair found: $KEY_NAME"
+fi
+
+# -----------------------------
+# 3️⃣ Delete Security Groups
+# -----------------------------
+DB_SG_ID=$(aws ec2 describe-security-groups --region $REGION --filters "Name=group-name,Values=$DB_SG_NAME" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+APP_SG_ID=$(aws ec2 describe-security-groups --region $REGION --filters "Name=group-name,Values=$APP_SG_NAME" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+
+# Revoke ingress rule if both SGs exist
+if [ -n "$DB_SG_ID" ] && [ -n "$APP_SG_ID" ] && [ "$DB_SG_ID" != "None" ] && [ "$APP_SG_ID" != "None" ]; then
+    echo "🗑️ Removing ingress rule from $DB_SG_NAME allowing $APP_SG_NAME access on port 3306"
+    aws ec2 revoke-security-group-ingress \
+        --group-id "$DB_SG_ID" \
+        --protocol tcp \
+        --port 3306 \
+        --source-group "$APP_SG_ID" \
+        --region $REGION || echo "⚠️ No ingress rule to remove"
+    echo "✅ Ingress rule removed"
+else
+    echo "ℹ️ Skipping ingress removal: one or both SGs not found"
+fi
+
+# Delete Security Groups
+for SG_NAME in "$APP_SG_NAME"; do
+    SG_ID=$(aws ec2 describe-security-groups --region $REGION --filters "Name=group-name,Values=$SG_NAME" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+    if [ -n "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+        echo "🗑️ Deleting Security Group: $SG_NAME ($SG_ID)"
+        aws ec2 delete-security-group --group-id "$SG_ID" 2>/dev/null && echo "✅ Deleted $SG_NAME" || echo "⚠️ Could not delete $SG_NAME (check dependencies)"
+    else
+        echo "ℹ️ Security Group not found: $SG_NAME"
+    fi
+done
+
+# -----------------------------
+# 4️⃣ Detach policies & delete IAM Role + Instance Profile
+# -----------------------------
+
+# Detach all attached managed policies dynamically
+ATTACHED_POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE_NAME" --query "AttachedPolicies[].PolicyArn" --output text 2>/dev/null || echo "")
+if [ -n "$ATTACHED_POLICIES" ]; then
+    for P in $ATTACHED_POLICIES; do
+        echo "🔗 Detaching managed policy $P from $ROLE_NAME"
+        aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$P" 2>/dev/null || echo "⚠️ Could not detach $P"
+    done
+else
+    echo "ℹ️ No managed policies attached to $ROLE_NAME"
+fi
+
+
+if aws iam get-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" &>/dev/null; then
+    echo "🗑️ Removing role from instance profile: $INSTANCE_PROFILE_NAME"
+    aws iam remove-role-from-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" --role-name "$ROLE_NAME" 2>/dev/null || echo "⚠️ Role not attached to instance profile"
+    aws iam delete-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" 2>/dev/null || echo "⚠️ Could not delete instance profile"
+fi
+
+if aws iam get-role --role-name $ROLE_NAME &>/dev/null; then
+    echo "🗑️ Deleting IAM Role: $ROLE_NAME"
+    aws iam delete-role --role-name $ROLE_NAME
+    echo "✅ IAM Role deleted"
+else
+    echo "ℹ️ IAM Role not found: $ROLE_NAME"
+fi
+
+# -----------------------------
+# 5️⃣ Delete frontend S3 bucket
+# -----------------------------
+if aws s3 ls "s3://$S3_FRONTEND_BUCKET" &>/dev/null; then
+    echo "🗑️ Deleting frontend S3 bucket and all contents: $S3_FRONTEND_BUCKET"
+    aws s3 rm "s3://$S3_FRONTEND_BUCKET" --recursive
+    aws s3api delete-bucket --bucket "$S3_FRONTEND_BUCKET"
+    echo "✅ Frontend S3 bucket deleted"
+else
+    echo "ℹ️ Frontend S3 bucket not found: $S3_FRONTEND_BUCKET"
+fi
+
+echo "🧹 Targeted cleanup completed!"
+
+```
+
+</details>
+
+---
 
 <details> <summary>Part 5: DynamoDB Table and Lambda Resources Cleanup (AWS CLI)</summary> 
 
