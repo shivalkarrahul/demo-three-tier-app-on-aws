@@ -248,8 +248,12 @@ This guide is intended for students and developers who want to **learn hands-on 
 
 ## Part 1: Network Setup
 
-<details>
-<summary>📖 Theory: Understanding the Network Setup</summary>
+
+
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
 
 In this section, we build the **foundation of the three-tier architecture** on AWS:
 
@@ -292,6 +296,11 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 ---
 
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 ### 1. Create a VPC
 1. Go to **AWS Console → VPC Dashboard**.  
 2. Click **Create VPC**. 
@@ -304,31 +313,7 @@ This layered setup enforces **security, availability, and scalability**. Public 
 
 You could make it a bit lighthearted like this:
 
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-echo "Creating VPC: demo-app-vpc"
-VPC_ID=$(aws ec2 create-vpc \
-    --cidr-block 10.0.0.0/16 \
-    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=demo-app-vpc}]' \
-    --query "Vpc.VpcId" --output text --no-cli-pager)
-
-if [ -n "$VPC_ID" ]; then
-    echo "✅ VPC created: $VPC_ID"
-else
-    echo "⚠️ Failed to create VPC demo-app-vpc"
-fi
-```
-
-</details>
-
----
 
 ### 2. Create Public & Private Subnets
 
@@ -341,43 +326,6 @@ fi
    - `demo-app-public-subnet-3` → `10.0.3.0/24` → **us-east-1c**  
 4. Click **Create**.
 
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-declare -A PUBLIC_SUBNETS=(
-    ["demo-app-public-subnet-1"]="10.0.1.0/24:us-east-1a"
-    ["demo-app-public-subnet-2"]="10.0.2.0/24:us-east-1b"
-    ["demo-app-public-subnet-3"]="10.0.3.0/24:us-east-1c"
-)
-
-for name in "${!PUBLIC_SUBNETS[@]}"; do
-    IFS=":" read -r CIDR AZ <<< "${PUBLIC_SUBNETS[$name]}"
-    echo "Creating Public Subnet: $name in $AZ"
-    
-    SUBNET_ID=$(aws ec2 create-subnet \
-        --vpc-id $VPC_ID \
-        --cidr-block $CIDR \
-        --availability-zone $AZ \
-        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
-        --query "Subnet.SubnetId" --output text --no-cli-pager)
-    
-    if [ -n "$SUBNET_ID" ]; then
-        echo "✅ Subnet created: $name ($SUBNET_ID)"
-    else
-        echo "⚠️ Failed to create subnet $name"
-    fi
-done
-```
-</details>
-
----
-
 #### 2.2  Private Subnets (For App & DB Layers)
 1. Go to **Subnets → Create Subnet**.  
 2. Choose **VPC:** `demo-app-vpc`.  
@@ -386,42 +334,6 @@ done
    - `demo-app-private-subnet-2` → `10.0.12.0/24` → **us-east-1b**  
    - `demo-app-private-subnet-3` → `10.0.13.0/24` → **us-east-1c**  
 4. Click **Create**.
-
----
-
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-declare -A PRIVATE_SUBNETS=(
-    ["demo-app-private-subnet-1"]="10.0.11.0/24:us-east-1a"
-    ["demo-app-private-subnet-2"]="10.0.12.0/24:us-east-1b"
-    ["demo-app-private-subnet-3"]="10.0.13.0/24:us-east-1c"
-)
-
-for name in "${!PRIVATE_SUBNETS[@]}"; do
-    IFS=":" read -r CIDR AZ <<< "${PRIVATE_SUBNETS[$name]}"
-    echo "Creating Private Subnet: $name in $AZ"
-    
-    SUBNET_ID=$(aws ec2 create-subnet \
-        --vpc-id $VPC_ID \
-        --cidr-block $CIDR \
-        --availability-zone $AZ \
-        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
-        --query "Subnet.SubnetId" --output text --no-cli-pager)
-    
-    if [ -n "$SUBNET_ID" ]; then
-        echo "✅ Private Subnet created: $name ($SUBNET_ID)"
-    else
-        echo "⚠️ Failed to create private subnet $name"
-    fi
-done
-```
-</details>
 
 ---
 
@@ -434,33 +346,8 @@ done
 5. Choose **VPC:** `demo-app-vpc` → Click **Attach**.
 
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-echo "Creating Internet Gateway: demo-app-igw"
-IGW_ID=$(aws ec2 create-internet-gateway \
-    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=demo-app-igw}]' \
-    --query "InternetGateway.InternetGatewayId" --output text --no-cli-pager)
-
-if [ -n "$IGW_ID" ]; then
-    echo "✅ IGW created: $IGW_ID"
-    echo "Attaching IGW to VPC: $VPC_ID"
-    aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
-    echo "✅ IGW attached to VPC"
-else
-    echo "⚠️ Failed to create Internet Gateway"
-fi
-```
-</details>
-
----
-
-### 4. Create & Configure Route Tables
+### 4. Create & Configure Public Route Table
 
 #### 4.1 Public Route Table (For Public Subnets)
 1. Go to **Route Tables → Create Route Table**.  
@@ -481,43 +368,8 @@ fi
 9. Click **Save Associations**.
 
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-echo "Creating Public Route Table: demo-app-public-rt"
-PUBLIC_RT_ID=$(aws ec2 create-route-table \
-    --vpc-id $VPC_ID \
-    --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-public-rt}]' \
-    --query "RouteTable.RouteTableId" --output text --no-cli-pager)
-
-if [ -n "$PUBLIC_RT_ID" ]; then
-    echo "✅ Public Route Table created: $PUBLIC_RT_ID"
-
-    # Add route to IGW
-    aws ec2 create-route --route-table-id $PUBLIC_RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID --no-cli-pager
-    echo "✅ Route added to Internet Gateway"
-
-    # Associate with public subnets
-    for name in "${!PUBLIC_SUBNETS[@]}"; do
-        SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=$name" --query "Subnets[0].SubnetId" --output text --no-cli-pager)
-        aws ec2 associate-route-table --subnet-id $SUBNET_ID --route-table-id $PUBLIC_RT_ID --no-cli-pager
-        echo "✅ Public Subnet $name associated with Route Table"
-    done
-else
-    echo "⚠️ Failed to create public route table"
-fi
-
-```
-</details>
-
----
-
-### 5. Create NAT Gateways
+### 5. Create a NAT Gateway
 
 In this step, we will create NAT Gateways to allow instances in private subnets to access the internet for updates and downloads.
 
@@ -530,31 +382,6 @@ This setup uses **a single NAT Gateway** for all private subnets to save costs.
 3. Click **Tags → Add new tag**:  
    - **Key:** `Name`
    - **Value:** `demo-app-eip-1`
-
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-# 1️⃣ Allocate Elastic IP for NAT Gateway
-echo "Allocating Elastic IP for NAT Gateway: demo-app-eip-1"
-EIP_ALLOC_ID=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=demo-app-eip-1" --query "Addresses[0].AllocationId" --output text)
-
-if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
-    echo "⚠️ Elastic IP already exists: $EIP_ALLOC_ID"
-else
-    EIP_ALLOC_ID=$(aws ec2 allocate-address \
-        --domain vpc \
-        --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=demo-app-eip-1}]' \
-        --query 'AllocationId' --output text)
-    echo "✅ Elastic IP allocated: $EIP_ALLOC_ID"
-fi
-```
-</details>
 
 ---
 
@@ -570,54 +397,6 @@ fi
 4. Wait until the status shows **Available**.
 
 ✅ This NAT Gateway will be used for all private subnets.
-
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-```bash
-# Fetch Public Subnet ID
-echo "Fetching Public Subnet ID: demo-app-public-subnet-1"
-PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets \
-    --filters "Name=tag:Name,Values=demo-app-public-subnet-1" \
-    --query "Subnets[0].SubnetId" --output text)
-
-if [ "$PUBLIC_SUBNET_ID" == "None" ] || [ -z "$PUBLIC_SUBNET_ID" ]; then
-    echo "❌ Public subnet demo-app-public-subnet-1 not found. Aborting NAT Gateway creation."
-    exit 1
-else
-    echo "✅ Public Subnet ID: $PUBLIC_SUBNET_ID"
-fi
-```
-
-```bash
-# Create NAT Gateway
-echo "Creating NAT Gateway: demo-app-nat-gateway-1"
-NAT_ID=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" --query "NatGateways[?State=='available'].NatGatewayId | [0]" --output text)
-
-if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
-    echo "⚠️ NAT Gateway already exists and is available: $NAT_ID"
-else
-    NAT_ID=$(aws ec2 create-nat-gateway \
-        --subnet-id $PUBLIC_SUBNET_ID \
-        --allocation-id $EIP_ALLOC_ID \
-        --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=demo-app-nat-gateway-1}]' \
-        --query 'NatGateway.NatGatewayId' --output text)
-    echo "✅ NAT Gateway created: $NAT_ID"
-fi
-```
-
-```bash
-# Wait until NAT Gateway is available
-echo "Waiting for NAT Gateway to become available..."
-aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
-echo "✅ NAT Gateway is available"
-```
-</details>
 
 ---
 
@@ -660,13 +439,201 @@ This setup uses **one NAT Gateway** for all private subnets → only **one route
 
 ✅ All private subnets now use the same NAT Gateway via this route table.
 
+</details>
+
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
 
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
+
+---
+
+### 1. Create a VPC
+
+```bash
+echo "Creating VPC: demo-app-vpc"
+VPC_ID=$(aws ec2 create-vpc \
+    --cidr-block 10.0.0.0/16 \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=demo-app-vpc}]' \
+    --query "Vpc.VpcId" --output text --no-cli-pager)
+
+if [ -n "$VPC_ID" ]; then
+    echo "✅ VPC created: $VPC_ID"
+else
+    echo "⚠️ Failed to create VPC demo-app-vpc"
+fi
+```
+
+---
+
+### 2. Create Public & Private Subnets
+
+```bash
+declare -A PUBLIC_SUBNETS=(
+    ["demo-app-public-subnet-1"]="10.0.1.0/24:us-east-1a"
+    ["demo-app-public-subnet-2"]="10.0.2.0/24:us-east-1b"
+    ["demo-app-public-subnet-3"]="10.0.3.0/24:us-east-1c"
+)
+
+for name in "${!PUBLIC_SUBNETS[@]}"; do
+    IFS=":" read -r CIDR AZ <<< "${PUBLIC_SUBNETS[$name]}"
+    echo "Creating Public Subnet: $name in $AZ"
+    
+    SUBNET_ID=$(aws ec2 create-subnet \
+        --vpc-id $VPC_ID \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
+        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
+        --query "Subnet.SubnetId" --output text --no-cli-pager)
+    
+    if [ -n "$SUBNET_ID" ]; then
+        echo "✅ Subnet created: $name ($SUBNET_ID)"
+    else
+        echo "⚠️ Failed to create subnet $name"
+    fi
+done
+```
+
+```bash
+declare -A PRIVATE_SUBNETS=(
+    ["demo-app-private-subnet-1"]="10.0.11.0/24:us-east-1a"
+    ["demo-app-private-subnet-2"]="10.0.12.0/24:us-east-1b"
+    ["demo-app-private-subnet-3"]="10.0.13.0/24:us-east-1c"
+)
+
+for name in "${!PRIVATE_SUBNETS[@]}"; do
+    IFS=":" read -r CIDR AZ <<< "${PRIVATE_SUBNETS[$name]}"
+    echo "Creating Private Subnet: $name in $AZ"
+    
+    SUBNET_ID=$(aws ec2 create-subnet \
+        --vpc-id $VPC_ID \
+        --cidr-block $CIDR \
+        --availability-zone $AZ \
+        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$name}]" \
+        --query "Subnet.SubnetId" --output text --no-cli-pager)
+    
+    if [ -n "$SUBNET_ID" ]; then
+        echo "✅ Private Subnet created: $name ($SUBNET_ID)"
+    else
+        echo "⚠️ Failed to create private subnet $name"
+    fi
+done
+```
+
+---
+
+### 3. Create & Attach Internet Gateway (IGW)
+
+```bash
+echo "Creating Internet Gateway: demo-app-igw"
+IGW_ID=$(aws ec2 create-internet-gateway \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=demo-app-igw}]' \
+    --query "InternetGateway.InternetGatewayId" --output text --no-cli-pager)
+
+if [ -n "$IGW_ID" ]; then
+    echo "✅ IGW created: $IGW_ID"
+    echo "Attaching IGW to VPC: $VPC_ID"
+    aws ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID --no-cli-pager
+    echo "✅ IGW attached to VPC"
+else
+    echo "⚠️ Failed to create Internet Gateway"
+fi
+```
+
+---
+
+### 4. Create & Configure a Public Route Table
+
+```bash
+echo "Creating Public Route Table: demo-app-public-rt"
+PUBLIC_RT_ID=$(aws ec2 create-route-table \
+    --vpc-id $VPC_ID \
+    --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=demo-app-public-rt}]' \
+    --query "RouteTable.RouteTableId" --output text --no-cli-pager)
+
+if [ -n "$PUBLIC_RT_ID" ]; then
+    echo "✅ Public Route Table created: $PUBLIC_RT_ID"
+
+    # Add route to IGW
+    aws ec2 create-route --route-table-id $PUBLIC_RT_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID --no-cli-pager
+    echo "✅ Route added to Internet Gateway"
+
+    # Associate with public subnets
+    for name in "${!PUBLIC_SUBNETS[@]}"; do
+        SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=$name" --query "Subnets[0].SubnetId" --output text --no-cli-pager)
+        aws ec2 associate-route-table --subnet-id $SUBNET_ID --route-table-id $PUBLIC_RT_ID --no-cli-pager
+        echo "✅ Public Subnet $name associated with Route Table"
+    done
+else
+    echo "⚠️ Failed to create public route table"
+fi
+
+```
+
+---
+
+### 4. Create a NAT Gateway
+
+```bash
+# 1️⃣ Allocate Elastic IP for NAT Gateway
+echo "Allocating Elastic IP for NAT Gateway: demo-app-eip-1"
+EIP_ALLOC_ID=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=demo-app-eip-1" --query "Addresses[0].AllocationId" --output text)
+
+if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
+    echo "⚠️ Elastic IP already exists: $EIP_ALLOC_ID"
+else
+    EIP_ALLOC_ID=$(aws ec2 allocate-address \
+        --domain vpc \
+        --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=demo-app-eip-1}]' \
+        --query 'AllocationId' --output text)
+    echo "✅ Elastic IP allocated: $EIP_ALLOC_ID"
+fi
+```
+
+---
+
+### 4. Create Route Tables for Private Subnets
+
+```bash
+# Fetch Public Subnet ID
+echo "Fetching Public Subnet ID: demo-app-public-subnet-1"
+PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-public-subnet-1" \
+    --query "Subnets[0].SubnetId" --output text)
+
+if [ "$PUBLIC_SUBNET_ID" == "None" ] || [ -z "$PUBLIC_SUBNET_ID" ]; then
+    echo "❌ Public subnet demo-app-public-subnet-1 not found. Aborting NAT Gateway creation."
+    exit 1
+else
+    echo "✅ Public Subnet ID: $PUBLIC_SUBNET_ID"
+fi
+```
+
+```bash
+# Create NAT Gateway
+echo "Creating NAT Gateway: demo-app-nat-gateway-1"
+NAT_ID=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=demo-app-nat-gateway-1" --query "NatGateways[?State=='available'].NatGatewayId | [0]" --output text)
+
+if [ "$NAT_ID" != "None" ] && [ -n "$NAT_ID" ]; then
+    echo "⚠️ NAT Gateway already exists and is available: $NAT_ID"
+else
+    NAT_ID=$(aws ec2 create-nat-gateway \
+        --subnet-id $PUBLIC_SUBNET_ID \
+        --allocation-id $EIP_ALLOC_ID \
+        --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=demo-app-nat-gateway-1}]' \
+        --query 'NatGateway.NatGatewayId' --output text)
+    echo "✅ NAT Gateway created: $NAT_ID"
+fi
+```
+
+```bash
+# Wait until NAT Gateway is available
+echo "Waiting for NAT Gateway to become available..."
+aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
+echo "✅ NAT Gateway is available"
+```
 
 ```bash
 echo "Creating Private Route Table: demo-app-private-rt-1"
@@ -716,21 +683,15 @@ for SUBNET_ID in $PRIVATE_SUBNET_IDS; do
     fi
 done
 ```
+
+---
+
 </details>
 
 ---
 
-✅ **Note:**
-* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
-* NAT Gateways incur charges — one is enough for demos.
-* After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
-
----
-
-### 7. Validate VPC Resources ✅
-
-<details>
-<summary>Click to expand CLI commands</summary>
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
@@ -748,6 +709,13 @@ chmod +x 1-validate-vpc.sh
 ```
 
 </details>
+
+---
+
+✅ **Note:**
+* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
+* NAT Gateways incur charges — one is enough for demos.
+* After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
 
 ---
 
