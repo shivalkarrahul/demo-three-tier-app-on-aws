@@ -23,17 +23,20 @@ fi
 # 2️⃣ Validate EC2 Instance
 # -----------------------------
 INSTANCE_NAME="demo-app-test-ami-builder"
-EC2_INFO=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
-    --query "Reservations[0].Instances[0].[InstanceId,State.Name,PublicIpAddress,KeyName]" --output text 2>/dev/null)
+EC2_INFO=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
+    --query "Reservations[0].Instances[0].[InstanceId,State.Name,PublicIpAddress,KeyName]" \
+    --output text 2>/dev/null)
 
-if [ -n "$EC2_INFO" ]; then
-    INSTANCE_ID=$(echo $EC2_INFO | awk '{print $1}')
+INSTANCE_ID=$(echo $EC2_INFO | awk '{print $1}')
+
+if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "None" ]; then
+    echo "❌ EC2 instance not found: $INSTANCE_NAME"
+else
     STATE=$(echo $EC2_INFO | awk '{print $2}')
     PUBLIC_IP=$(echo $EC2_INFO | awk '{print $3}')
     KEY_NAME_INST=$(echo $EC2_INFO | awk '{print $4}')
     echo "✅ EC2 exists: $INSTANCE_NAME ($INSTANCE_ID) - State: $STATE - Public IP: $PUBLIC_IP - Key: $KEY_NAME_INST"
-else
-    echo "❌ EC2 instance not found: $INSTANCE_NAME"
 fi
 
 # -----------------------------
