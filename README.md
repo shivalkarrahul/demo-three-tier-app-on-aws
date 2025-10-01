@@ -3188,7 +3188,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 ### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
 
-<details> <summary>Part 5: DynamoDB Table and Lambda Resources Cleanup (AWS CLI)</summary> 
+<details> <summary>Part 6: Flask Application Resources Cleanup (AWS CLI)</summary> 
 
 > Run these AWS CLI commands to quickly delete the resource without navigating the Console.
 
