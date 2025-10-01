@@ -726,6 +726,31 @@ done
 
 ---
 
+### 7 Validate VPC Resources ✅
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/1-validate-vpc.sh
+
+# Make it executable
+chmod +x 1-validate-vpc.sh
+
+# Run the script
+./1-validate-vpc.sh
+
+```
+
+</details>
+
+---
+
+
 ## Part 2: Set Up RDS (3 Mins)
 
 <details>
@@ -905,6 +930,31 @@ fi
 
 ```
 </details>
+---
+
+### 6 Validate RDS Resources ✅
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/2-validate-rds.sh
+
+# Make it executable
+chmod +x 2-validate-rds.sh
+
+# Run the script
+./2-validate-rds.sh
+
+```
+
+</details>
+
+
 
 ---
 
