@@ -10,7 +10,7 @@ RDS_USER = "CHANGE_ME_RDS_USER"
 RDS_PASSWORD = "CHANGE_ME_RDS_PASSWORD"
 RDS_DATABASE = "demo"
 S3_BUCKET = "CHANGE_ME_BACKEND_S3_BUCKET"
-DYNAMODB_TABLE_NAME = “demo-app-file-metadata-dynamodb"
+DYNAMODB_TABLE_NAME = "demo-app-file-metadata-dynamodb"
 # AWS S3 Client
 s3_client = boto3.client("s3")
 # Create Database if Not Exists
