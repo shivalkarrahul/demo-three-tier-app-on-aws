@@ -727,7 +727,7 @@ done
 
 ---
 
-### 7 Validate VPC Resources ✅
+### 7. Validate VPC Resources ✅
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -935,7 +935,7 @@ fi
 
 ---
 
-### 6 Validate RDS Resources ✅
+### 6. Validate RDS Resources ✅
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -1063,7 +1063,7 @@ fi
 
 ---
 
-### 2 Validate S3 Resources ✅
+### 2. Validate S3 Resources ✅
 
 <details>
 <summary>Click to expand CLI commands</summary>
@@ -1288,6 +1288,30 @@ echo "✅ S3 bucket configured to send SNS notifications on object upload"
 </details>
 
 ---
+
+### 5. Validate SNS Resources ✅
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/4-validate-sns.sh
+
+# Make it executable
+chmod +x 4-validate-sns.sh
+
+# Run the script
+./4-validate-sns.sh
+
+```
+
+</details>
+
+--
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
