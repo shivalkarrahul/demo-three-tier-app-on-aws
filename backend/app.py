@@ -5,11 +5,11 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # ✅ Allow all origins
 # RDS and S3 Configurations
-RDS_HOST = "CHANGE_ME"
-RDS_USER = "CHANGE_ME"
-RDS_PASSWORD = "CHANGE_ME"
+RDS_HOST = "CHANGE_ME_RDS_HOST"
+RDS_USER = "CHANGE_ME_RDS_USER"
+RDS_PASSWORD = "CHANGE_ME_RDS_PASSWORD"
 RDS_DATABASE = "demo"
-S3_BUCKET = "CHANGE_ME"
+S3_BUCKET = "CHANGE_ME_S3_BUCKET"
 DYNAMODB_TABLE_NAME = “demo-app-file-metadata-dynamodb"
 # AWS S3 Client
 s3_client = boto3.client("s3")

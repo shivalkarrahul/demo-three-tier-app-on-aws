@@ -1935,7 +1935,7 @@ if __name__ == "__main__":
 ```
 
 5. **Download the `index.html` file** from the repo:
-   [Frontend `index.html`](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws/blob/dev/frontend/index.html)
+   [Frontend `index.html`](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws/blob/main/frontend/index.html)
 
 6. **Edit the file** to update the backend API endpoint:
 
