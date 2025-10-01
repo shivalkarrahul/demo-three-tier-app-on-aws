@@ -2665,14 +2665,10 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 ---
 ## Part 12: Cleanup – Terminate All Resources
 
-<details>
-<summary>📖 Theory: The Importance of a Clean AWS Environment</summary>
+### 📖 Theory
+<details> <summary>Understanding the Resource Cleanup</summary> 
 
-In this step, we clean up all AWS resources after testing the three-tier application:  
-• Terminate EC2 instances and Auto Scaling Groups.  
-• Delete RDS and DynamoDB databases.  
-• Remove S3 buckets and SNS topics.  
-• Delete networking components such as Security Groups, Route Tables, Internet Gateway, and finally the VPC.  
+In this step, we clean up all AWS resources after testing the three-tier application:   
 
 ---
 
@@ -2687,28 +2683,18 @@ A clean environment is easier to manage and reduces the chance of misconfigurati
 **Dependency-Based Cleanup Order**  
 AWS resources often depend on each other. To avoid errors during deletion, follow a specific order:  
 
-1. **EC2 Instances & Auto Scaling Groups (ASG)**  
-   - Deleting the ASG automatically terminates all EC2 instances it manages.  
-2. **AMIs and Snapshots**  
-   - Deregister AMIs and delete the associated snapshots to free storage.  
-3. **Databases & Storage**  
-   - Delete RDS instances, DynamoDB tables, S3 buckets, and SNS topics.  
-4. **Networking Components**  
-   - Delete Security Groups, Route Tables, and the Internet Gateway.  
-5. **VPC**  
-   - The VPC is deleted last, as it is the container for all other resources.  
-
-✅ Following this order ensures a **safe, complete, and cost-effective cleanup** of your AWS environment.
-
 <p align="left"><b>🔒 Theory section ends here — continue with hands-on steps ⬇️</b></p>
 
 </details>
 
 ---
 
-### Steps:
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
 
-### 🧹 DynamoDB Table and Lambda Resources (AWS CLI)
+<details> <summary>Part 5: DynamoDB Table and Lambda Resources Cleanup (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
 
 ```bash
 ROLE_NAME="demo-app-lambda-iam-role"
@@ -2762,9 +2748,14 @@ else
 fi
 
 ```
+</details>
 
+---
 
-### 🧹 Cleanup SNS Resources (AWS CLI)
+<details> <summary>Part 4: SNS Resources Cleanup  (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
 
 ```bash
 SNS_TOPIC_NAME="demo-app-sns-topic"
@@ -2807,7 +2798,14 @@ fi
 
 ```
 
-### 🧹 Cleanup Backend S3 Resources (AWS CLI)
+</details>
+
+---
+
+<details> <summary>Part 3: S3 Resource Cleanup (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
 
 ```bash
 BUCKET_NAME="demo-app-backend-s3-bucket-12345"
@@ -2832,8 +2830,14 @@ fi
 
 ```
 
+</details>
 
-### 🧹 Cleanup RDS Resources (AWS CLI)
+---
+
+<details> <summary>Part 2: RDS Resource  Cleanup (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
 
 ```bash
 DB_INSTANCE_ID="my-demo-db"
@@ -2882,8 +2886,14 @@ else
 fi
 ```
 
+</details>
 
-### 🧹 Cleanup VPC Resources (AWS CLI)
+---
+
+<details> <summary>Part 1: Network Resource Cleanup (AWS CLI)</summary> 
+
+> Run these AWS CLI commands to quickly delete the resource without navigating the Console.
+
 
 ### **1. Delete NAT Gateway**
 
@@ -3022,8 +3032,6 @@ fi
 
 ---
 
-✅ **Notes:**
+</details>
 
-* The commands use **`--no-cli-pager`** so you don’t need to press `q` after viewing outputs.
-* The `if [ "$ID" != "None" ]` check ensures commands won’t fail if a resource doesn’t exist.
-* This covers **NAT Gateway, Elastic IP, IGW, Route Tables, Subnets, and VPC**.
+---
