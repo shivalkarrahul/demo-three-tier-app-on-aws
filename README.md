@@ -2662,7 +2662,6 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 
 ---
 
----
 ## Part 12: Cleanup – Terminate All Resources
 
 ### 📖 Theory
