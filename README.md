@@ -1492,8 +1492,9 @@ if [ -n "$LAMBDA_ARN" ]; then
     echo "⚠️ Lambda function already exists: $LAMBDA_ARN"
 else
    # Create a minimal empty Lambda zip
-   echo "def lambda_handler(event, context): pass" > lambda_function.py
-   zip lambda_function.zip lambda_function.py
+   echo "Downloading Lambda code from GitHub..."
+   curl -L -o lambda_function.py https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/backend/demo-app-metadata-lambda
+   zip lambda_function.zip lambda_function.py >/dev/null 2>&1
 
    # Create Lambda function
    aws lambda create-function \
