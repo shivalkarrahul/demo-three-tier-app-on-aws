@@ -40,6 +40,7 @@ fi
 # 3️⃣ Validate Security Groups
 # -----------------------------
 APP_SG_NAME="demo-app-test-ami-builder-sg"
+DB_SG_ID="demo-app-db-sg"
 
 APP_SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$APP_SG_NAME" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
 DB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$DB_SG_NAME" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
