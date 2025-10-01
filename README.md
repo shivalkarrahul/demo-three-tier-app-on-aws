@@ -1063,7 +1063,7 @@ fi
 
 ---
 
-### 7 Validate S3 Resources ✅
+### 2 Validate S3 Resources ✅
 
 <details>
 <summary>Click to expand CLI commands</summary>
