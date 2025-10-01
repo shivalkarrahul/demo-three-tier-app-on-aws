@@ -1069,8 +1069,11 @@ chmod +x 3-validate-s3.sh
 
 ## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
 
-<details>
-<summary>📖 Theory: Decoupled Messaging and Events</summary>
+
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
 
 In this step, we use **Amazon SNS (Simple Notification Service)** to get email alerts whenever a file is uploaded to **S3**.  
 
@@ -1113,6 +1116,12 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 </details>
 
 ---
+
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 
 ### 1. Create an SNS Topic
 1. Go to AWS Console → Amazon SNS.
@@ -1176,12 +1185,14 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 ✅ Now, whenever a file is uploaded to this bucket, an email notification will be sent via SNS.
 
+</details>
 
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
-<details>
-<summary>Click to expand CLI commands</summary>
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
 
 ```bash
@@ -1268,10 +1279,8 @@ echo "✅ S3 bucket configured to send SNS notifications on object upload"
 
 ---
 
-### 5. Validate SNS Resources ✅
-
-<details>
-<summary>Click to expand CLI commands</summary>
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
@@ -1294,8 +1303,10 @@ chmod +x 4-validate-sns.sh
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
-<details>
-<summary>📖 Theory: Serverless Data Processing and Storage</summary>
+### 📖 Theory
+<details> <summary>Understanding the Resource</summary> 
+
+> Understand why this resource is needed and how it fits into the AWS architecture before creating it.
 
 In this step, we **store metadata of uploaded files in DynamoDB using a Lambda function**:  
 
@@ -1345,6 +1356,11 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 
 ---
 
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 ### 1. Create a DynamoDB Table
 1. Go to AWS Console → DynamoDB → Tables → **Create Table**.
 2. Enter **Table name:** `demo-app-file-metadata-dynamodb`.
@@ -1355,38 +1371,6 @@ This pipeline (S3 → SNS → Lambda → DynamoDB) is a **classic serverless, ev
 5. Click **Create Table**.
 
 > **Important:** You don’t need to manually define other required attributes like `upload_time` or `file_size`. These will be dynamically inserted by the Lambda function. You can view them under **Explore Items** in DynamoDB later.
-
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-
-```bash
-# Create DynamoDB Table
-echo "Creating DynamoDB Table: demo-app-file-metadata-dynamodb"
-DDB_TABLE=$(aws dynamodb describe-table \
-    --table-name demo-app-file-metadata-dynamodb \
-    --query "Table.TableName" --output text 2>/dev/null)
-
-if [ "$DDB_TABLE" == "demo-app-file-metadata-dynamodb" ]; then
-    echo "⚠️ DynamoDB Table already exists: $DDB_TABLE"
-else
-    aws dynamodb create-table \
-        --table-name demo-app-file-metadata-dynamodb \
-        --attribute-definitions AttributeName=file_name,AttributeType=S \
-        --key-schema AttributeName=file_name,KeyType=HASH \
-        --billing-mode PAY_PER_REQUEST \
-        --tags Key=Name,Value=demo-app-file-metadata-dynamodb \
-        --no-cli-pager
-    echo "✅ DynamoDB Table created: demo-app-file-metadata-dynamodb"
-fi
-```
-
-</details>
 
 ---
 
@@ -1401,48 +1385,7 @@ fi
 5. Name the role: `demo-app-lambda-iam-role`.
 6. Create the role and note the **Role ARN**.
 
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-
-```bash
-#Create IAM Role for Lambda
-echo "Creating IAM Role: demo-app-lambda-iam-role"
-ROLE_ARN=$(aws iam get-role --role-name demo-app-lambda-iam-role --query 'Role.Arn' --output text 2>/dev/null)
-
-if [ -n "$ROLE_ARN" ]; then
-    echo "⚠️ IAM Role already exists: $ROLE_ARN"
-else
-    TRUST_POLICY='{
-      "Version": "2012-10-17",
-      "Statement": [{
-        "Effect": "Allow",
-        "Principal": { "Service": "lambda.amazonaws.com" },
-        "Action": "sts:AssumeRole"
-      }]
-    }'
-    ROLE_ARN=$(aws iam create-role \
-        --role-name demo-app-lambda-iam-role \
-        --assume-role-policy-document "$TRUST_POLICY" \
-        --query 'Role.Arn' --output text)
-    echo "✅ IAM Role created: $ROLE_ARN"
-
-    # Attach policies
-    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-    echo "✅ Attached S3, DynamoDB & Lambda basic execution policies"
-fi
-```
-
-</details>
-
----
+----
 
 
 ### 3. Create a Lambda Function
@@ -1454,46 +1397,6 @@ fi
 6. Click **Create Function**.
 
 ---
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-
-```bash
-# Create Lambda Function
-echo "Creating Lambda Function: demo-app-metadata-lambda"
-LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
-
-if [ -n "$LAMBDA_ARN" ]; then
-    echo "⚠️ Lambda function already exists: $LAMBDA_ARN"
-else
-   # Create a minimal empty Lambda zip
-   echo "Downloading Lambda code from GitHub..."
-   curl -L -o lambda_function.py https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/backend/demo-app-metadata-lambda
-   zip lambda_function.zip lambda_function.py >/dev/null 2>&1
-
-   # Create Lambda function
-   aws lambda create-function \
-      --function-name demo-app-metadata-lambda \
-      --runtime python3.13 \
-      --role "$ROLE_ARN" \
-      --handler lambda_function.lambda_handler \
-      --zip-file fileb://lambda_function.zip \
-      --timeout 30 \
-      --memory-size 128 \
-      --tags Name=demo-app-metadata-lambda \
-      --no-cli-pager
-
-   echo "✅ Lambda function created: demo-app-metadata-lambda"
-fi
-```
-
-</details>
-
----
 
 ### 4. Subscribe Lambda to Existing SNS Topic
 1. Go to **SNS Console → Your SNS Topic (`demo-app-sns-topic`)**.
@@ -1502,80 +1405,6 @@ fi
 4. Select the Lambda Function you created (`demo-app-metadata-lambda`).
 5. Click **Create Subscription**.
 6. Return to the SNS Topic `demo-app-sns-topic` and verify that there are now **2 subscriptions**, both showing the **Status: Subscribed**.
-
----
-🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
-
-<details>
-<summary>Click to expand CLI commands</summary>
-
-> Save some clicks and time—use the CLI commands below instead of the Console. Or do it the old-school way if you enjoy extra scrolling!
-
-
-```bash
-
-# Fetch Lambda ARN
-LAMBDA_ARN=$(aws lambda get-function \
-    --function-name demo-app-metadata-lambda \
-    --query 'Configuration.FunctionArn' --output text --no-cli-pager)
-
-if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
-    echo "❌ Lambda function not found. Create it first."
-    exit 1
-else
-    echo "✅ Lambda ARN: $LAMBDA_ARN"
-fi
-
-# Fetch SNS Topic ARN
-SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
-
-if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
-    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
-    exit 1
-else
-    echo "✅ SNS Topic ARN: $SNS_TOPIC_ARN"
-fi
-
-# Subscribe Lambda to SNS Topic
-SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
-
-if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
-    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
-else
-    SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
-        --query "Subscriptions[?Endpoint=='$LAMBDA_ARN'].SubscriptionArn" --output text)
-
-    if [ -n "$SUBSCRIPTION_ARN" ]; then
-        echo "⚠️ Lambda already subscribed to SNS Topic: $SUBSCRIPTION_ARN"
-    else
-        aws sns subscribe \
-            --topic-arn "$SNS_TOPIC_ARN" \
-            --protocol lambda \
-            --notification-endpoint "$LAMBDA_ARN" \
-            --no-cli-pager
-        echo "✅ Lambda subscribed to SNS Topic: $SNS_TOPIC_ARN"
-    fi
-fi
-
-# Ensure Lambda has permission to be invoked by SNS
-STATEMENT_ID="sns-invoke-demo-app"
-PERMISSION_EXISTS=$(aws lambda get-policy --function-name demo-app-metadata-lambda --query "Policy" --output text 2>/dev/null | grep "$STATEMENT_ID" || true)
-
-if [ -n "$PERMISSION_EXISTS" ]; then
-    echo "⚠️ Lambda already has permission for SNS to invoke"
-else
-    aws lambda add-permission \
-        --function-name demo-app-metadata-lambda \
-        --statement-id "$STATEMENT_ID" \
-        --action lambda:InvokeFunction \
-        --principal sns.amazonaws.com \
-        --source-arn "$SNS_TOPIC_ARN" \
-        --no-cli-pager
-    echo "✅ Added permission for SNS to invoke Lambda"
-fi
-```
-
-</details>
 
 ---
 
@@ -1646,12 +1475,178 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 
 ✅ This confirms that uploading a file to S3 triggers SNS, which sends an email, invokes Lambda, and writes metadata to DynamoDB successfully.
 
+</details>
+
 ---
 
-### 7. Validate DynamoDB and Lambda Resources ✅
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
 
-<details>
-<summary>Click to expand CLI commands</summary>
+> Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
+
+### 1. Create a DynamoDB Table
+
+```bash
+# Create DynamoDB Table
+echo "Creating DynamoDB Table: demo-app-file-metadata-dynamodb"
+DDB_TABLE=$(aws dynamodb describe-table \
+    --table-name demo-app-file-metadata-dynamodb \
+    --query "Table.TableName" --output text 2>/dev/null)
+
+if [ "$DDB_TABLE" == "demo-app-file-metadata-dynamodb" ]; then
+    echo "⚠️ DynamoDB Table already exists: $DDB_TABLE"
+else
+    aws dynamodb create-table \
+        --table-name demo-app-file-metadata-dynamodb \
+        --attribute-definitions AttributeName=file_name,AttributeType=S \
+        --key-schema AttributeName=file_name,KeyType=HASH \
+        --billing-mode PAY_PER_REQUEST \
+        --tags Key=Name,Value=demo-app-file-metadata-dynamodb \
+        --no-cli-pager
+    echo "✅ DynamoDB Table created: demo-app-file-metadata-dynamodb"
+fi
+```
+
+---
+
+### 2. Create an IAM Role for Lambda
+
+```bash
+#Create IAM Role for Lambda
+echo "Creating IAM Role: demo-app-lambda-iam-role"
+ROLE_ARN=$(aws iam get-role --role-name demo-app-lambda-iam-role --query 'Role.Arn' --output text 2>/dev/null)
+
+if [ -n "$ROLE_ARN" ]; then
+    echo "⚠️ IAM Role already exists: $ROLE_ARN"
+else
+    TRUST_POLICY='{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }]
+    }'
+    ROLE_ARN=$(aws iam create-role \
+        --role-name demo-app-lambda-iam-role \
+        --assume-role-policy-document "$TRUST_POLICY" \
+        --query 'Role.Arn' --output text)
+    echo "✅ IAM Role created: $ROLE_ARN"
+
+    # Attach policies
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+    aws iam attach-role-policy --role-name demo-app-lambda-iam-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    echo "✅ Attached S3, DynamoDB & Lambda basic execution policies"
+fi
+```
+
+---
+
+### 3. Create a Lambda Function with Code
+
+```bash
+# Create Lambda Function
+echo "Creating Lambda Function: demo-app-metadata-lambda"
+LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
+
+if [ -n "$LAMBDA_ARN" ]; then
+    echo "⚠️ Lambda function already exists: $LAMBDA_ARN"
+else
+   # Create a minimal empty Lambda zip
+   echo "Downloading Lambda code from GitHub..."
+   curl -L -o lambda_function.py https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/backend/demo-app-metadata-lambda
+   zip lambda_function.zip lambda_function.py >/dev/null 2>&1
+
+   # Create Lambda function
+   aws lambda create-function \
+      --function-name demo-app-metadata-lambda \
+      --runtime python3.13 \
+      --role "$ROLE_ARN" \
+      --handler lambda_function.lambda_handler \
+      --zip-file fileb://lambda_function.zip \
+      --timeout 30 \
+      --memory-size 128 \
+      --tags Name=demo-app-metadata-lambda \
+      --no-cli-pager
+
+   echo "✅ Lambda function created: demo-app-metadata-lambda"
+fi
+```
+
+---
+
+### 4. Subscribe Lambda to Existing SNS Topic
+
+```bash
+
+# Fetch Lambda ARN
+LAMBDA_ARN=$(aws lambda get-function \
+    --function-name demo-app-metadata-lambda \
+    --query 'Configuration.FunctionArn' --output text --no-cli-pager)
+
+if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
+    echo "❌ Lambda function not found. Create it first."
+    exit 1
+else
+    echo "✅ Lambda ARN: $LAMBDA_ARN"
+fi
+
+# Fetch SNS Topic ARN
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
+    exit 1
+else
+    echo "✅ SNS Topic ARN: $SNS_TOPIC_ARN"
+fi
+
+# Subscribe Lambda to SNS Topic
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
+else
+    SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[?Endpoint=='$LAMBDA_ARN'].SubscriptionArn" --output text)
+
+    if [ -n "$SUBSCRIPTION_ARN" ]; then
+        echo "⚠️ Lambda already subscribed to SNS Topic: $SUBSCRIPTION_ARN"
+    else
+        aws sns subscribe \
+            --topic-arn "$SNS_TOPIC_ARN" \
+            --protocol lambda \
+            --notification-endpoint "$LAMBDA_ARN" \
+            --no-cli-pager
+        echo "✅ Lambda subscribed to SNS Topic: $SNS_TOPIC_ARN"
+    fi
+fi
+
+# Ensure Lambda has permission to be invoked by SNS
+STATEMENT_ID="sns-invoke-demo-app"
+PERMISSION_EXISTS=$(aws lambda get-policy --function-name demo-app-metadata-lambda --query "Policy" --output text 2>/dev/null | grep "$STATEMENT_ID" || true)
+
+if [ -n "$PERMISSION_EXISTS" ]; then
+    echo "⚠️ Lambda already has permission for SNS to invoke"
+else
+    aws lambda add-permission \
+        --function-name demo-app-metadata-lambda \
+        --statement-id "$STATEMENT_ID" \
+        --action lambda:InvokeFunction \
+        --principal sns.amazonaws.com \
+        --source-arn "$SNS_TOPIC_ARN" \
+        --no-cli-pager
+    echo "✅ Added permission for SNS to invoke Lambda"
+fi
+```
+
+</details>
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly)
+<details> <summary>Validate the Resource</summary> 
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
