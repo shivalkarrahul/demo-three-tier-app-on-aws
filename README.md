@@ -1642,6 +1642,30 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 
 ---
 
+### 7. Validate DynamoDB and Lambda Resources ✅
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/1-validate-vpc.sh
+
+# Make it executable
+chmod +x 1-validate-vpc.sh
+
+# Run the script
+./1-validate-vpc.sh
+
+```
+
+</details>
+
+---
+
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
 <details>
 <summary>📖 Theory: The Application Layer and Service Integration</summary>
@@ -2741,6 +2765,18 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 ```bash
 ROLE_NAME="demo-app-lambda-iam-role"
+DDB_TABLE_NAME="demo-app-file-metadata-dynamodb"
+
+# Delete DynamoDB Table
+DDB_TABLE=$(aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --query "Table.TableName" --output text 2>/dev/null)
+
+if [ -z "$DDB_TABLE" ] || [ "$DDB_TABLE" == "None" ]; then
+    echo "⚠️ DynamoDB Table $DDB_TABLE_NAME not found. Skipping deletion."
+else
+    aws dynamodb delete-table --table-name "$DDB_TABLE_NAME" --no-cli-pager
+    echo "✅ DynamoDB Table deleted: $DDB_TABLE_NAME"
+fi
+
 # Delete SNS subscriptions and topic
 SNS_TOPIC_ARN=$(aws sns list-topics \
     --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" \
