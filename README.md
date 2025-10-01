@@ -1904,13 +1904,13 @@ if __name__ == "__main__":
 1. Open **AWS Console → Navigate to S3**.
 2. Click **Create bucket**.
 3. Enter a unique bucket name, for example:  
-   `demo-app-backend-s3-bucket-6789`  
+   `demo-app-frontend-s3-bucket-6789`  
    
    🚨 **Important:**  
    - S3 bucket names must be globally unique across all AWS accounts.  
    - You may use a different name if this one is not available.  
    - **Note:** Keep a record of this bucket name as it will be required later.  
-   - It is recommended to add a random string at the end of the bucket name `demo-app-backend-s3-bucket-6789-<some-random-string>` to avoid conflicts or confusion.
+   - It is recommended to add a random string at the end of the bucket name `demo-app-frontend-s3-bucket-6789-<some-random-string>` to avoid conflicts or confusion.
 
 4. Choose the **same region** as your VPC (e.g., `us-east-1`).
 5. Disable **Block public access**. Tick the checkbox `I acknowledge that the current settings might result in this bucket and the objects within becoming public.`
