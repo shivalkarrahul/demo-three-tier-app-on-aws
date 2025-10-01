@@ -1547,6 +1547,16 @@ else
     echo "✅ Lambda ARN: $LAMBDA_ARN"
 fi
 
+# Fetch SNS Topic ARN
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
+
+if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
+    echo "❌ SNS Topic demo-app-sns-topic not found. Create the SNS Topic first."
+    exit 1
+else
+    echo "✅ SNS Topic ARN: $SNS_TOPIC_ARN"
+fi
+
 # Subscribe Lambda to SNS Topic
 SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" --output text)
 
@@ -1566,6 +1576,23 @@ else
             --no-cli-pager
         echo "✅ Lambda subscribed to SNS Topic: $SNS_TOPIC_ARN"
     fi
+fi
+
+# Ensure Lambda has permission to be invoked by SNS
+STATEMENT_ID="sns-invoke-demo-app"
+PERMISSION_EXISTS=$(aws lambda get-policy --function-name demo-app-metadata-lambda --query "Policy" --output text 2>/dev/null | grep "$STATEMENT_ID" || true)
+
+if [ -n "$PERMISSION_EXISTS" ]; then
+    echo "⚠️ Lambda already has permission for SNS to invoke"
+else
+    aws lambda add-permission \
+        --function-name demo-app-metadata-lambda \
+        --statement-id "$STATEMENT_ID" \
+        --action lambda:InvokeFunction \
+        --principal sns.amazonaws.com \
+        --source-arn "$SNS_TOPIC_ARN" \
+        --no-cli-pager
+    echo "✅ Added permission for SNS to invoke Lambda"
 fi
 ```
 
@@ -1652,13 +1679,13 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 
 ```bash
 # Download the validation script from GitHub
-curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/1-validate-vpc.sh
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/5-validate-dynamodb-lambda.sh
 
 # Make it executable
-chmod +x 1-validate-vpc.sh
+chmod +x 5-validate-dynamodb-lambda.sh
 
 # Run the script
-./1-validate-vpc.sh
+./5-validate-dynamodb-lambda.sh
 
 ```
 
@@ -2766,6 +2793,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ```bash
 ROLE_NAME="demo-app-lambda-iam-role"
 DDB_TABLE_NAME="demo-app-file-metadata-dynamodb"
+LAMBDA_NAME="demo-app-metadata-lambda"
 
 # Delete DynamoDB Table
 DDB_TABLE=$(aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --query "Table.TableName" --output text 2>/dev/null)
@@ -2777,40 +2805,22 @@ else
     echo "✅ DynamoDB Table deleted: $DDB_TABLE_NAME"
 fi
 
-# Delete SNS subscriptions and topic
-SNS_TOPIC_ARN=$(aws sns list-topics \
-    --query "Topics[?contains(TopicArn,'demo-app-sns-topic')].TopicArn | [0]" \
-    --output text)
-
-if [ -z "$SNS_TOPIC_ARN" ] || [ "$SNS_TOPIC_ARN" == "None" ]; then
-    echo "⚠️ SNS Topic demo-app-sns-topic not found. Skipping deletion."
-else
-    echo "Deleting subscriptions for SNS Topic: $SNS_TOPIC_ARN"
-    SUB_ARN_LIST=$(aws sns list-subscriptions-by-topic \
-        --topic-arn "$SNS_TOPIC_ARN" \
-        --query "Subscriptions[].SubscriptionArn" --output text)
-
-    for SUB_ARN in $SUB_ARN_LIST; do
-        if [ "$SUB_ARN" != "PendingConfirmation" ]; then
-            aws sns unsubscribe --subscription-arn "$SUB_ARN" --no-cli-pager
-            echo "✅ Unsubscribed: $SUB_ARN"
-        else
-            echo "⚠️ Subscription is PendingConfirmation, skipping: $SUB_ARN"
-        fi
-    done
-
-    aws sns delete-topic --topic-arn "$SNS_TOPIC_ARN" --no-cli-pager
-    echo "✅ SNS Topic deleted: $SNS_TOPIC_ARN"
-fi
-
-# Delete Lambda Function
-LAMBDA_ARN=$(aws lambda get-function --function-name demo-app-metadata-lambda --query 'Configuration.FunctionArn' --output text 2>/dev/null)
+# Fetch Lambda ARN
+LAMBDA_ARN=$(aws lambda get-function --function-name "$LAMBDA_NAME" --query 'Configuration.FunctionArn' --output text 2>/dev/null)
 
 if [ -z "$LAMBDA_ARN" ] || [ "$LAMBDA_ARN" == "None" ]; then
-    echo "⚠️ Lambda function demo-app-metadata-lambda not found. Skipping deletion."
+    echo "⚠️ Lambda function $LAMBDA_NAME not found. Skipping deletion."
 else
-    aws lambda delete-function --function-name demo-app-metadata-lambda --no-cli-pager
-    echo "✅ Lambda function deleted: demo-app-metadata-lambda"
+    # Unsubscribe Lambda from any existing SNS topics
+    SUBSCRIPTION_ARNS=$(aws sns list-subscriptions | jq -r ".Subscriptions[] | select(.Endpoint==\"$LAMBDA_ARN\") | .SubscriptionArn")
+    for SUB_ARN in $SUBSCRIPTION_ARNS; do
+        aws sns unsubscribe --subscription-arn "$SUB_ARN" --no-cli-pager
+        echo "✅ Unsubscribed Lambda from SNS subscription: $SUB_ARN"
+    done
+
+    # Delete Lambda Function
+    aws lambda delete-function --function-name "$LAMBDA_NAME" --no-cli-pager
+    echo "✅ Lambda function deleted: $LAMBDA_NAME"
 fi
 
 # Delete IAM Role for Lambda
