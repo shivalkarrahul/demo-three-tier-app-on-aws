@@ -246,7 +246,7 @@ This guide is intended for students and developers who want to **learn hands-on 
 ## Architecture Diagram - Three-Tier Architecture Overview
 ![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
 
-## Part 1: Network Setup (7 Mins)
+## Part 1: Network Setup
 
 <details>
 <summary>📖 Theory: Understanding the Network Setup</summary>
@@ -388,6 +388,7 @@ done
 4. Click **Create**.
 
 ---
+
 🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
@@ -751,7 +752,7 @@ chmod +x 1-validate-vpc.sh
 ---
 
 
-## Part 2: Set Up RDS (3 Mins)
+## Part 2: Set Up RDS
 
 <details>
 <summary>📖 Theory: The Data Layer</summary>
@@ -832,6 +833,7 @@ Placing the database in private subnets enforces **security best practices** whi
 
 
 ---
+
 🔹💻⚡ AWS CLI Commands (Skip the clicks! Expand for magic)
 
 <details>
@@ -930,6 +932,7 @@ fi
 
 ```
 </details>
+
 ---
 
 ### 6 Validate RDS Resources ✅
@@ -954,11 +957,9 @@ chmod +x 2-validate-rds.sh
 
 </details>
 
-
-
 ---
 
-## Part 3: Set Up S3 (1 Min)
+## Part 3: Set Up S3
 
 <details>
 <summary>📖 Theory: The Storage Layer</summary>
@@ -1062,7 +1063,32 @@ fi
 
 ---
 
-## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads (4 mins)
+### 7 Validate S3 Resources ✅
+
+<details>
+<summary>Click to expand CLI commands</summary>
+
+> After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
+> Run the following in CloudShell:
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/3-validate-s3.sh
+
+# Make it executable
+chmod +x 3-validate-s3.sh
+
+# Run the script
+./3-validate-s3.sh
+
+```
+
+</details>
+
+---
+
+
+## Part 4: Configure SNS to Send Email Notifications on S3 File Uploads
 
 <details>
 <summary>📖 Theory: Decoupled Messaging and Events</summary>
@@ -1263,7 +1289,7 @@ echo "✅ S3 bucket configured to send SNS notifications on object upload"
 
 ---
 
-## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage (5 Mins)
+## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
 <details>
 <summary>📖 Theory: Serverless Data Processing and Storage</summary>
@@ -1592,7 +1618,6 @@ After setting up S3, SNS, DynamoDB, and Lambda:
 ---
 
 ## Part 6: Deploy a Flask Application on Test AMI Builder EC2 with RDS & S3, DynamoDB Integration in Public Subnet
-(20 Mins)
 <details>
 <summary>📖 Theory: The Application Layer and Service Integration</summary>
 
@@ -2024,7 +2049,7 @@ sudo systemctl status flask-app
 
 ---
 
-## Part 7: Create an AMI, Launch Template, and Auto Scaling Group (10 Mins)
+## Part 7: Create an AMI, Launch Template, and Auto Scaling Group
 
 <details>
 <summary>📖 Theory: Immutable Infrastructure and Automated Scaling</summary>
