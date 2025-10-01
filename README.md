@@ -1815,11 +1815,11 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # RDS and S3 Configurations
-RDS_HOST = "CHANGE_ME"
-RDS_USER = "CHANGE_ME"
-RDS_PASSWORD = "CHANGE_ME"
+RDS_HOST = "CHANGE_ME_RDS_HOST"
+RDS_USER = "CHANGE_ME_RDS_USER"
+RDS_PASSWORD = "CHANGE_ME_RDS_PASSWORD"
 RDS_DATABASE = "demo"
-S3_BUCKET = "CHANGE_ME"
+S3_BUCKET = "CHANGE_ME_BACKEND_S3_BUCKET"
 DYNAMODB_TABLE_NAME = "demo-app-file-metadata-dynamodb"
 
 # AWS S3 Client
@@ -1904,7 +1904,7 @@ if __name__ == "__main__":
 1. Open **AWS Console → Navigate to S3**.
 2. Click **Create bucket**.
 3. Enter a unique bucket name, for example:  
-   `demo-app-backend-s3-bucket-1234`  
+   `demo-app-backend-s3-bucket-6789`  
    
    🚨 **Important:**  
    - S3 bucket names must be globally unique across all AWS accounts.  
@@ -1965,8 +1965,7 @@ if __name__ == "__main__":
 
 ```bash
 cd /home/ubuntu/flask-app
-python3 -m venv venv        # Create virtual environment
-source venv/bin/activate    # Activate virtual environment
+source /home/ubuntu/venv/bin/activate   # Activate virtual environment
 ```
 
 3. **Start the Flask application**:
