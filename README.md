@@ -2477,6 +2477,73 @@ EOF
 
 echo "✅ Deployment completed. Access your backend at http://$EC2_PUBLIC_IP:5000"
 ```
+
+
+NOTE: TESTING PENDING
+```bash
+#!/bin/bash
+set -e
+
+# -----------------------------
+# Automated Systemd Setup for Flask
+# -----------------------------
+
+# Required environment variables
+: "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP}"
+: "${KEY_NAME:?Please export KEY_NAME}"  # without .pem
+
+APP_DIR="/home/ubuntu/flask-app"
+VENV_DIR="/home/ubuntu/venv"
+SERVICE_NAME="flask-app"
+
+echo "🚀 Setting up Flask as a systemd service on $EC2_PUBLIC_IP"
+
+ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP <<EOF
+set -e
+
+# -----------------------------
+# 1️⃣ Create systemd service file
+# -----------------------------
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
+
+echo "📝 Creating systemd service file: \$SERVICE_FILE"
+sudo tee \$SERVICE_FILE > /dev/null <<EOL
+[Unit]
+Description=Flask Application
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=$APP_DIR
+ExecStart=$VENV_DIR/bin/python3 $APP_DIR/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# -----------------------------
+# 2️⃣ Reload systemd, enable, start service
+# -----------------------------
+sudo systemctl daemon-reload
+sudo systemctl enable $SERVICE_NAME
+sudo systemctl restart $SERVICE_NAME
+
+echo "ℹ️ $SERVICE_NAME status:"
+sudo systemctl status $SERVICE_NAME --no-pager
+
+# Verify process is running
+if pgrep -f 'python app.py' >/dev/null; then
+    echo "✅ Flask app is running as a systemd service"
+else
+    echo "❌ Flask app is NOT running"
+fi
+EOF
+
+echo "✅ Flask systemd service setup completed on $EC2_PUBLIC_IP"
+echo "🌐 Access your backend at http://$EC2_PUBLIC_IP:5000"
+
+```
 </details>
 
 ---
