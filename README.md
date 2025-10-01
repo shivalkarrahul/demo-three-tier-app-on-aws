@@ -1311,7 +1311,7 @@ chmod +x 4-validate-sns.sh
 
 </details>
 
---
+---
 
 ## Part 5: Create DynamoDB Table and Lambda for File Metadata Extraction & Storage
 
