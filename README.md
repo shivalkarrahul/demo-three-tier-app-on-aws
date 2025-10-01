@@ -2488,6 +2488,34 @@ echo "✅ Deployment completed. Access your backend at http://$EC2_PUBLIC_IP:500
 > Run the following in CloudShell:
 
 ```bash
+export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
+```
+
+```bash
+export RDS_USER="admin"
+```
+
+```bash
+export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"
+```
+
+```bash
+export S3_BACKEND_BUCKET="demo-app-backend-s3-bucket-12345"
+```
+
+```bash
+export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
+```
+
+```bash
+export KEY_NAME="demo-app-private-key"
+```
+
+```bash
+export S3_FRONTEND_BUCKET="demo-app-backend-s3-bucket-12345"
+```
+
+```bash
 # Download the validation script from GitHub
 curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/6-validate-flask-application.sh
 
