@@ -288,6 +288,14 @@ These act as **rules for traffic flow**:
 
 ---
 
+✅ **Note:**
+* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
+* NAT Gateways incur charges — one is enough for demos.
+* After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
+
+
+---
+
 ✅ **Why this matters:**  
 This layered setup enforces **security, availability, and scalability**. Public resources stay accessible, private resources remain protected, and traffic flows are tightly controlled.
 
@@ -708,13 +716,6 @@ chmod +x 1-validate-vpc.sh
 ```
 
 </details>
-
----
-
-✅ **Note:**
-* We use 1 NAT Gateway and 1 private route table for simplicity and cost-saving. Production should use one per AZ for high availability.
-* NAT Gateways incur charges — one is enough for demos.
-* After this step, your **VPC, subnets, Internet Gateway, NAT Gateways, and route tables** are fully configured — forming the foundation of your three-tier architecture.
 
 ---
 
