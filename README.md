@@ -2114,7 +2114,6 @@ sudo systemctl status flask-app
 
 > Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
-</details>
 
 ```bash
 # Create IAM Role for EC2 with S3 + DynamoDB Access
@@ -2261,7 +2260,6 @@ EOF
 echo "✅ Dependencies installed on EC2 instance: $PUBLIC_IP"
 ```
 
-
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
 ```
@@ -2289,7 +2287,6 @@ export KEY_NAME="demo-app-private-key"
 ```bash
 export S3_FRONTEND_BUCKET="demo-app-backend-s3-bucket-12345"
 ```
-
 
 ```bash
 #!/bin/bash
@@ -2323,7 +2320,6 @@ ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "mkdir 
 ```bash
 scp -i "$KEY_NAME.pem" app.py ubuntu@$EC2_PUBLIC_IP:/home/ubuntu/flask-app/
 ```
-
 
 ```bash
 ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "ls -l /home/ubuntu/flask-app"
@@ -2409,7 +2405,6 @@ echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 
 
 ```bash
-Script 6
 
 #!/bin/bash
 
@@ -2444,7 +2439,6 @@ else
 fi
 ```
 
-
 ```bash
 export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
 ```
@@ -2454,7 +2448,6 @@ export KEY_NAME="demo-app-private-key"
 ```
 
 ```bash
-Script 8
 #!/bin/bash
 
 # Ensure environment variables are set
@@ -2484,7 +2477,7 @@ EOF
 
 echo "✅ Deployment completed. Access your backend at http://$EC2_PUBLIC_IP:5000"
 ```
-
+</details>
 
 ---
 
