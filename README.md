@@ -1383,6 +1383,12 @@ echo "✅ S3 bucket configured to send SNS notifications on object upload"
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
 
+✅ **Set your backend S3 bucket name exactly as you used when creating the backend bucket. Ensure it matches the name in AWS to avoid any mismatches, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`**
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
+
 ```bash
 # Download the validation script from GitHub
 curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/4-validate-sns.sh
