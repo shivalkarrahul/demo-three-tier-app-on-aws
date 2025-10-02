@@ -1280,10 +1280,22 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 
 > Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
+✅ **Set your email ID for email notifications on object uploads to the S3 Backend Bucket**
+
+```bash
+export EMAIL="your-email-id@example.com"
+```
+
+✅ **Set your backend S3 bucket name for which event notifications will be created for all object uploads. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`. Notifications will be sent to an SNS Topic.**
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
+
 
 ```bash
 SNS_TOPIC_NAME="demo-app-sns-topic"
-S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 EVENT_NAME="demo-app-s3-object-upload-notification"
 
 #Create SNS Topic
@@ -1299,7 +1311,7 @@ else
 fi
 
 # Subscribe Email to SNS Topic
-EMAIL="your-email@example.com"
+EMAIL=$EMAIL
 echo "Subscribing email $EMAIL to SNS Topic $SNS_TOPIC_NAME"
 
 SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[?Endpoint=='$EMAIL'].SubscriptionArn" --output text)
@@ -1344,10 +1356,10 @@ echo "✅ SNS Topic policy updated to allow S3 to publish"
 
 # Configure S3 Bucket Event Notification to Trigger SNS
 
-echo "Configuring S3 Bucket $S3_BUCKET_NAME to trigger SNS Topic on object create"
+echo "Configuring S3 Bucket $BACKEND_BUCKET_NAME to trigger SNS Topic on object create"
 
 aws s3api put-bucket-notification-configuration \
-    --bucket $S3_BUCKET_NAME \
+    --bucket $BACKEND_BUCKET_NAME \
     --notification-configuration "{
         \"TopicConfigurations\": [
             {
@@ -3478,19 +3490,24 @@ fi
 
 > Run these AWS CLI commands to quickly delete the resource without navigating the Console.
 
+✅ **Set your backend S3 bucket name for which the event notification rule was created for all object uploads.. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`.**
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
 
 ```bash
 SNS_TOPIC_NAME="demo-app-sns-topic"
-S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 
 # Delete S3 Bucket Notification
-echo "Removing event notifications from S3 bucket: $S3_BUCKET_NAME"
+echo "Removing event notifications from S3 bucket: $BACKEND_BUCKET_NAME"
 
 aws s3api put-bucket-notification-configuration \
-    --bucket $S3_BUCKET_NAME \
+    --bucket $BACKEND_BUCKET_NAME \
     --notification-configuration '{}' --no-cli-pager
 
-echo "✅ Event notifications removed from S3 bucket: $S3_BUCKET_NAME"
+echo "✅ Event notifications removed from S3 bucket: $BACKEND_BUCKET_NAME"
 
 # Unsubscribe all emails from SNS Topic
 
@@ -3528,26 +3545,31 @@ fi
 
 > Run these AWS CLI commands to quickly delete the resource without navigating the Console.
 
+✅ **Set your backend S3 bucket name. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`.**
 
 ```bash
-BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
+
+```bash
+BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 REGION="us-east-1"
 
-echo "Deleting all objects from S3 Bucket: $BUCKET_NAME"
+echo "Deleting all objects from S3 Bucket: $BACKEND_BUCKET_NAME"
 
-aws s3 rm s3://$BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
+aws s3 rm s3://$BACKEND_BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
 
-echo "Deleting S3 Bucket: $BUCKET_NAME"
+echo "Deleting S3 Bucket: $BACKEND_BUCKET_NAME"
 aws s3api delete-bucket \
-    --bucket $BUCKET_NAME \
+    --bucket $BACKEND_BUCKET_NAME \
     --region $REGION \
     --no-cli-pager >/dev/null 2>&1
 
 # Verify deletion
-if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
-    echo "⚠️ Failed to delete S3 Bucket: $BUCKET_NAME"
+if aws s3api head-bucket --bucket $BACKEND_BUCKET_NAME 2>/dev/null; then
+    echo "⚠️ Failed to delete S3 Bucket: $BACKEND_BUCKET_NAME"
 else
-    echo "✅ S3 Bucket deleted: $BUCKET_NAME"
+    echo "✅ S3 Bucket deleted: $BACKEND_BUCKET_NAME"
 fi
 
 ```

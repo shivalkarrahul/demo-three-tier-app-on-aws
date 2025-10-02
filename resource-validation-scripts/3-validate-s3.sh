@@ -2,17 +2,17 @@
 # 3-validate-s3.sh
 # Validation script for S3 bucket
 
-BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 REGION="us-east-1"
 
-echo "🔹💻⚡ Validating S3 Bucket: $BUCKET_NAME in region $REGION"
+echo "🔹💻⚡ Validating S3 Bucket: $BACKEND_BUCKET_NAME in region $REGION"
 
 # Check if bucket exists
-if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
-    echo "✅ S3 Bucket exists: $BUCKET_NAME"
+if aws s3api head-bucket --bucket "$BACKEND_BUCKET_NAME" 2>/dev/null; then
+    echo "✅ S3 Bucket exists: $BACKEND_BUCKET_NAME"
 
     # Optional: check bucket region
-    BUCKET_REGION=$(aws s3api get-bucket-location --bucket "$BUCKET_NAME" --query "LocationConstraint" --output text)
+    BUCKET_REGION=$(aws s3api get-bucket-location --bucket "$BACKEND_BUCKET_NAME" --query "LocationConstraint" --output text)
     # us-east-1 returns None
     if [ "$BUCKET_REGION" == "None" ]; then
         BUCKET_REGION="us-east-1"
@@ -24,5 +24,5 @@ if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
         echo "⚠️ Bucket region mismatch. Expected: $REGION, Found: $BUCKET_REGION"
     fi
 else
-    echo "❌ S3 Bucket not found: $BUCKET_NAME"
+    echo "❌ S3 Bucket not found: $BACKEND_BUCKET_NAME"
 fi

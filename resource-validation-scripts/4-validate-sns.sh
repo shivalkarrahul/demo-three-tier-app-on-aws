@@ -3,8 +3,8 @@
 # Validation script for SNS topic and S3 notification
 
 SNS_TOPIC_NAME="demo-app-sns-topic"
-S3_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
-EMAIL="your-email@example.com"
+BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
+EMAIL=$EMAIL
 EVENT_NAME="demo-app-s3-object-upload-notification"
 
 echo "🔹💻⚡ Validating SNS Topic: $SNS_TOPIC_NAME"
@@ -36,11 +36,11 @@ if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
     fi
 
     # Check S3 bucket notification
-    NOTIF=$(aws s3api get-bucket-notification-configuration --bucket "$S3_BUCKET_NAME")
+    NOTIF=$(aws s3api get-bucket-notification-configuration --bucket "$BACKEND_BUCKET_NAME")
     if echo "$NOTIF" | grep -q "$SNS_TOPIC_ARN"; then
-        echo "✅ S3 Bucket $S3_BUCKET_NAME is configured to send notifications to SNS Topic"
+        echo "✅ S3 Bucket $BACKEND_BUCKET_NAME is configured to send notifications to SNS Topic"
     else
-        echo "❌ S3 Bucket $S3_BUCKET_NAME is NOT configured to send notifications to SNS Topic"
+        echo "❌ S3 Bucket $BACKEND_BUCKET_NAME is NOT configured to send notifications to SNS Topic"
     fi
 
 else
