@@ -2390,6 +2390,8 @@ fi
 
 ```
 
+---
+
 ```bash
 #!/bin/bash
 
@@ -2518,7 +2520,7 @@ export KEY_NAME="demo-app-private-key"
 ```
 
 ```bash
-export S3_FRONTEND_BUCKET="demo-app-backend-s3-bucket-12345"
+export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
 ```
 
 ```bash
