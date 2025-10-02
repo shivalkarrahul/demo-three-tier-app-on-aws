@@ -1292,11 +1292,27 @@ export EMAIL="your-email-id@example.com"
 export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 ```
 
-
 ```bash
+#!/bin/bash
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "BACKEND_BUCKET_NAME"
+check_var "EMAIL"
+
 SNS_TOPIC_NAME="demo-app-sns-topic"
 BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 EVENT_NAME="demo-app-s3-object-upload-notification"
+EMAIL=$EMAIL
 
 #Create SNS Topic
 echo "Creating SNS Topic: $SNS_TOPIC_NAME"
@@ -1311,7 +1327,6 @@ else
 fi
 
 # Subscribe Email to SNS Topic
-EMAIL=$EMAIL
 echo "Subscribing email $EMAIL to SNS Topic $SNS_TOPIC_NAME"
 
 SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn $SNS_TOPIC_ARN --query "Subscriptions[?Endpoint=='$EMAIL'].SubscriptionArn" --output text)
@@ -1757,6 +1772,20 @@ export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 #!/bin/bash
 # 5-validate-s3-sns-lambda-dynamodb.sh
 # Automates validation of S3 upload → SNS → Lambda → DynamoDB workflow
+
+#!/bin/bash
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "BACKEND_BUCKET_NAME"
 
 set -e
 
