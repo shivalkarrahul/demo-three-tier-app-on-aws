@@ -4,27 +4,36 @@
 
 SNS_TOPIC_NAME="demo-app-sns-topic"
 BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
-EMAIL=$EMAIL
 EVENT_NAME="demo-app-s3-object-upload-notification"
 
 echo "🔹💻⚡ Validating SNS Topic: $SNS_TOPIC_NAME"
 
 # Check if SNS Topic exists
-SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+SNS_TOPIC_ARN="arn:aws:sns:us-east-1:064827688814:demo-app-sns-topic"
 
-if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
-    echo "✅ SNS Topic exists: $SNS_TOPIC_ARN"
+# Fetch all subscriptions for the topic
+SUBSCRIPTIONS=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" --output json)
 
-    # Check email subscription
-    SUBSCRIPTION_ARN=$(aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
-        --query "Subscriptions[?Endpoint=='$EMAIL'].SubscriptionArn" --output text)
-    
-    if [ "$SUBSCRIPTION_ARN" != "None" ] && [ -n "$SUBSCRIPTION_ARN" ]; then
-        echo "⚠️ Email subscription exists but may need confirmation: $EMAIL"
-    else
-        echo "❌ Email not subscribed: $EMAIL"
-    fi
+# Loop through all subscriptions
+echo "$SUBSCRIPTIONS" | jq -c '.Subscriptions[]' | while read -r sub; do
+    ENDPOINT=$(echo "$sub" | jq -r '.Endpoint')
+    PROTOCOL=$(echo "$sub" | jq -r '.Protocol')
+    SUB_ARN=$(echo "$sub" | jq -r '.SubscriptionArn')
 
+    case "$SUB_ARN" in
+        "PendingConfirmation")
+            STATUS_MSG="⚠️ Subscription pending confirmation"
+            ;;
+        "Deleted")
+            STATUS_MSG="❌ Subscription deleted"
+            ;;
+        *)
+            STATUS_MSG="✅ Subscription confirmed"
+            ;;
+    esac
+
+    echo "$STATUS_MSG: $ENDPOINT ($PROTOCOL, $SUB_ARN)"
+done
     # Check Topic Policy contains S3 publish permission
     POLICY=$(aws sns get-topic-attributes --topic-arn "$SNS_TOPIC_ARN" --query "Attributes.Policy" --output text)
 
