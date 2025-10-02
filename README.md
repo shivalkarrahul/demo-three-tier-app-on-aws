@@ -2494,6 +2494,9 @@ EOF
 
 echo "✅ Dependencies installed on EC2 instance: $PUBLIC_IP"
 ```
+---
+
+✅ **Set the following variables**
 
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
@@ -2527,12 +2530,23 @@ export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
 #!/bin/bash
 
 # Ensure environment variables are set
-: "${RDS_HOST:?Please export RDS_HOST before running the script}"
-: "${RDS_USER:?Please export RDS_USER before running the script}"
-: "${RDS_PASSWORD:?Please export RDS_PASSWORD before running the script}"
-: "${S3_BACKEND_BUCKET:?Please export S3_BACKEND_BUCKET before running the script}"
-: "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP before running the script}"
-: "${KEY_NAME:?Please export KEY_NAME before running the script}"  # without .pem
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "RDS_HOST"
+check_var "RDS_USER"
+check_var "RDS_PASSWORD"
+check_var "S3_BACKEND_BUCKET"
+check_var "EC2_PUBLIC_IP"
+check_var "KEY_NAME"
 
 # 2. Download app.py from GitHub
 if rm -f app.py 2>/dev/null; then
@@ -2564,9 +2578,25 @@ ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "ls -l 
 ```bash
 echo "✅ app.py copied to EC2 instance: $EC2_PUBLIC_IP:/home/ubuntu/flask-app"
 ```
+---
 
 ```bash
 #!/bin/bash
+
+# Ensure environment variables are set
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "S3_FRONTEND_BUCKET"
+check_var "EC2_PUBLIC_IP"
 
 # Ensure environment variables are set
 : "${S3_FRONTEND_BUCKET:?Please export S3_FRONTEND_BUCKET before running the script}"
@@ -2639,6 +2669,7 @@ echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 echo "⚠️ Backend is not yet deployed, so the application is not fully functional."
 ```
 
+---
 
 ```bash
 
@@ -2675,18 +2706,25 @@ else
 fi
 ```
 
-```bash
-export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
-```
-
-```bash
-export KEY_NAME="demo-app-private-key"
-```
+---
 
 ```bash
 #!/bin/bash
 
-# Ensure environment variables are set
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_PUBLIC_IP"
+check_var "KEY_NAME"
+
 : "${EC2_PUBLIC_IP:?Please export EC2_PUBLIC_IP before running the script}"
 : "${KEY_NAME:?Please export KEY_NAME before running the script}" 
 
@@ -2716,6 +2754,8 @@ echo "✅ Backend Deployment completed."
 echo "✅ Backend deployed and accessible at:"
 echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 ```
+
+---
 
 ```bash
 #!/bin/bash
@@ -2791,6 +2831,8 @@ echo "🌐 Access your backend at http://$EC2_PUBLIC_IP:5000"
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
+
+✅ **Set the following variables**
 
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
