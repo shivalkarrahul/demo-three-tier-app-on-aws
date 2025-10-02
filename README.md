@@ -883,6 +883,8 @@ export RDS_PASSWORD="<set-a-strong-password>"
         VAR_NAME=$1
         if [ -z "${!VAR_NAME}" ]; then
             echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this script or the required commands."
             read -rp "👉 Press Enter to exit the script safely..."
             return 1
         fi
