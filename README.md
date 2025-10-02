@@ -2700,6 +2700,7 @@ if [ ! -d "$VENV_DIR" ]; then
     echo "⏳ Creating global Python venv at $VENV_DIR"
     python3 -m venv $VENV_DIR
 fi
+EOF
 
 # 6. Start Flask app on EC2 using global venv
 ssh -i "$KEY_NAME.pem" ubuntu@$EC2_PUBLIC_IP <<EOF
