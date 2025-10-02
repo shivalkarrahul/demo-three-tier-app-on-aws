@@ -884,7 +884,7 @@ export RDS_PASSWORD="<set-a-strong-password>"
         if [ -z "${!VAR_NAME}" ]; then
             echo "⚠️  Environment variable $VAR_NAME is not set."
             echo "👉 Please set it using: export $VAR_NAME=<value>"
-            echo "💡 Then rerun this script or the required commands."
+            echo "💡 Then rerun this block."
             read -rp "👉 Press Enter to exit the script safely..."
             return 1
         fi
@@ -901,7 +901,7 @@ DB_INSTANCE_ID=$(aws rds create-db-instance \
     --engine-version 8.0.42 \
     --allocated-storage 20 \
     --master-username admin \
-    --master-user-password "<YOUR_STRONG_PASSWORD>" \
+    --master-user-password $RDS_PASSWORD \
     --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
     --vpc-security-group-ids $DB_SG_ID \
     --no-publicly-accessible \
