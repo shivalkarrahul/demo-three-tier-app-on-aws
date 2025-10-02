@@ -2717,8 +2717,6 @@ echo "✅ Backend deployed and accessible at:"
 echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 ```
 
-
-NOTE: TESTING PENDING
 ```bash
 #!/bin/bash
 set -e
@@ -2764,6 +2762,7 @@ EOL
 # -----------------------------
 # 2️⃣ Reload systemd, enable, start service
 # -----------------------------
+fuser -k 5000/tcp
 sudo systemctl daemon-reload
 sudo systemctl enable $SERVICE_NAME
 sudo systemctl restart $SERVICE_NAME
