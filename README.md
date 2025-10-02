@@ -1067,33 +1067,55 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 
 > Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
+
+✅ **Set a unique backend S3 bucket name. It is recommended to append a random string at the end of the bucket name, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`, to avoid conflicts or confusion**
+
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
+
 ```bash
 
-BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+#!/bin/bash
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "BACKEND_BUCKET_NAME"
+
+BACKEND_BUCKET_NAME="$BACKEND_BUCKET_NAME$"
 REGION="us-east-1"
 
-echo "Creating S3 Bucket: $BUCKET_NAME in $REGION"
+echo "Creating S3 Bucket: $BACKEND_BUCKET_NAME in $REGION"
 
 if [ "$REGION" == "us-east-1" ]; then
     # us-east-1 special case
     aws s3api create-bucket \
-        --bucket $BUCKET_NAME \
+        --bucket $BACKEND_BUCKET_NAME \
         --region $REGION \
         --no-cli-pager >/dev/null 2>&1
 else
     # all other regions need LocationConstraint
     aws s3api create-bucket \
-        --bucket $BUCKET_NAME \
+        --bucket $BACKEND_BUCKET_NAME \
         --region $REGION \
         --create-bucket-configuration LocationConstraint=$REGION \
         --no-cli-pager >/dev/null 2>&1
 fi
 
 # Verify bucket creation
-if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
-    echo "✅ S3 Bucket created: $BUCKET_NAME"
+if aws s3api head-bucket --bucket $BACKEND_BUCKET_NAME 2>/dev/null; then
+    echo "✅ S3 Bucket created: $BACKEND_BUCKET_NAME"
 else
-    echo "⚠️ Failed to create S3 Bucket: $BUCKET_NAME"
+    echo "⚠️ Failed to create S3 Bucket: $BACKEND_BUCKET_NAME"
 fi
 
 ```
@@ -1107,6 +1129,12 @@ fi
 
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
+
+✅ **Set your backend S3 bucket name exactly as you used when creating the backend bucket. Ensure it matches the name in AWS to avoid any mismatches, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`**
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
 
 ```bash
 # Download the validation script from GitHub
