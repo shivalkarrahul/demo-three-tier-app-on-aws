@@ -2321,6 +2321,8 @@ sudo systemctl status flask-app
 ```bash
 # Create IAM Role for EC2 with S3 + DynamoDB Access
 ROLE_NAME="demo-app-s3-dynamo-iam-role"
+INSTANCE_PROFILE_NAME="$ROLE_NAME"
+
 echo "Checking if IAM Role exists: $ROLE_NAME"
 
 # Try to get the role, suppress errors, and set ROLE_EXISTS safely
@@ -2361,7 +2363,31 @@ EOF
     echo "✅ Policies attached: AmazonS3FullAccess, AmazonDynamoDBReadOnlyAccess"
 
     rm -f "$TRUST_POLICY_FILE"
+
+    
 fi
+
+# Check if instance profile exists
+if ! aws iam get-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" &>/dev/null; then
+    echo "🗂️ Creating instance profile: $INSTANCE_PROFILE_NAME"
+    aws iam create-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME"
+    echo "✅ Instance profile created: $INSTANCE_PROFILE_NAME"
+else
+    echo "ℹ️ Instance profile already exists: $INSTANCE_PROFILE_NAME"
+fi
+
+# Add role to instance profile
+PROFILE_ROLES=$(aws iam get-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" \
+    --query "InstanceProfile.Roles[].RoleName" --output text)
+
+if [[ ! " $PROFILE_ROLES " =~ " $ROLE_NAME " ]]; then
+    echo "🔗 Adding role $ROLE_NAME to instance profile $INSTANCE_PROFILE_NAME"
+    aws iam add-role-to-instance-profile --instance-profile-name "$INSTANCE_PROFILE_NAME" --role-name "$ROLE_NAME"
+    echo "✅ Role added to instance profile"
+else
+    echo "ℹ️ Role $ROLE_NAME already in instance profile $INSTANCE_PROFILE_NAME"
+fi
+
 ```
 
 ```bash
