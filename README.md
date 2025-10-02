@@ -1,8 +1,9 @@
 # From Hello World to Real World: A Hands-On Journey into Event-Driven Three-Tier Architecture on AWS
 
-**Presenter:** Rahul Shivalkar
+**Presenter:** Rahul Shivalkar  
+**Event:** AWS Cloud Club - MIT ADTU & MIT-WPU  
+**Audience:** Students, developers, and cloud enthusiasts looking for hands-on AWS experience.
 
-**Event:** AWS Cloud Club - MIT ADTU and AWS Cloud Club MIT-WPU
 
 This intensive, hands-on workshop is designed for developers and cloud enthusiasts ready to move beyond basic setups and deploy a truly **scalable, secure, and production-ready three-tier application on AWS**.
 
@@ -35,6 +36,10 @@ This repeatable format is designed to give you **theoretical context, choice in 
 
 * **AWS Account:** You must have an active AWS account with **administrative access** or permissions to create and manage the resources listed in the agenda (IAM, VPC, EC2, S3, SNS, RDS, DynamoDB, Lambda, etc).
 
+  * If you don’t have an AWS account yet, you can [sign up here](https://aws.amazon.com/free/). The **AWS Free Tier** provides enough credits and services to complete this workshop without incurring significant costs.
+  * A valid **credit/debit card** is required for signup, but most of the services used in this lab are free-tier eligible.
+
+
 * **Billing Note:** While we utilize the AWS Free Tier where possible, you are responsible for any charges incurred. Be sure to follow the **Cleanup** steps at the end to avoid unexpected costs
 
 ### 2. Assumed Knowledge
@@ -45,25 +50,51 @@ This repeatable format is designed to give you **theoretical context, choice in 
 
 ---
 
-## Hands-On Lab: Deploying the Three-Tier AWS Application
+## 👩‍💻 Who This Guide Is For
 
-> **Context:** All the following steps are performed in the **us-east-1** (N. Virginia) region.
+This guide is crafted for:
+
+* **Students & beginners** eager to learn AWS in a structured, real-world way.
+* **Developers** looking to practice three-tier architectures and event-driven design.
+* **Cloud enthusiasts** who want to strengthen both their **manual (Console)** and **automation (CLI)** skills.
 
 ---
 
-## Who This Guide Is For
-This guide is intended for students and developers who want to **learn hands-on AWS deployment** using a three-tier architecture.  
+## 🌍 Region & Execution Guidelines
 
----
+To keep everything consistent and error-free during this workshop:
 
-## Prerequisites
-- AWS Account with appropriate permissions  
-- Basic Linux & SSH knowledge  
-- Familiarity with Python and Flask
+1. **AWS Management Console (UI/Manual Steps)**
+
+   * All steps performed via the **AWS Console UI** must be executed in the **us-east-1 (N. Virginia)** region.
+   * Always double-check the **region selector** in the top-right of the AWS Console before creating a resource.
+
+2. **AWS CLI (⚡ Alternate to AWS Console – Save Some Clicks)**
+
+   * All CLI commands are designed to run from **AWS CloudShell in us-east-1**.
+   * Do **not** run them from your laptop unless you have your AWS CLI preconfigured; CloudShell is simpler and pre-authenticated.
+
+3. **✅ Validation (Check if Resource Created Correctly)**
+
+   * Every validation script/command must also be run from **AWS CloudShell in us-east-1**.
+   * This ensures your resources are being checked in the same region you deployed them.
+
+4. **🧹 Cleanup Section**
+
+   * Cleanup commands must also be run from **CloudShell in us-east-1**.
+   * This avoids leaving behind unused resources and prevents billing surprises.
+
+> 💡 **Tip: Using CloudShell in us-east-1**
+>
+> * Log in to the [AWS Management Console](https://console.aws.amazon.com).
+> * Confirm the region is set to **N. Virginia (us-east-1)**.
+> * Click the **CloudShell icon** (a terminal symbol in the top navigation bar).
+> * A pre-authenticated shell will open — use it for all **⚡ CLI commands, ✅ Validation checks, and 🧹 Cleanup scripts**.
 
 ---
 
 ## Table of Contents
+- [Architecture Diagram - Three-Tier Architecture Overview](#architecture-diagram---three-tier-architecture-overview)
 - [Part 1: Network Setup](#part-1-network-setup)
 - [Part 2: Set Up RDS](#part-2-set-up-rds)
 - [Part 3: Set Up S3](#part-3-set-up-s3)
@@ -82,9 +113,14 @@ This guide is intended for students and developers who want to **learn hands-on 
 ## Architecture Diagram - Three-Tier Architecture Overview
 ![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
 
+## 🧪 Hands-On Lab: Deploying a Three-Tier AWS Application
+
+> **Region Note:** All manual steps performed via the **AWS Console UI** must be executed in the **us-east-1 (N. Virginia)** region.
+
+> **CloudShell Usage:** For all **⚡ CLI commands, ✅ Validation checks, and 🧹 Cleanup scripts**, use **AWS CloudShell** in the **us-east-1** region. This ensures consistency and prevents region-related errors.
+
+
 ## Part 1: Network Setup
-
-
 
 ### 📖 Theory
 <details> <summary>Understanding the Resource</summary> 
@@ -3143,9 +3179,7 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 
 ## Part 9 Security Groups Overview
 
-<details> <summary>Run commands to create/configure the resource via CLI</summary> 
-
-> Make sure you have all these Security Groups in place along with the rules mentioned
+<details> <summary>Check your rules</summary> 
 
 A total of **5 Security Groups** were created to manage access between different components of the application.
 
@@ -3430,6 +3464,15 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 ---
 
 ## Part 12: Cleanup – Terminate All Resources
+
+> 🧹 **Cleanup Reminder:** Run these steps in **CloudShell (us-east-1)** to safely delete all resources created during the workshop and prevent billing charges.
+
+> 💡 **Tip: Using CloudShell in us-east-1**
+>
+> * Log in to the [AWS Management Console](https://console.aws.amazon.com).
+> * Confirm the region is set to **N. Virginia (us-east-1)**.
+> * Click the **CloudShell icon** (a terminal symbol in the top navigation bar).
+> * A pre-authenticated shell will open — use it for all **⚡ CLI commands, ✅ Validation checks, and 🧹 Cleanup scripts**.
 
 ### 📖 Theory
 <details> <summary>Understanding the Resource Cleanup</summary> 
