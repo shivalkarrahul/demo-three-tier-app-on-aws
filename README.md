@@ -1745,6 +1745,105 @@ else
 fi
 ```
 
+### 5. Quick Test
+
+✅ **Set your backend S3 bucket name exactly as you used when creating the backend bucket. Ensure it matches the name in AWS to avoid any mismatches, e.g., demo-app-backend-s3-bucket-12345-<some-random-string>. We will upload and test if we get an email and lambda gets triggered**
+
+```bash
+export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+```
+
+```bash
+#!/bin/bash
+# 5-validate-s3-sns-lambda-dynamodb.sh
+# Automates validation of S3 upload → SNS → Lambda → DynamoDB workflow
+
+set -e
+
+# -----------------------------
+# Configuration
+# -----------------------------
+BACKEND_BUCKET_NAME="$BACKEND_BUCKET_NAME"
+SNS_TOPIC_NAME="demo-app-sns-topic"
+LAMBDA_NAME="demo-app-metadata-lambda"
+DDB_TABLE_NAME="demo-app-file-metadata-dynamodb"
+REGION="us-east-1"
+
+TEST_FILE="demo-app-test-file.txt"
+TEST_KEY="test-folder/$TEST_FILE"
+echo "This is a test file for validating S3 -> SNS -> Lambda -> DynamoDB workflow" > "$TEST_FILE"
+
+echo "🔹 Uploading test file to S3 bucket: $BACKEND_BUCKET_NAME"
+aws s3 cp "$TEST_FILE" "s3://$BACKEND_BUCKET_NAME/$TEST_KEY" --region "$REGION"
+
+# -----------------------------
+# Validate SNS Subscription
+# -----------------------------
+echo "🔹 Validating SNS subscriptions for topic: $SNS_TOPIC_NAME"
+SNS_TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, '$SNS_TOPIC_NAME')].TopicArn | [0]" --output text)
+
+if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
+    echo "✅ SNS Topic exists: $SNS_TOPIC_ARN"
+
+    echo "Subscriptions:"
+    aws sns list-subscriptions-by-topic --topic-arn "$SNS_TOPIC_ARN" \
+        --query "Subscriptions[].{Endpoint:Endpoint,Protocol:Protocol,Status:SubscriptionArn}" \
+        --output table
+
+else
+    echo "❌ SNS Topic not found: $SNS_TOPIC_NAME"
+fi
+
+# -----------------------------
+# Fetch latest Lambda logs
+# -----------------------------
+echo "🔹 Waiting 5 seconds for Lambda to process S3 event..."
+echo "🔹 Fetching latest Lambda logs for $LAMBDA_NAME"
+LATEST_LOG_STREAM=$(aws logs describe-log-streams \
+    --log-group-name "/aws/lambda/$LAMBDA_NAME" \
+    --order-by LastEventTime \
+    --descending \
+    --query "logStreams[0].logStreamName" \
+    --output text)
+
+if [ "$LATEST_LOG_STREAM" != "None" ]; then
+    echo "✅ Latest log stream: $LATEST_LOG_STREAM"
+    echo "---- Last 10 log events ----"
+    aws logs get-log-events \
+        --log-group-name "/aws/lambda/$LAMBDA_NAME" \
+        --log-stream-name "$LATEST_LOG_STREAM" \
+        --limit 10 \
+        --query "events[].message" \
+        --output text
+else
+    echo "⚠️ No log streams found for Lambda: $LAMBDA_NAME"
+fi
+
+# -----------------------------
+# Check DynamoDB for metadata
+# -----------------------------
+echo "🔹 Waiting 5 seconds for Lambda to process S3 event..."
+echo "🔹 Checking DynamoDB table: $DDB_TABLE_NAME for uploaded file metadata"
+
+
+ITEM_COUNT=$(aws dynamodb scan \
+    --table-name "$DDB_TABLE_NAME" \
+    --filter-expression "fileName = :fname" \
+    --expression-attribute-values "{\":fname\":{\"S\":\"$TEST_FILE\"}}" \
+    --query "Count" \
+    --output text)
+
+if [ "$ITEM_COUNT" -ge 1 ]; then
+    echo "✅ DynamoDB has $ITEM_COUNT entry(ies) for file: $TEST_FILE"
+else
+    echo "❌ No DynamoDB entries found for file: $TEST_FILE"
+fi
+
+# Cleanup local test file
+rm -f "$TEST_FILE"
+
+```
+
 </details>
 
 ---
