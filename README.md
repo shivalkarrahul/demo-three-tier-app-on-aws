@@ -2954,6 +2954,11 @@ By combining AMIs, Launch Templates, and ASGs, we create a **self-healing, auto-
 
 ---
 
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 ### 1. Create an AMI from the Running EC2 Instance
 
 #### 1.1 Stop the Flask Application
@@ -3071,6 +3076,28 @@ The ASG will automatically manage EC2 instances to ensure availability.
 * Check the **Launch Time** of the instances to confirm they are newly created
 * Verify that the **IAM Role** (`demo-app-s3-dynamo-iam-role`) is attached to the instances. Select one instance → Action → Security →Modify IAM Role. Here you should be able to see `demo-app-s3-dynamo-iam-role` attached to the instance.
 
+</details>
+
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks ) (Contribution & Learning – Assignment) 
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly - Assignment) (Contribution & Learning – Assignment)
+<details> <summary>Validate the Resource</summary> 
+
+> ⚠️ This validation section is **also not automated**.
+> It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
+> Experiment, check the results, and optionally contribute your solution to the repository.
+
+</details>
+
 ---
 
 ## Part 8: Attach Load Balancer to Auto Scaling Group (ASG)
@@ -3111,6 +3138,12 @@ The ASG works with the ALB and TG to maintain a resilient setup:
 </details>
 
 ---
+
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 
 ### 1. Create a Target Group (TG)
 1. Go to AWS Console → **EC2 Dashboard**  
@@ -3247,6 +3280,30 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 
 ![App UI ALB ](artifacts/app-ui-after-lb.png)
 
+</details>
+
+---
+
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks ) (Contribution & Learning – Assignment) 
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly - Assignment) (Contribution & Learning – Assignment)
+<details> <summary>Validate the Resource</summary> 
+
+> ⚠️ This validation section is **also not automated**.
+> It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
+> Experiment, check the results, and optionally contribute your solution to the repository.
+
+</details>
+
 ---
 
 ## Part 9 Security Groups Overview
@@ -3321,6 +3378,13 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
 
 </details>
 
+---
+
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 ### 2. Launch an EC2 Instance (Bastion Host)
 1. Open AWS EC2 Console → **Launch Instance**.
 2. Enter **Instance Name:** `demo-app-bastion-host`.
@@ -3334,6 +3398,30 @@ A Bastion Host is a hardened EC2 instance in a **public subnet** with controlled
    - Name: `demo-app-bastion-host-sg`  
    - Allow SSH (22) from Anywhere (Not recommended in Production, ok for Testing)
 10. Launch the instance and copy the **Public IP**.
+
+</details>
+
+---
+
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks ) (Contribution & Learning – Assignment) 
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly - Assignment) (Contribution & Learning – Assignment)
+<details> <summary>Validate the Resource</summary> 
+
+> ⚠️ This validation section is **also not automated**.
+> It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
+> Experiment, check the results, and optionally contribute your solution to the repository.
+
+</details>
 
 ---
 
@@ -3375,6 +3463,12 @@ Once connected to the private EC2 instance via the Bastion Host, administrators 
 </details>
 
 ---
+
+### 🖥️ AWS Console (Old School Way – Clicks & GUI)
+<details> <summary>Create and Configure the Resource via AWS Console</summary> 
+
+> Follow these steps in the AWS Console to create and configure the resource manually.
+
 
 ### 1. Copy the Private Key to Bastion Host
 **From Terminal (Linux/Mac):**  
@@ -3467,6 +3561,30 @@ sudo systemctl status flask-app
 sudo journalctl -u flask-app.service -n 50 --no-pager
 ```
 
+</details>
+
+---
+
+### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks ) (Contribution & Learning – Assignment) 
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+### ✅ Validation (Check if Resource Created Correctly - Assignment) (Contribution & Learning – Assignment)
+<details> <summary>Validate the Resource</summary> 
+
+> ⚠️ This validation section is **also not automated**.
+> It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
+> Experiment, check the results, and optionally contribute your solution to the repository.
+
+</details>
+
 ---
 
 ## Part 12: Cleanup – Terminate All Resources
@@ -3496,6 +3614,51 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 ---
 
 ### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks)
+
+<details> <summary>Part 11: NA (AWS CLI)</summary> 
+
+> Nothing to cleanup in thi section
+
+</details>
+
+---
+<details> <summary>Part 10: Bastion Host Resources Cleanup (AWS CLI) (Contribution & Learning – Assignment)</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+<details> <summary>Part 9: NA (AWS CLI)</summary> 
+
+> Nothing to cleanup in this section
+
+</details>
+
+---
+
+<details> <summary>Part 8: Load Balancer to ASG Cleanup (AWS CLI) (Contribution & Learning – Assignment)</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
+
+<details> <summary>Part 7: AMI, Launch Template, and ASG Resources Cleanup (AWS CLI) (Contribution & Learning – Assignment)</summary> 
+
+> ⚠️ This section is **not automated** in this repository.
+> It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
+> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+
+</details>
+
+---
 
 <details> <summary>Part 6: Flask Application Resources Cleanup (AWS CLI)</summary> 
 
