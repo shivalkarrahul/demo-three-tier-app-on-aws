@@ -3552,7 +3552,7 @@ export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 ```
 
 ```bash
-BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
+BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 REGION="us-east-1"
 
 echo "Deleting all objects from S3 Bucket: $BACKEND_BUCKET_NAME"
