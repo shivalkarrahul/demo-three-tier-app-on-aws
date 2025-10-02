@@ -879,19 +879,14 @@ export RDS_PASSWORD="<set-a-strong-password>"
 
 ```bash
 #!/bin/bash
-check_var() {
-    VAR_NAME=$1
-    if [ -z "${!VAR_NAME}" ]; then
-        echo "⚠️  Environment variable $VAR_NAME is not set."
-        read -p "👉 Do you want to continue without $VAR_NAME? (y/N): " choice
-        case "$choice" in
-            y|Y ) echo "➡️ Continuing without $VAR_NAME (may cause errors later)";;
-            * ) echo "🛑 Aborting. Please export $VAR_NAME and rerun."
-                return 1 2>/dev/null || true
-                ;;
-        esac
-    fi
-}
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
 
 check_var "RDS_PASSWORD"
 
