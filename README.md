@@ -837,6 +837,23 @@ echo "✅ Using Subnets: $PRIVATE_SUBNET_1, $PRIVATE_SUBNET_2, $PRIVATE_SUBNET_3
 ```
 
 ```bash
+
+#!/bin/bash
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "PRIVATE_SUBNET_1"
+check_var "PRIVATE_SUBNET_2"
+check_var "PRIVATE_SUBNET_3"
+
 # Create a DB Subnet Group
 echo "Creating DB Subnet Group: demo-app-db-subnet-group"
 DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
@@ -855,6 +872,21 @@ fi
 ```
 
 ```bash
+
+#!/bin/bash
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "VPC_ID"
+
 # Create Security Group for RDS
 echo "Creating Security Group: demo-app-db-sg"
 DB_SG_ID=$(aws ec2 create-security-group \
@@ -891,6 +923,8 @@ export RDS_PASSWORD="<set-a-strong-password>"
     }
 
 check_var "RDS_PASSWORD"
+check_var "DB_SUBNET_GROUP_NAME"
+check_var "DB_SG_ID"
 
 # 3️⃣ Create RDS Instance
 echo "Creating RDS Instance: my-demo-db"
