@@ -3457,17 +3457,22 @@ echo "🧹 Starting targeted cleanup..."
 # -----------------------------
 # 1️⃣ Terminate EC2 instance
 # -----------------------------
-INSTANCE_ID=$(aws ec2 describe-instances \
-    --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
-    --query "Reservations[0].Instances[0].InstanceId" --output text 2>/dev/null)
+INSTANCE_IDS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$INSTANCE_NAME" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+    --query "Reservations[].Instances[].InstanceId" \
+    --output text 2>/dev/null)
 
-if [ -n "$INSTANCE_ID" ] && [ "$INSTANCE_ID" != "None" ]; then
-    echo "🛑 Terminating EC2 instance: $INSTANCE_NAME ($INSTANCE_ID)"
-    aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-    aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
-    echo "✅ EC2 instance terminated"
+if [ -n "$INSTANCE_IDS" ]; then
+    for ID in $INSTANCE_IDS; do
+        echo "🛑 Terminating EC2 instance: $INSTANCE_NAME ($ID)"
+        aws ec2 terminate-instances --instance-ids "$ID"
+    done
+
+    # Wait for all instances to terminate
+    aws ec2 wait instance-terminated --instance-ids $INSTANCE_IDS
+    echo "✅ EC2 instance(s) terminated: $INSTANCE_IDS"
 else
-    echo "ℹ️ No EC2 instance found: $INSTANCE_NAME"
+    echo "ℹ️ No running EC2 instances found: $INSTANCE_NAME"
 fi
 
 # -----------------------------
