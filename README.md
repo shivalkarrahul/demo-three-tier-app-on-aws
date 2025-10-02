@@ -477,7 +477,7 @@ fi
 
 ---
 
-### 2. Create Public & Private Subnets
+### 2. Create Public Subnets
 
 ```bash
 declare -A PUBLIC_SUBNETS=(
@@ -504,6 +504,9 @@ for name in "${!PUBLIC_SUBNETS[@]}"; do
     fi
 done
 ```
+---
+
+### 3. Create Private Subnets
 
 ```bash
 declare -A PRIVATE_SUBNETS=(
@@ -533,7 +536,7 @@ done
 
 ---
 
-### 3. Create & Attach Internet Gateway (IGW)
+### 4. Create & Attach Internet Gateway (IGW)
 
 ```bash
 echo "Creating Internet Gateway: demo-app-igw"
@@ -553,7 +556,7 @@ fi
 
 ---
 
-### 4. Create & Configure a Public Route Table
+### 5. Create & Configure a Public Route Table
 
 ```bash
 echo "Creating Public Route Table: demo-app-public-rt"
@@ -583,7 +586,7 @@ fi
 
 ---
 
-### 4. Create a NAT Gateway
+### 6. Create a NAT Gateway
 
 ```bash
 # 1️⃣ Allocate Elastic IP for NAT Gateway
@@ -603,7 +606,7 @@ fi
 
 ---
 
-### 4. Create Route Tables for Private Subnets
+### 7. Create Route Tables for Private Subnets
 
 ```bash
 # Fetch Public Subnet ID
@@ -868,7 +871,30 @@ else
 fi
 ```
 
+✅ **Set a strong password for your RDS Instance and note it down safely.**
+
 ```bash
+export RDS_PASSWORD="<set-a-strong-password>"
+```
+
+```bash
+#!/bin/bash
+check_var() {
+    VAR_NAME=$1
+    if [ -z "${!VAR_NAME}" ]; then
+        echo "⚠️  Environment variable $VAR_NAME is not set."
+        read -p "👉 Do you want to continue without $VAR_NAME? (y/N): " choice
+        case "$choice" in
+            y|Y ) echo "➡️ Continuing without $VAR_NAME (may cause errors later)";;
+            * ) echo "🛑 Aborting. Please export $VAR_NAME and rerun."
+                return 1 2>/dev/null || true
+                ;;
+        esac
+    fi
+}
+
+check_var "RDS_PASSWORD"
+
 # 3️⃣ Create RDS Instance
 echo "Creating RDS Instance: my-demo-db"
 DB_INSTANCE_ID=$(aws rds create-db-instance \
