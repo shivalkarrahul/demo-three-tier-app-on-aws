@@ -115,7 +115,7 @@ fi
 
 
 # Optionally check Flask process running
-ssh -o StrictHostKeyChecking=no -i "$KEY_NAME.pem" ubuntu@$EC2_PUBLIC_IP "pgrep -f 'python app.py'"
+ssh -o StrictHostKeyChecking=no -i "$KEY_NAME.pem" ubuntu@$EC2_PUBLIC_IP "systemctl is-active --quiet flask-app"
 
 
 if [ $? -eq 0 ]; then
