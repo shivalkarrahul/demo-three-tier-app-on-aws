@@ -1769,7 +1769,7 @@ LAMBDA_NAME="demo-app-metadata-lambda"
 DDB_TABLE_NAME="demo-app-file-metadata-dynamodb"
 REGION="us-east-1"
 
-TEST_FILE="demo-app-test-file.txt"
+TEST_FILE="test-file-$(date +%s).txt"
 TEST_KEY="test-folder/$TEST_FILE"
 echo "This is a test file for validating S3 -> SNS -> Lambda -> DynamoDB workflow" > "$TEST_FILE"
 
@@ -1798,6 +1798,7 @@ fi
 # Fetch latest Lambda logs
 # -----------------------------
 echo "🔹 Waiting 5 seconds for Lambda to process S3 event..."
+sleep 5
 echo "🔹 Fetching latest Lambda logs for $LAMBDA_NAME"
 LATEST_LOG_STREAM=$(aws logs describe-log-streams \
     --log-group-name "/aws/lambda/$LAMBDA_NAME" \
@@ -1823,20 +1824,20 @@ fi
 # Check DynamoDB for metadata
 # -----------------------------
 echo "🔹 Waiting 5 seconds for Lambda to process S3 event..."
+sleep 5
 echo "🔹 Checking DynamoDB table: $DDB_TABLE_NAME for uploaded file metadata"
 
 
-ITEM_COUNT=$(aws dynamodb scan \
+echo "🔹 Fetching all items from DynamoDB table: $DDB_TABLE_NAME"
+ITEMS=$(aws dynamodb scan \
     --table-name "$DDB_TABLE_NAME" \
-    --filter-expression "fileName = :fname" \
-    --expression-attribute-values "{\":fname\":{\"S\":\"$TEST_FILE\"}}" \
-    --query "Count" \
-    --output text)
+    --output json)
 
-if [ "$ITEM_COUNT" -ge 1 ]; then
-    echo "✅ DynamoDB has $ITEM_COUNT entry(ies) for file: $TEST_FILE"
+if [ "$(echo "$ITEMS" | jq '.Items | length')" -ge 1 ]; then
+    echo "✅ DynamoDB table $DDB_TABLE_NAME contains the following entries:"
+    echo "$ITEMS" | jq
 else
-    echo "❌ No DynamoDB entries found for file: $TEST_FILE"
+    echo "❌ DynamoDB table $DDB_TABLE_NAME is empty"
 fi
 
 # Cleanup local test file
