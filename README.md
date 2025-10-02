@@ -6,209 +6,44 @@
 
 This intensive, hands-on workshop is designed for developers and cloud enthusiasts ready to move beyond basic setups and deploy a truly **scalable, secure, and production-ready three-tier application on AWS**.
 
-**Workshop Flow:**
-
-1. **Network Foundation:**
-
-   * Build a robust custom VPC with Public and Private Subnets.
-   * Configure NAT Gateways and a secure Bastion Host for management access.
-
-2. **Backend Deployment & HA:**
-
-   * Deploy a Flask backend application.
-   * Ensure High Availability (HA) using an Application Load Balancer (ALB) distributing traffic across an Auto Scaling Group (ASG).
-
-3. **Data Security & Event-Driven Integration:**
-
-   * Secure the data layer by placing RDS (MySQL) in private subnets.
-   * Implement an **event-driven pipeline**:
-
-     * File uploads to S3 trigger SNS notifications.
-     * AWS Lambda functions process metadata and store it in DynamoDB.
-
-**Outcome:**
 By the end of this workshop, attendees will have the practical skills and confidence to **design, deploy, and scale complex applications** using core AWS best practices in **networking, security, and serverless integration**.
 
 ---
 
-<details>
-<summary>Presentation</summary>
+## 🛠️ Instruction Format: Navigating the Lab Guide
 
-## Agenda
+To ensure you can follow along efficiently, all detailed instructions for creating the workshop resources are broken down into a **standardized four-part structure**. You can choose to follow either the manual GUI method or the automated CLI method for each resource.
 
-1. Introduction: Why event-driven, three-tier architectures matter
-2. Three-Tier Architecture Overview
-3. AWS Services & Event-Driven Design
-4. Lambda & Serverless Integration
-5. Storage & Data Flow
-6. Application Layer: Flask on EC2
-7. Monitoring & Notifications
-8. Demo & Key Learnings
+This repeatable format is designed to give you **theoretical context, choice in deployment methods, and instant verification**.
 
----
+### **Component Breakdown**
 
-## Introduction
+| Icon & Heading | Purpose | Description |
+| :--- | :--- | :--- |
+| **📖 Theory** | **Conceptual Understanding** | Provides essential background and context. It explains *why* we are creating the resource and its role in the overall architecture. |
+| **🖥️ AWS Console** | **Manual/GUI Deployment** | Step-by-step instructions for creating the resource using the **AWS Management Console** (clicks and graphical interface). |
+| **⚡ AWS CLI** | **Automated/CLI Deployment** | A block of **AWS CLI commands** to create the resource quickly. A great alternative to save time and practice command-line automation. |
+| **✅ Validation** | **Verification Check** | A simple script or command to run in **AWS CloudShell** to confirm that the resource was created correctly and is in the desired state, regardless of which deployment method you chose. |
 
-* Many applications start as simple scripts or “Hello World” apps.
-* To be **production-ready**, they need to be scalable, decoupled, and event-driven.
-* Event-driven design allows services to **react automatically to events**, reducing manual intervention.
-* We focus on AWS services that make it easy to **build, monitor, and scale** applications efficiently.
+🔹 **Note:** Once you complete all the steps, you’ll find a **Cleanup Section at the end** of this guide. It will help you safely remove all resources created during the workshop to avoid unwanted charges.
 
 ---
 
-## Three-Tier Architecture Overview
+## ⚙️ Prerequisites
 
-The **architecture is divided into three primary layers**:
+### 1. Cloud Access
 
-1. **Presentation Layer (Frontend)**
+* **AWS Account:** You must have an active AWS account with **administrative access** or permissions to create and manage the resources listed in the agenda (IAM, VPC, EC2, S3, SNS, RDS, DynamoDB, Lambda, etc).
 
-   * Handles user interaction and requests.
-   * Deployed via Application Load Balancer (ALB) routing traffic to the backend.
+* **Billing Note:** While we utilize the AWS Free Tier where possible, you are responsible for any charges incurred. Be sure to follow the **Cleanup** steps at the end to avoid unexpected costs
 
-2. **Application Layer (Backend & Event-Driven Processing)**
+### 2. Assumed Knowledge
 
-   * Flask backend application deployed on EC2 Auto Scaling Group for High Availability (HA).
-   * Event-driven integration components:
+* **Basic Cloud Concepts:** Familiarity with concepts like IAM, VPC, EC2, S3, SNS, RDS, DynamoDB, Lambda, etc will be helpful.
 
-     * **S3**: for file uploads
-     * **SNS**: for notifications
-     * **Lambda**: for processing events and metadata
-     * **DynamoDB**: stores processed metadata and supports serverless data operations
-
-3. **Data Layer (Relational Database)**
-
-   * **RDS (MySQL)** deployed in private subnets for secure and persistent storage.
-
-**Note:** DynamoDB is used as part of the event-driven application workflow, complementing the main relational database but does not constitute a separate tier.
-
-**Architecture Diagram:**
-![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
+* **Basic Python/Shell Scripting:** The backend application is written in Python (Flask), and most of the scripts are written in Bash. A basic understanding will help you follow the implementation steps.
 
 ---
-
-## Slide: AWS Services & Roles
-
-| AWS Service                           | Role / Purpose in the Architecture                                                   |
-| ------------------------------------- | ------------------------------------------------------------------------------------ |
-| **VPC**                               | Provides an isolated network for the application. Hosts public and private subnets.  |
-| **Public Subnets**                    | Hosts ALB and Bastion Host. Enables controlled access from the Internet.             |
-| **Private Subnets**                   | Hosts EC2 backend instances, RDS database, and Lambda (via VPC endpoints if needed). |
-| **NAT Gateway**                       | Allows private subnet instances to access the Internet securely (e.g., for updates). |
-| **Bastion Host**                      | Secure access point to manage private EC2 instances.                                 |
-| **EC2 (Auto Scaling Group)**          | Runs the Flask backend application with High Availability.                           |
-| **Application Load Balancer (ALB)**   | Distributes incoming traffic across backend EC2 instances.                           |
-| **RDS (MySQL)**                       | Primary relational database for application data, deployed in private subnets.       |
-| **S3**                                | Stores uploaded files; triggers event-driven processing.                             |
-| **SNS (Simple Notification Service)** | Sends notifications on S3 events to Lambda or other subscribers.                     |
-| **Lambda**                            | Processes S3-triggered events, extracts metadata, and stores it in DynamoDB.         |
-| **DynamoDB**                          | Stores processed metadata for serverless, scalable storage.                          |
-| **Security Groups**                   | Controls inbound and outbound traffic for EC2, RDS, ALB, and Lambda.                 |
-| **IAM Roles**                         | Provides permissions for Lambda, EC2, RDS, and other services to interact securely.  |
-| **CloudWatch**                        | Monitors application, logs, and triggers alarms for metrics.                         |
-
-**Summary:**
-This setup ensures a **secure, scalable, and event-driven three-tier architecture**, combining **traditional relational data storage** with **serverless event processing**.
-
----
-
-## Application Layer: Flask on EC2
-
-* Flask backend runs on EC2, serving API endpoints.
-* Handles CRUD operations on RDS (users, products, orders).
-* Accepts file uploads to S3.
-* Integrates with Lambda for event-driven processing.
-* Ensures **security and isolation** via IAM roles.
-
-**Key Advantage:** Combines **traditional server-based architecture** with serverless event-driven components.
-
----
-
-## Event-Driven Design with Lambda
-
-**Event Flow:**
-`User → S3 → Lambda → DynamoDB → SNS → User`
-
-**Steps:**
-
-1. **Trigger Event:** File uploaded to S3 bucket.
-2. **Processing:** Lambda function validates and processes the file.
-3. **Database Update:** Updates DynamoDB metadata to track status.
-4. **Notification:** Sends alerts to users/admins via SNS.
-
-**Benefits:**
-
-* Immediate response to events.
-* Reduces load on EC2 backend.
-* Improves reliability by decoupling components.
-
----
-
-## Storage & Data Flow
-
-* **S3 Bucket:** Stores uploaded files securely.
-* **Lambda Function:** Acts as a processor and orchestrator.
-* **DynamoDB Table:** Keeps metadata and event logs for tracking.
-* **SNS Topic:** Sends real-time notifications to stakeholders.
-
-**Outcome:** A **highly responsive, event-driven system** with minimal manual intervention.
-
----
-
-## Monitoring & Notifications
-
-* **CloudWatch Logs & Metrics:** Monitor EC2, Lambda, and RDS.
-* **SNS Alerts:** Notifies developers or admins of failures or key events.
-
-**Benefits:**
-
-* Quick troubleshooting.
-* Proactive system monitoring.
-* Reduces downtime and manual checks.
-
----
-
-## Demo Flow
-
-1. **User uploads a file → S3 bucket**
-
-   * The file is securely stored in S3 for processing.
-
-2. **Lambda function triggers → processes the file**
-
-   * Extracts metadata or transforms data as needed.
-
-3. **RDS updates → relational data storage**
-
-   * Stores structured relational data (e.g., new users via Flask APIs).
-
-4. **DynamoDB updates → metadata and processing status**
-
-   * Serverless storage for quick access to processing results and metadata.
-
-5. **SNS sends notification → user/admin receives an email alert**
-
-   * Alerts stakeholders that file processing is complete.
-
-6. **Flask frontend shows updated data → reflects processed files**
-
-   * Reads from RDS/DynamoDB to show real-time status to users.
-
----
-
-## Key Takeaways
-
-* Hybrid architecture using **EC2 + Lambda**.
-* Event-driven design ensures **automatic, real-time processing**.
-* Decoupled services allow **independent scaling** and reliability.
-* Demonstrates a **production-ready system** suitable for enterprise applications.
-
-<p align="left"><b>🔒 Presentation section ends here — continue with hands-on steps ⬇️</b></p>
-
-</details>
-
----
-
-
 
 ## Hands-On Lab: Deploying the Three-Tier AWS Application
 
