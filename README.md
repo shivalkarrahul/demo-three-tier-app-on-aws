@@ -2636,6 +2636,7 @@ aws s3api put-bucket-policy --bucket "$S3_FRONTEND_BUCKET" --policy "$POLICY" --
 
 echo "✅ Frontend deployed and accessible at:"
 echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
+echo "⚠️ Backend is not yet deployed, so the application is not fully functional."
 ```
 
 
@@ -2711,7 +2712,9 @@ nohup python app.py > flask.log 2>&1 &
 echo "✅ Flask backend is running. Logs: $APP_DIR/flask.log"
 EOF
 
-echo "✅ Deployment completed. Access your backend at http://$EC2_PUBLIC_IP:5000"
+echo "✅ Backend Deployment completed."
+echo "✅ Backend deployed and accessible at:"
+echo "http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 ```
 
 
