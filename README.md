@@ -2320,17 +2320,20 @@ sudo systemctl status flask-app
 
 ```bash
 # Create IAM Role for EC2 with S3 + DynamoDB Access
-echo "Creating IAM Role: demo-app-s3-dynamo-iam-role"
-
-# Check if role already exists
 ROLE_NAME="demo-app-s3-dynamo-iam-role"
-ROLE_EXISTS=$(aws iam get-role --role-name $ROLE_NAME --query "Role.RoleName" --output text 2>/dev/null)
+echo "Checking if IAM Role exists: $ROLE_NAME"
 
-if [ "$ROLE_EXISTS" == "$ROLE_NAME" ]; then
-    echo "⚠️ IAM Role already exists: $ROLE_NAME"
+# Try to get the role, suppress errors, and set ROLE_EXISTS safely
+ROLE_EXISTS=$(aws iam get-role --role-name "$ROLE_NAME" --query "Role.RoleName" --output text 2>/dev/null || echo "")
+
+if [ -n "$ROLE_EXISTS" ]; then
+    echo "⚠️ IAM Role already exists: $ROLE_EXISTS"
 else
-    # Create Trust Policy for EC2
-    TRUST_POLICY=$(cat <<EOF
+    echo "✅ IAM Role does not exist. Proceeding to create it."
+
+    # Create Trust Policy in temp file
+    TRUST_POLICY_FILE=$(mktemp)
+    cat > "$TRUST_POLICY_FILE" <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -2342,21 +2345,22 @@ else
   ]
 }
 EOF
-)
 
     # Create the role
     aws iam create-role \
-        --role-name $ROLE_NAME \
-        --assume-role-policy-document "$TRUST_POLICY" \
-        --tags Key=Name,Value=$ROLE_NAME \
+        --role-name "$ROLE_NAME" \
+        --assume-role-policy-document "file://$TRUST_POLICY_FILE" \
+        --tags Key=Name,Value="$ROLE_NAME" \
         --no-cli-pager
 
     echo "✅ IAM Role created: $ROLE_NAME"
 
-    # Attach required policies
-    aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:policy/AmazonS3FullAccess
-    aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:policy/AmazonDynamoDBReadOnlyAccess
+    # Attach policies
+    aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn "arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess"
     echo "✅ Policies attached: AmazonS3FullAccess, AmazonDynamoDBReadOnlyAccess"
+
+    rm -f "$TRUST_POLICY_FILE"
 fi
 ```
 
