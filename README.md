@@ -3308,6 +3308,10 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 
 ## Part 9 Security Groups Overview
 
+<details> <summary>Run commands to create/configure the resource via CLI</summary> 
+
+> Make sure you have all these Security Groups in place along with the rules mentioned
+
 A total of **5 Security Groups** were created to manage access between different components of the application.
 
 | **Security Group**                 | **Purpose**                                | **Inbound Rules**                                                                                                                                                                                                     |
@@ -3339,6 +3343,8 @@ A total of **5 Security Groups** were created to manage access between different
 
 ##### 5. demo-app-db-sg Rules
 ![demo-app-db-sg](artifacts/demo-app-db-sg.png)
+
+</details>
 
 ---
 
@@ -3566,6 +3572,7 @@ sudo journalctl -u flask-app.service -n 50 --no-pager
 ---
 
 ### ⚡ AWS CLI (Alternate to AWS Console – Save Some Clicks ) (Contribution & Learning – Assignment) 
+
 <details> <summary>Run commands to create/configure the resource via CLI</summary> 
 
 > ⚠️ This section is **not automated** in this repository.
@@ -3626,7 +3633,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 > ⚠️ This section is **not automated** in this repository.
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
-> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+> Try using AWS CLI to cleanup the resource, and feel free to submit improvements to this repo.
 
 </details>
 
@@ -3644,7 +3651,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 > ⚠️ This section is **not automated** in this repository.
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
-> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+> Try using AWS CLI to cleanup the resource, and feel free to submit improvements to this repo.
 
 </details>
 
@@ -3654,7 +3661,7 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 
 > ⚠️ This section is **not automated** in this repository.
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
-> Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
+> Try using AWS CLI to cleanup the resource, and feel free to submit improvements to this repo.
 
 </details>
 
