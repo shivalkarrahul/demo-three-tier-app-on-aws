@@ -4166,3 +4166,10 @@ fi
 </details>
 
 ---
+
+# Let’s Connect:
+
+- **👤 Name**: Rahul Shivalkar  
+- **🔗 LinkedIn**: [www.linkedin.com/in/rahul-shivalkar](https://www.linkedin.com/in/rahul-shivalkar)
+
+![LinkedInQR](artifacts/my-linkedin-qr.png)
