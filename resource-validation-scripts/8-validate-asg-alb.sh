@@ -13,7 +13,7 @@ ALB_SG_NAME="demo-app-lb-sg"
 ASG_NAME="demo-app-asg"
 ASG_SG_NAME="demo-app-lt-asg-sg"
 DB_SG_NAME="demo-app-db-sg"
-FRONTEND_BUCKET="$S3_FRONTEND_BUCKET"
+FRONTEND_BUCKET=$S3_FRONTEND_BUCKET
 
 # -------------------------------
 # Function to check required variables
@@ -33,7 +33,6 @@ done
 # -------------------------------
 # 2️⃣ Validate Target Group
 # -------------------------------
-echo "📌 Validating Target Group: $TG_NAME"
 TG_ARN=$(aws elbv2 describe-target-groups \
     --names "$TG_NAME" \
     --query "TargetGroups[0].TargetGroupArn" --output text --region $REGION 2>/dev/null)
@@ -47,7 +46,6 @@ fi
 # -------------------------------
 # 3️⃣ Validate ALB Security Group
 # -------------------------------
-echo "📌 Validating ALB Security Group: $ALB_SG_NAME"
 ALB_SG_ID=$(aws ec2 describe-security-groups \
     --filters "Name=group-name,Values=$ALB_SG_NAME" \
     --query "SecurityGroups[0].GroupId" --output text --region $REGION)
@@ -61,7 +59,6 @@ fi
 # -------------------------------
 # 4️⃣ Validate ALB
 # -------------------------------
-echo "📌 Validating ALB: $ALB_NAME"
 ALB_ARN=$(aws elbv2 describe-load-balancers \
     --names "$ALB_NAME" \
     --query "LoadBalancers[0].LoadBalancerArn" --output text --region $REGION 2>/dev/null)
@@ -85,7 +82,6 @@ fi
 # -------------------------------
 # 5️⃣ Validate ASG Security Group
 # -------------------------------
-echo "📌 Validating ASG Security Group: $ASG_SG_NAME"
 ASG_SG_ID=$(aws ec2 describe-security-groups \
     --filters "Name=group-name,Values=$ASG_SG_NAME" \
     --query "SecurityGroups[0].GroupId" --output text --region $REGION)
@@ -99,7 +95,6 @@ fi
 # -------------------------------
 # 6️⃣ Validate DB Security Group
 # -------------------------------
-echo "📌 Validating DB Security Group: $DB_SG_NAME"
 DB_SG_ID=$(aws ec2 describe-security-groups \
     --filters "Name=group-name,Values=$DB_SG_NAME" \
     --query "SecurityGroups[0].GroupId" --output text --region $REGION)
@@ -113,7 +108,6 @@ fi
 # -------------------------------
 # 7️⃣ Validate Auto Scaling Group
 # -------------------------------
-echo "📌 Validating ASG: $ASG_NAME"
 ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
     --auto-scaling-group-names "$ASG_NAME" \
     --query "AutoScalingGroups[0].AutoScalingGroupName" \
@@ -166,7 +160,6 @@ fi
 # -------------------------------
 # 9️⃣ Validate Frontend S3 Bucket
 # -------------------------------
-echo "📌 Validating frontend S3 bucket: $FRONTEND_BUCKET"
 if aws s3 ls "s3://$FRONTEND_BUCKET" --region $REGION >/dev/null 2>&1; then
     echo "✅ Frontend bucket exists: $FRONTEND_BUCKET"
 else
