@@ -111,7 +111,63 @@ To keep everything consistent and error-free during this workshop:
 ---
 
 ## Architecture Diagram - Three-Tier Architecture Overview
+
+This workshop demonstrates a **three-tier architecture on AWS**, designed for scalability, security, and maintainability. The architecture is divided into three primary layers:
+
+1. **Presentation Layer (Frontend)**
+
+   * Hosts the **user interface** of the application.
+   * Implemented using **static website hosting on S3**.
+   * **Publicly accessible** and interacts with the backend via **API endpoints behind an Application Load Balancer (ALB)** for high availability and load distribution.
+
+2. **Application Layer (Backend & Event-Driven Processing)**
+
+   * Handles all **business logic and processing**.
+   * Implemented using **Flask on EC2** and **AWS Lambda functions** for event-driven tasks.
+   * Integrates with **S3, SNS, and DynamoDB** to process uploads, send notifications, and store metadata.
+   * Load Balancer ensures **traffic is distributed across multiple backend instances** for reliability.
+
+3. **Data Layer (Relational Database & Storage)**
+
+   * Stores **persistent data** for the application.
+   * Implemented using **RDS (MySQL/PostgreSQL)** for structured data.
+   * DynamoDB stores **event-driven metadata** extracted from S3 files.
+
+**Key Highlights:**
+
+* **Event-Driven Integration:** S3 → SNS → Lambda → DynamoDB
+* **Separation of Concerns:** Each layer is independent, enabling scalability and easier maintenance.
+* **High Availability:** Load Balancer distributes traffic, ensuring backend reliability.
+* **AWS Best Practices:** Uses managed services, secure networking, and region-specific deployments (us-east-1).
+
 ![Three-Tier AWS Architecture](artifacts/demo-three-tier-app-on-aws.svg)
+
+---
+
+## Fork this Repo to Learn & Experiment
+
+![Scan to visit the repo](artifacts/demo-three-tier-app-on-aws-repo-qr.png)
+or visit directly: [https://github.com/shivalkarrahul/demo-three-tier-app-on-aws](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws)
+
+By forking the repository, you can **experiment safely, make changes, and practice hands-on AWS deployment** without affecting the original project.
+
+**Steps to fork:**
+
+1. Navigate to the **main repository page** on GitHub.
+2. Click the **“Fork”** button in the top-right corner.
+3. A copy of the repository will be created under **your GitHub account**, which you can freely modify and experiment with.
+
+**Why Fork?**
+
+* Learn by experimenting with code safely.
+* Try enhancements or new features without impacting the original repo.
+* Build your own version to showcase your skills.
+
+> ⚠️ **Note:** If you run the workshop from your forked repository, you may need to **update links in the validation scripts or instructions** to point to your forked repo where applicable.
+
+> 💡 Tip: Use your fork to test automation scripts, add improvements, or explore new ideas.
+
+---
 
 ## 🧪 Hands-On Lab: Deploying a Three-Tier AWS Application
 
@@ -119,6 +175,19 @@ To keep everything consistent and error-free during this workshop:
 
 > **CloudShell Usage:** For all **⚡ CLI commands, ✅ Validation checks, and 🧹 Cleanup scripts**, use **AWS CloudShell** in the **us-east-1** region. This ensures consistency and prevents region-related errors.
 
+---
+
+You can add a short, energetic intro like this:
+
+---
+
+## 🏁 Let’s Get Started!
+
+Time to **get our hands dirty**! In this workshop, we’ll move step by step to deploy a **fully functional three-tier AWS application**. Follow the instructions, experiment with the resources, and watch your architecture come to life.
+
+> 💡 Tip: Keep your **AWS Console** and **CloudShell** ready in **us-east-1**, and don’t hesitate to try things out on your forked repo.
+
+---
 
 ## Part 1: Network Setup
 
@@ -2396,7 +2465,9 @@ echo "✅ Dependencies installed on EC2 instance: $PUBLIC_IP"
 ```
 ---
 
-✅ **Set the following variables**
+
+
+✅ **Set the following variables** You can copy all these commands in a text editor, change the values and paste.
 
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
@@ -2466,14 +2537,20 @@ sed -i "s/CHANGE_ME_BACKEND_S3_BUCKET/${S3_BACKEND_BUCKET}/g" app.py
 ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "mkdir -p /home/ubuntu/flask-app"
 ```
 
+Copy app.py to ubuntu@$EC2_PUBLIC_IP:/home/ubuntu/flask-app/
+
 ```bash
 scp -i "$KEY_NAME.pem" app.py ubuntu@$EC2_PUBLIC_IP:/home/ubuntu/flask-app/
 ```
+
+Check /home/ubuntu/flask-app on ubuntu@$EC2_PUBLIC_IP
 
 ```bash
 ssh -i "$KEY_NAME.pem" -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP "ls -l /home/ubuntu/flask-app"
 
 ```
+
+Print simple message
 
 ```bash
 echo "✅ app.py copied to EC2 instance: $EC2_PUBLIC_IP:/home/ubuntu/flask-app"
@@ -2732,8 +2809,9 @@ echo "🌐 Access your backend at http://$EC2_PUBLIC_IP:5000"
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
 
-✅ **Set the following variables**
+✅ **Set the following variables** You can copy all these commands in a text editor, change the values and paste.
 
+ 
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
 ```
@@ -3768,11 +3846,15 @@ BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 # Delete S3 Bucket Notification
 echo "Removing event notifications from S3 bucket: $BACKEND_BUCKET_NAME"
 
-aws s3api put-bucket-notification-configuration \
-    --bucket $BACKEND_BUCKET_NAME \
-    --notification-configuration '{}' --no-cli-pager
+if aws s3api head-bucket --bucket "$BACKEND_BUCKET_NAME" 2>/dev/null; then
+    aws s3api put-bucket-notification-configuration \
+        --bucket "$BACKEND_BUCKET_NAME" \
+        --notification-configuration '{}' --no-cli-pager
 
-echo "✅ Event notifications removed from S3 bucket: $BACKEND_BUCKET_NAME"
+    echo "✅ Event notifications removed from S3 bucket: $BACKEND_BUCKET_NAME"
+else
+    echo "⚠️ S3 bucket not found or not accessible: $BACKEND_BUCKET_NAME"
+fi
 
 # Unsubscribe all emails from SNS Topic
 
@@ -3820,21 +3902,28 @@ export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
 BACKEND_BUCKET_NAME=$BACKEND_BUCKET_NAME
 REGION="us-east-1"
 
-echo "Deleting all objects from S3 Bucket: $BACKEND_BUCKET_NAME"
+echo "Checking if S3 bucket exists: $BACKEND_BUCKET_NAME"
 
-aws s3 rm s3://$BACKEND_BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
+if aws s3api head-bucket --bucket "$BACKEND_BUCKET_NAME" 2>/dev/null; then
+    echo "Bucket exists. Proceeding with deletion..."
 
-echo "Deleting S3 Bucket: $BACKEND_BUCKET_NAME"
-aws s3api delete-bucket \
-    --bucket $BACKEND_BUCKET_NAME \
-    --region $REGION \
-    --no-cli-pager >/dev/null 2>&1
+    echo "Deleting all objects from S3 Bucket: $BACKEND_BUCKET_NAME"
+    aws s3 rm s3://$BACKEND_BUCKET_NAME --recursive --region $REGION >/dev/null 2>&1
 
-# Verify deletion
-if aws s3api head-bucket --bucket $BACKEND_BUCKET_NAME 2>/dev/null; then
-    echo "⚠️ Failed to delete S3 Bucket: $BACKEND_BUCKET_NAME"
+    echo "Deleting S3 Bucket: $BACKEND_BUCKET_NAME"
+    aws s3api delete-bucket \
+        --bucket $BACKEND_BUCKET_NAME \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+
+    # Verify deletion
+    if aws s3api head-bucket --bucket "$BACKEND_BUCKET_NAME" 2>/dev/null; then
+        echo "⚠️ Failed to delete S3 Bucket: $BACKEND_BUCKET_NAME"
+    else
+        echo "✅ S3 Bucket deleted: $BACKEND_BUCKET_NAME"
+    fi
 else
-    echo "✅ S3 Bucket deleted: $BACKEND_BUCKET_NAME"
+    echo "⚠️ S3 Bucket does not exist: $BACKEND_BUCKET_NAME"
 fi
 
 ```
@@ -3854,37 +3943,61 @@ DB_SUBNET_GROUP_NAME="demo-app-db-subnet-group"
 DB_SECURITY_GROUP_NAME="demo-app-db-sg"
 REGION="us-east-1"
 
-echo "Deleting RDS Instance: $DB_INSTANCE_ID"
+echo "Checking if RDS instance exists: $DB_INSTANCE_ID"
 
-# Delete RDS instance without final snapshot
-aws rds delete-db-instance \
+DB_STATUS=$(aws rds describe-db-instances \
     --db-instance-identifier $DB_INSTANCE_ID \
-    --skip-final-snapshot \
     --region $REGION \
-    --no-cli-pager >/dev/null 2>&1
+    --query "DBInstances[0].DBInstanceStatus" \
+    --output text 2>/dev/null)
 
-# Wait until instance is deleted
-aws rds wait db-instance-deleted \
-    --db-instance-identifier $DB_INSTANCE_ID \
-    --region $REGION
-echo "✅ RDS Instance deleted: $DB_INSTANCE_ID"
+if [ "$DB_STATUS" != "None" ] && [ -n "$DB_STATUS" ]; then
+    echo "Deleting RDS Instance: $DB_INSTANCE_ID"
+
+    # Delete RDS instance without final snapshot
+    aws rds delete-db-instance \
+        --db-instance-identifier $DB_INSTANCE_ID \
+        --skip-final-snapshot \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+
+    # Wait until instance is deleted
+    echo "⏳ Waiting for RDS instance deletion..."
+    aws rds wait db-instance-deleted \
+        --db-instance-identifier $DB_INSTANCE_ID \
+        --region $REGION
+
+    echo "✅ RDS Instance deleted: $DB_INSTANCE_ID"
+else
+    echo "⚠️ RDS Instance not found: $DB_INSTANCE_ID"
+fi
 
 # Delete DB Subnet Group
-echo "Deleting DB Subnet Group: $DB_SUBNET_GROUP_NAME"
-aws rds delete-db-subnet-group \
+echo "Checking if DB Subnet Group exists: $DB_SUBNET_GROUP_NAME"
+if aws rds describe-db-subnet-groups \
     --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
-    --region $REGION \
-    --no-cli-pager >/dev/null 2>&1
-echo "✅ DB Subnet Group deleted: $DB_SUBNET_GROUP_NAME"
+    --region $REGION >/dev/null 2>&1; then
+
+    echo "Deleting DB Subnet Group: $DB_SUBNET_GROUP_NAME"
+    aws rds delete-db-subnet-group \
+        --db-subnet-group-name $DB_SUBNET_GROUP_NAME \
+        --region $REGION \
+        --no-cli-pager >/dev/null 2>&1
+
+    echo "✅ DB Subnet Group deleted: $DB_SUBNET_GROUP_NAME"
+else
+    echo "⚠️ DB Subnet Group not found: $DB_SUBNET_GROUP_NAME"
+fi
 
 # Delete Security Group
-echo "Deleting Security Group: $DB_SECURITY_GROUP_NAME"
+echo "Checking if Security Group exists: $DB_SECURITY_GROUP_NAME"
 DB_SG_ID=$(aws ec2 describe-security-groups \
     --filters Name=group-name,Values=$DB_SECURITY_GROUP_NAME \
     --query "SecurityGroups[0].GroupId" \
-    --output text --region $REGION)
+    --output text --region $REGION 2>/dev/null)
 
-if [ "$DB_SG_ID" != "None" ]; then
+if [ "$DB_SG_ID" != "None" ] && [ -n "$DB_SG_ID" ]; then
+    echo "Deleting Security Group: $DB_SECURITY_GROUP_NAME ($DB_SG_ID)"
     aws ec2 delete-security-group \
         --group-id $DB_SG_ID \
         --region $REGION \
@@ -3929,14 +4042,6 @@ else
     echo "⚠️ NAT Gateway demo-app-nat-gateway-1 not found in available state"
 fi
 
-
-```
-
----
-
-### **2. Release Elastic IP**
-
-```bash
 echo "Releasing Elastic IP: demo-app-eip-1"
 EIP_ALLOC_ID=$(aws ec2 describe-addresses \
     --filters "Name=tag:Name,Values=demo-app-eip-1" \
@@ -3949,13 +4054,7 @@ if [ "$EIP_ALLOC_ID" != "None" ] && [ -n "$EIP_ALLOC_ID" ]; then
 else
     echo "⚠️ Elastic IP demo-app-eip-1 not found"
 fi
-```
 
----
-
-### **3. Detach & Delete Internet Gateway**
-
-```bash
 echo "Deleting Internet Gateway: demo-app-igw"
 IGW_ID=$(aws ec2 describe-internet-gateways \
     --filters "Name=tag:Name,Values=demo-app-igw" \
@@ -3971,13 +4070,7 @@ if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
 else
     echo "⚠️ Internet Gateway demo-app-igw not found"
 fi
-```
 
----
-
-### **4. Delete Public & Private Route Tables**
-
-```bash
 for RT_NAME in demo-app-public-rt demo-app-private-rt-1; do
     echo "Deleting Route Table: $RT_NAME"
     RT_ID=$(aws ec2 describe-route-tables \
@@ -3999,13 +4092,7 @@ for RT_NAME in demo-app-public-rt demo-app-private-rt-1; do
         echo "⚠️ Route Table $RT_NAME not found"
     fi
 done
-```
 
----
-
-### **5. Delete Subnets**
-
-```bash
 for SUBNET in demo-app-public-subnet-1 demo-app-public-subnet-2 demo-app-public-subnet-3 demo-app-private-subnet-1 demo-app-private-subnet-2 demo-app-private-subnet-3; do
     echo "Deleting Subnet: $SUBNET"
     SUBNET_ID=$(aws ec2 describe-subnets \
@@ -4019,13 +4106,7 @@ for SUBNET in demo-app-public-subnet-1 demo-app-public-subnet-2 demo-app-public-
         echo "⚠️ Subnet $SUBNET not found"
     fi
 done
-```
 
----
-
-### **6. Delete VPC**
-
-```bash
 echo "Deleting VPC: demo-app-vpc"
 VPC_ID=$(aws ec2 describe-vpcs \
     --filters "Name=tag:Name,Values=demo-app-vpc" \
