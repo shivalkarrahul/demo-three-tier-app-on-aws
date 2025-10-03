@@ -3030,6 +3030,325 @@ The ASG will automatically manage EC2 instances to ensure availability.
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
 > Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
 
+```bash
+# -------------------------------
+# Variables
+# -------------------------------
+EC2_INSTANCE_NAME="demo-app-test-ami-builder"
+AMI_NAME="demo-app-ami"
+LT_NAME="demo-app-launch-template"
+ASG_NAME="demo-app-asg"
+IAM_ROLE="demo-app-s3-dynamo-iam-role"
+KEY_NAME="demo-app-private-key"
+VPC_ID="demo-app-vpc"
+REGION="us-east-1"
+ASG_INSTANCE_NAME_TAG="app-demo-asg-instances"
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+# -------------------------------
+# 1️⃣ Create AMI from Running Instance
+# -------------------------------
+echo "📌 Stopping Flask app on EC2 instance: $EC2_INSTANCE_NAME"
+INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$EC2_INSTANCE_NAME" \
+    --query "Reservations[0].Instances[0].InstanceId" --output text --region $REGION)
+
+if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "None" ]; then
+    echo "⚠️ EC2 instance $EC2_INSTANCE_NAME not found!"
+    exit 1
+fi
+
+ssh -o StrictHostKeyChecking=no -i "$KEY_NAME.pem" ubuntu@$(aws ec2 describe-instances \
+    --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicIpAddress" --output text --region $REGION) \
+    "sudo systemctl stop flask-app || true"
+
+```
+
+
+```bash
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+echo "📌 Checking if AMI already exists with name: $AMI_NAME"
+
+EXISTING_AMI_ID=$(aws ec2 describe-images \
+    --filters "Name=name,Values=$AMI_NAME" \
+    --query "Images[0].ImageId" --output text --region $REGION)
+
+if [ "$EXISTING_AMI_ID" != "None" ] && [ -n "$EXISTING_AMI_ID" ]; then
+    echo "⚠️ Existing AMI found: $EXISTING_AMI_ID. Deleting..."
+    aws ec2 deregister-image --image-id $EXISTING_AMI_ID --region $REGION
+    echo "✅ Deleted existing AMI: $EXISTING_AMI_ID"
+fi
+
+echo "Wait for deletion of AMI: $EXISTING_AMI_ID""
+sleep 2
+```
+
+```bash
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+echo "📌 Creating AMI from instance: $INSTANCE_ID"
+AMI_ID=$(aws ec2 create-image \
+    --instance-id $INSTANCE_ID \
+    --name "$AMI_NAME" \
+    --no-reboot \
+    --query "ImageId" --output text --region $REGION)
+
+echo "⏳ Waiting for AMI to become available..."
+aws ec2 wait image-available --image-ids $AMI_ID --region $REGION
+echo "✅ AMI created: $AMI_ID"
+```
+
+```bash
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+# Check if Launch Template already exists
+EXISTING_LT=$(aws ec2 describe-launch-templates \
+    --launch-template-names "$LT_NAME" \
+    --query "LaunchTemplates[0].LaunchTemplateName" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ "$EXISTING_LT" == "$LT_NAME" ]; then
+    echo "⚠️ Launch Template already exists: $LT_NAME. Deleting it first..."
+    aws ec2 delete-launch-template --launch-template-name "$LT_NAME" --region $REGION
+    echo "✅ Existing Launch Template deleted: $LT_NAME"
+fi
+
+# Create a temporary UserData file
+cat <<'EOF' > userdata.sh
+#!/bin/bash
+sudo systemctl start flask-app
+sudo systemctl enable flask-app
+EOF
+
+# Encode in base64
+USER_DATA_B64=$(base64 -w 0 userdata.sh)
+
+# Create launch template
+aws ec2 create-launch-template \
+    --launch-template-name "$LT_NAME" \
+    --version-description "v1" \
+    --launch-template-data "{
+        \"ImageId\":\"$AMI_ID\",
+        \"InstanceType\":\"t2.micro\",
+        \"KeyName\":\"$KEY_NAME\",
+        \"IamInstanceProfile\":{\"Name\":\"$IAM_ROLE\"},
+        \"UserData\":\"$USER_DATA_B64\",
+        \"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$ASG_INSTANCE_NAME_TAG\"}]}]
+    }" \
+    --region $REGION \
+    --no-cli-pager
+
+echo "✅ Launch Template created: $LT_NAME"
+
+```
+
+```bash
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+# -------------------------------
+# 3️⃣ Create Auto Scaling Group
+# -------------------------------
+echo "📌 Creating Auto Scaling Group: $ASG_NAME"
+
+# Get private subnet IDs by tag pattern
+SUBNET_ID_LIST=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-private-subnet-*" \
+    --query "Subnets[].SubnetId" \
+    --output text \
+    --region $REGION)
+
+# Validate
+if [ -z "$SUBNET_ID_LIST" ]; then
+    echo "❌ No private subnets found. Cannot create ASG."
+    exit 1
+else
+    echo "✅ Found private Subnet IDs: $SUBNET_ID_LIST"
+fi    
+
+aws autoscaling create-auto-scaling-group \
+    --auto-scaling-group-name "$ASG_NAME" \
+    --launch-template "LaunchTemplateName=$LT_NAME,Version=1" \
+    --min-size 1 \
+    --max-size 3 \
+    --desired-capacity 2 \
+    --vpc-zone-identifier "$(echo $SUBNET_ID_LIST | tr ' ' ',')" \
+    --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$ASG_INSTANCE_NAME_TAG,PropagateAtLaunch=true" \
+    --region $REGION \
+    --no-cli-pager
+
+ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+    --auto-scaling-group-names "$ASG_NAME" \
+    --query "AutoScalingGroups[0].AutoScalingGroupName" \
+    --output text --region $REGION)
+
+if [ "$ASG_EXISTS" == "None" ] || [ -z "$ASG_EXISTS" ]; then
+    echo "❌ Failed to create Auto Scaling Group: $ASG_NAME"
+else
+    echo "✅ Auto Scaling Group created: $ASG_NAME"
+    echo "⏳ Waiting for ASG instances to launch for 30 sec..."
+    sleep 30 # Wait briefly for instances to appear    
+
+    # -------------------------------
+    # 4️⃣ Validation
+    # -------------------------------
+    echo "📌 Validating ASG Instances"
+
+    ASG_INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+        --auto-scaling-group-names "$ASG_NAME" \
+        --query "AutoScalingGroups[0].Instances[].InstanceId" \
+        --output text --region $REGION)
+
+    if [ -z "$ASG_INSTANCE_IDS" ]; then
+        echo "⚠️ No instances launched by ASG $ASG_NAME"
+    else
+        echo "✅ Instances launched by ASG: $ASG_INSTANCE_IDS"
+    fi    
+fi
+
+
+```
+
+```bash
+
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+
+check_var "EC2_INSTANCE_NAME"
+check_var "AMI_NAME"
+check_var "LT_NAME"
+check_var "ASG_NAME"
+check_var "IAM_ROLE"
+check_var "KEY_NAME"
+check_var "VPC_ID"
+check_var "REGION"
+check_var "ASG_INSTANCE_NAME_TAG"
+
+# Verify IAM Role attached
+for INSTANCE in $ASG_INSTANCE_IDS; do
+    ROLE_ATTACHED=$(aws ec2 describe-instances \
+        --instance-ids $INSTANCE \
+        --query "Reservations[0].Instances[0].IamInstanceProfile.Arn" \
+        --output text --region $REGION)
+    if [[ "$ROLE_ATTACHED" == *"$IAM_ROLE"* ]]; then
+        echo "✅ IAM Role $IAM_ROLE attached to instance $INSTANCE"
+    else
+        echo "⚠️ IAM Role $IAM_ROLE NOT attached to instance $INSTANCE"
+    fi
+done
+
+echo "🎉 AMI, Launch Template, and Auto Scaling Group setup completed successfully."
+```
+
 </details>
 
 ---
@@ -3040,6 +3359,19 @@ The ASG will automatically manage EC2 instances to ensure availability.
 > ⚠️ This validation section is **also not automated**.
 > It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
 > Experiment, check the results, and optionally contribute your solution to the repository.
+
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/7-validate-asg-lt.sh
+
+# Make it executable
+chmod +x 7-validate-asg-lt.sh
+
+# Run the script
+./7-validate-asg-lt.sh
+
+```
 
 </details>
 
@@ -3614,6 +3946,83 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 > ⚠️ This section is **not automated** in this repository.
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
 > Try using AWS CLI to cleanup the resource, and feel free to submit improvements to this repo.
+
+```bash
+# -------------------------------
+# Variables
+# -------------------------------
+AMI_NAME="demo-app-ami"
+LT_NAME="demo-app-launch-template"
+ASG_NAME="demo-app-asg"
+REGION="us-east-1"
+
+# -------------------------------
+# 1️⃣ Delete Auto Scaling Group
+# -------------------------------
+echo "📌 Deleting Auto Scaling Group: $ASG_NAME"
+
+ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+    --auto-scaling-group-names "$ASG_NAME" \
+    --query "AutoScalingGroups[0].AutoScalingGroupName" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ "$ASG_EXISTS" == "None" ] || [ -z "$ASG_EXISTS" ]; then
+    echo "⚠️ Auto Scaling Group $ASG_NAME not found"
+else
+    aws autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "$ASG_NAME" \
+        --force-delete \
+        --region $REGION
+    echo "✅ Auto Scaling Group deleted: $ASG_NAME"
+fi
+
+# -------------------------------
+# 2️⃣ Delete Launch Template
+# -------------------------------
+echo "📌 Deleting Launch Template: $LT_NAME"
+
+EXISTING_LT=$(aws ec2 describe-launch-templates \
+    --launch-template-names "$LT_NAME" \
+    --query "LaunchTemplates[0].LaunchTemplateName" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ "$EXISTING_LT" == "$LT_NAME" ]; then
+    aws ec2 delete-launch-template --launch-template-name "$LT_NAME" --region $REGION
+    echo "✅ Launch Template deleted: $LT_NAME"
+else
+    echo "⚠️ Launch Template $LT_NAME not found"
+fi
+
+# -------------------------------
+# 3️⃣ Delete AMI
+# -------------------------------
+echo "📌 Deleting AMI: $AMI_NAME"
+
+AMI_ID=$(aws ec2 describe-images \
+    --filters "Name=name,Values=$AMI_NAME" \
+    --query "Images[0].ImageId" \
+    --output text --region $REGION)
+
+if [ "$AMI_ID" == "None" ] || [ -z "$AMI_ID" ]; then
+    echo "⚠️ AMI $AMI_NAME not found"
+else
+    # Deregister AMI
+    aws ec2 deregister-image --image-id "$AMI_ID" --region $REGION
+    echo "✅ AMI deregistered: $AMI_ID"
+
+    # Delete associated snapshots
+    SNAPSHOT_IDS=$(aws ec2 describe-snapshots \
+        --filters "Name=description,Values=*$AMI_ID*" \
+        --query "Snapshots[].SnapshotId" --output text --region $REGION)
+
+    for SNAP in $SNAPSHOT_IDS; do
+        aws ec2 delete-snapshot --snapshot-id "$SNAP" --region $REGION
+        echo "✅ Deleted snapshot: $SNAP"
+    done
+fi
+
+echo "🎉 AMI, Launch Template, and Auto Scaling Group cleanup completed successfully."
+```
 
 </details>
 
