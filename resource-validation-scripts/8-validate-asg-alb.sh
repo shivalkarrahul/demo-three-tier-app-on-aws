@@ -93,19 +93,6 @@ else
 fi
 
 # -------------------------------
-# 6️⃣ Validate DB Security Group
-# -------------------------------
-DB_SG_ID=$(aws ec2 describe-security-groups \
-    --filters "Name=group-name,Values=$DB_SG_NAME" \
-    --query "SecurityGroups[0].GroupId" --output text --region $REGION)
-
-if [ -z "$DB_SG_ID" ] || [ "$DB_SG_ID" == "None" ]; then
-    echo "❌ DB Security Group not found: $DB_SG_NAME"
-else
-    echo "✅ DB Security Group exists: $DB_SG_NAME ($DB_SG_ID)"
-fi
-
-# -------------------------------
 # 7️⃣ Validate Auto Scaling Group
 # -------------------------------
 ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
@@ -133,7 +120,10 @@ fi
 # -------------------------------
 # 8️⃣ Validate ASG → DB and ALB → ASG rules
 # -------------------------------
-if [ -n "$ASG_SG_ID" ] && [ -n "$ALB_SG_ID" ]; then
+# -------------------------------
+# 8️⃣ Validate ASG → DB and ALB → ASG rules
+# -------------------------------
+if [ -n "$ASG_SG_ID" ] && [ "$ASG_SG_ID" != "None" ] && [ -n "$ALB_SG_ID" ] && [ "$ALB_SG_ID" != "None" ]; then
     RULE=$(aws ec2 describe-security-groups \
         --group-ids "$ASG_SG_ID" \
         --query "SecurityGroups[0].IpPermissions[?FromPort==\`5000\` && ToPort==\`5000\` && IpProtocol=='tcp' && UserIdGroupPairs[?GroupId=='$ALB_SG_ID']]" \
@@ -143,9 +133,11 @@ if [ -n "$ASG_SG_ID" ] && [ -n "$ALB_SG_ID" ]; then
     else
         echo "⚠️ ALB → ASG rule missing"
     fi
+else
+    echo "⚠️ Could not validate ALB → ASG rule: missing or invalid SG IDs"
 fi
 
-if [ -n "$DB_SG_ID" ] && [ -n "$ASG_SG_ID" ]; then
+if [ -n "$DB_SG_ID" ] && [ "$DB_SG_ID" != "None" ] && [ -n "$ASG_SG_ID" ] && [ "$ASG_SG_ID" != "None" ]; then
     RULE=$(aws ec2 describe-security-groups \
         --group-ids "$DB_SG_ID" \
         --query "SecurityGroups[0].IpPermissions[?FromPort==\`3306\` && ToPort==\`3306\` && IpProtocol=='tcp' && UserIdGroupPairs[?GroupId=='$ASG_SG_ID']]" \
@@ -155,7 +147,10 @@ if [ -n "$DB_SG_ID" ] && [ -n "$ASG_SG_ID" ]; then
     else
         echo "⚠️ ASG → DB rule missing"
     fi
+else
+    echo "⚠️ Could not validate ASG → DB rule: missing or invalid SG IDs"
 fi
+
 
 # -------------------------------
 # 9️⃣ Validate Frontend S3 Bucket
