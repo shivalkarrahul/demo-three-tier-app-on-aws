@@ -26,7 +26,6 @@ done
 # -------------------------------
 # 1️⃣ Validate AMI
 # -------------------------------
-echo "📌 Validating AMI: $AMI_NAME"
 AMI_ID=$(aws ec2 describe-images \
     --filters "Name=name,Values=$AMI_NAME" \
     --query "Images[0].ImageId" --output text --region $REGION)
@@ -40,7 +39,6 @@ fi
 # -------------------------------
 # 2️⃣ Validate Launch Template
 # -------------------------------
-echo "📌 Validating Launch Template: $LT_NAME"
 LT_EXISTS=$(aws ec2 describe-launch-templates \
     --launch-template-names "$LT_NAME" \
     --query "LaunchTemplates[0].LaunchTemplateName" --output text --region $REGION 2>/dev/null)
@@ -54,7 +52,6 @@ fi
 # -------------------------------
 # 3️⃣ Validate Auto Scaling Group
 # -------------------------------
-echo "📌 Validating Auto Scaling Group: $ASG_NAME"
 ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
     --auto-scaling-group-names "$ASG_NAME" \
     --query "AutoScalingGroups[0].AutoScalingGroupName" \
