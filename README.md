@@ -3043,6 +3043,7 @@ KEY_NAME="demo-app-private-key"
 VPC_ID="demo-app-vpc"
 REGION="us-east-1"
 ASG_INSTANCE_NAME_TAG="app-demo-asg-instances"
+ASG_SG_NAME="demo-app-lt-asg-sg"
 
     check_var() {
         VAR_NAME=$1
@@ -3064,6 +3065,7 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
 
 # -------------------------------
 # 1️⃣ Create AMI from Running Instance
@@ -3107,6 +3109,7 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
 
 echo "📌 Checking if AMI already exists with name: $AMI_NAME"
 
@@ -3146,6 +3149,7 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
 
 echo "📌 Creating AMI from instance: $INSTANCE_ID"
 AMI_ID=$(aws ec2 create-image \
@@ -3181,6 +3185,27 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
+
+echo "📌 Creating ASG Security Group: $ASG_SG_NAME"
+ASG_SG_ID=$(aws ec2 describe-security-groups \
+    --region $REGION \
+    --filters "Name=tag:Name,Values=$ASG_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text)
+
+if [ "$ASG_SG_ID" == "None" ] || [ -z "$ASG_SG_ID" ]; then
+    ASG_SG_ID=$(aws ec2 create-security-group \
+        --group-name "$ASG_SG_NAME" \
+        --description "$ASG_SG_NAME for ASG instances" \
+        --vpc-id "$VPC_ID" \
+        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$ASG_SG_NAME}]" \
+        --query "GroupId" \
+        --output text --region $REGION)
+    echo "✅ ASG Security Group created: $ASG_SG_ID"
+else
+    echo "ℹ️ ASG Security Group already exists: $ASG_SG_ID"
+fi
 
 # Check if Launch Template already exists
 EXISTING_LT=$(aws ec2 describe-launch-templates \
@@ -3213,6 +3238,7 @@ aws ec2 create-launch-template \
         \"InstanceType\":\"t2.micro\",
         \"KeyName\":\"$KEY_NAME\",
         \"IamInstanceProfile\":{\"Name\":\"$IAM_ROLE\"},
+        \"SecurityGroupIds\":[\"$ASG_SG_ID\"],
         \"UserData\":\"$USER_DATA_B64\",
         \"TagSpecifications\":[{\"ResourceType\":\"instance\",\"Tags\":[{\"Key\":\"Name\",\"Value\":\"$ASG_INSTANCE_NAME_TAG\"}]}]
     }" \
@@ -3245,6 +3271,7 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
 
 # -------------------------------
 # 3️⃣ Create Auto Scaling Group
@@ -3266,6 +3293,57 @@ else
     echo "✅ Found private Subnet IDs: $SUBNET_ID_LIST"
 fi    
 
+# -------------------------------
+# Delete existing ASG if it exists
+# -------------------------------
+# -------------------------------
+# Delete existing ASG if it exists
+# -------------------------------
+EXISTING_ASG=$(aws autoscaling describe-auto-scaling-groups \
+    --auto-scaling-group-names "$ASG_NAME" \
+    --query "AutoScalingGroups[0].AutoScalingGroupName" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ "$EXISTING_ASG" == "$ASG_NAME" ]; then
+    echo "⚠️ Auto Scaling Group $ASG_NAME already exists. Deleting..."
+    
+    # Set desired capacity to 0 first to terminate instances
+    aws autoscaling update-auto-scaling-group \
+        --auto-scaling-group-name "$ASG_NAME" \
+        --min-size 0 \
+        --max-size 0 \
+        --desired-capacity 0 \
+        --region $REGION
+
+    # Delete the ASG
+    aws autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "$ASG_NAME" \
+        --force-delete \
+        --region $REGION
+
+    # Wait until ASG is deleted
+    echo "⏳ Waiting for ASG to be deleted..."
+    while true; do
+        ASG_CHECK=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "$ASG_NAME" \
+            --query "AutoScalingGroups[0].AutoScalingGroupName" \
+            --output text --region $REGION 2>/dev/null)
+
+        if [ -z "$ASG_CHECK" ] || [ "$ASG_CHECK" == "None" ]; then
+            echo "✅ ASG $ASG_NAME deleted."
+            break
+        fi
+        echo "⏳ Still deleting... sleeping 10s"
+        sleep 10
+    done
+else
+    echo "✅ No existing ASG found with name $ASG_NAME. Proceeding to create."
+fi
+
+
+# -------------------------------
+# Create new ASG
+# -------------------------------
 aws autoscaling create-auto-scaling-group \
     --auto-scaling-group-name "$ASG_NAME" \
     --launch-template "LaunchTemplateName=$LT_NAME,Version=1" \
@@ -3276,6 +3354,9 @@ aws autoscaling create-auto-scaling-group \
     --tags "ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=Name,Value=$ASG_INSTANCE_NAME_TAG,PropagateAtLaunch=true" \
     --region $REGION \
     --no-cli-pager
+
+echo "✅ Auto Scaling Group $ASG_NAME created."
+
 
 ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
     --auto-scaling-group-names "$ASG_NAME" \
@@ -3332,6 +3413,7 @@ check_var "KEY_NAME"
 check_var "VPC_ID"
 check_var "REGION"
 check_var "ASG_INSTANCE_NAME_TAG"
+check_var "ASG_SG_NAME"
 
 # Verify IAM Role attached
 for INSTANCE in $ASG_INSTANCE_IDS; do
@@ -3955,6 +4037,8 @@ AMI_NAME="demo-app-ami"
 LT_NAME="demo-app-launch-template"
 ASG_NAME="demo-app-asg"
 REGION="us-east-1"
+ASG_SG_NAME="demo-app-lt-asg-sg"
+
 
 # -------------------------------
 # 1️⃣ Delete Auto Scaling Group
@@ -4021,7 +4105,22 @@ else
     done
 fi
 
-echo "🎉 AMI, Launch Template, and Auto Scaling Group cleanup completed successfully."
+ASG_SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$ASG_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ -n "$ASG_SG_ID" ] && [ "$ASG_SG_ID" != "None" ]; then
+    echo "⚠️ Security Group $ASG_SG_NAME exists ($ASG_SG_ID). Deleting..."
+    aws ec2 delete-security-group \
+        --group-id "$ASG_SG_ID" \
+        --region $REGION
+    echo "✅ Security Group $ASG_SG_NAME deleted."
+else
+    echo "✅ Security Group $ASG_SG_NAME does not exist. Skipping deletion."
+fi
+
+echo "🎉 AMI, Launch Template, Auto Scaling Group, And Security Group cleanup completed successfully."
 ```
 
 </details>

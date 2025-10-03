@@ -7,6 +7,7 @@ LT_NAME="demo-app-launch-template"
 ASG_NAME="demo-app-asg"
 IAM_ROLE="demo-app-s3-dynamo-iam-role"
 REGION="us-east-1"
+ASG_SG_NAME="demo-app-lt-asg-sg"
 
 # -------------------------------
 # Function to check required variables
@@ -19,7 +20,7 @@ check_var() {
     fi
 }
 
-for VAR in AMI_NAME LT_NAME ASG_NAME IAM_ROLE REGION; do
+for VAR in AMI_NAME LT_NAME ASG_NAME ASG_SG_NAME IAM_ROLE REGION; do
     check_var "$VAR"
 done
 
@@ -86,6 +87,23 @@ else
             fi
         done
     fi
+fi
+
+echo "🎯 Validation script completed."
+
+
+# -------------------------------
+# 4️⃣ Validate ASG Security Group
+# -------------------------------
+ASG_SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$ASG_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION)
+
+if [ -z "$ASG_SG_ID" ] || [ "$ASG_SG_ID" == "None" ]; then
+    echo "❌ ASG Security Group not found: $ASG_SG_NAME"
+else
+    echo "✅ ASG Security Group exists: $ASG_SG_NAME ($ASG_SG_ID)"
 fi
 
 echo "🎯 Validation script completed."
