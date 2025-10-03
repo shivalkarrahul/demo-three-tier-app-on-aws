@@ -3120,7 +3120,7 @@ if [ "$EXISTING_AMI_ID" != "None" ] && [ -n "$EXISTING_AMI_ID" ]; then
     echo "✅ Deleted existing AMI: $EXISTING_AMI_ID"
 fi
 
-echo "Wait for deletion of AMI: $EXISTING_AMI_ID""
+echo "Wait for deletion of AMI: $EXISTING_AMI_ID"
 sleep 2
 ```
 
