@@ -3959,6 +3959,7 @@ echo "✅ ALB DNS: http://$ALB_DNS"
 export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-678901"
 ```
 
+```bash
 # Update index.html with new API_BASE
 
 # 4. Download index.html from Github
@@ -3985,7 +3986,7 @@ aws s3 cp index.html s3://$S3_FRONTEND_BUCKET/index.html --region $REGION
 
 echo "✅ Frontend updated to use ALB: http://$ALB_DNS"
 echo "✅ Frontend accessible at: http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
-
+```
 
 </details>
 
