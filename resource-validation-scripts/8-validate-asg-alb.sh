@@ -13,7 +13,7 @@ ALB_SG_NAME="demo-app-lb-sg"
 ASG_NAME="demo-app-asg"
 ASG_SG_NAME="demo-app-lt-asg-sg"
 DB_SG_NAME="demo-app-db-sg"
-FRONTEND_BUCKET="$FRONTEND_BUCKET"
+S3_FRONTEND_BUCKET="$S3_FRONTEND_BUCKET"
 
 # -------------------------------
 # Function to check required variables
@@ -26,7 +26,7 @@ check_var() {
     fi
 }
 
-for VAR in REGION TG_NAME ALB_NAME ALB_SG_NAME ASG_NAME ASG_SG_NAME DB_SG_NAME FRONTEND_BUCKET; do
+for VAR in REGION TG_NAME ALB_NAME ALB_SG_NAME ASG_NAME ASG_SG_NAME DB_SG_NAME S3_FRONTEND_BUCKET; do
     check_var "$VAR"
 done
 
