@@ -4373,6 +4373,161 @@ AWS resources often depend on each other. To avoid errors during deletion, follo
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
 > Try using AWS CLI to cleanup the resource, and feel free to submit improvements to this repo.
 
+```bash
+#!/bin/bash
+# ===============================
+# Cleanup Script for Demo App
+# ===============================
+
+# -------------------------------
+# Variables
+# -------------------------------
+REGION="us-east-1"
+TG_NAME="demo-app-tg"
+ALB_NAME="demo-app-alb"
+ALB_SG_NAME="demo-app-lb-sg"
+ASG_NAME="demo-app-asg"
+ASG_SG_NAME="demo-app-lt-asg-sg"
+DB_SG_NAME="demo-app-db-sg"
+FRONTEND_BUCKET="demo-app-frontend-s3-bucket-6789"
+ASG_INSTANCE_NAME_TAG="app-demo-asg-instances"
+
+
+# -------------------------------
+# Delete ALB Listeners and ALB
+# -------------------------------
+ALB_ARN=$(aws elbv2 describe-load-balancers \
+    --names "$ALB_NAME" \
+    --query "LoadBalancers[0].LoadBalancerArn" --output text --region $REGION 2>/dev/null)
+
+if [ -n "$ALB_ARN" ] && [ "$ALB_ARN" != "None" ]; then
+    echo "📌 Deleting listeners for ALB: $ALB_NAME"
+    LISTENER_ARNS=$(aws elbv2 describe-listeners \
+        --load-balancer-arn "$ALB_ARN" \
+        --query "Listeners[].ListenerArn" --output text --region $REGION)
+
+    for LARN in $LISTENER_ARNS; do
+        aws elbv2 delete-listener --listener-arn "$LARN" --region $REGION
+        echo "✅ Deleted listener: $LARN"
+    done
+
+    echo "📌 Deleting ALB: $ALB_NAME"
+    aws elbv2 delete-load-balancer --load-balancer-arn "$ALB_ARN" --region $REGION
+    aws elbv2 wait load-balancers-deleted --load-balancer-arns "$ALB_ARN" --region $REGION
+    echo "✅ ALB deleted: $ALB_NAME"
+else
+    echo "❌ ALB not found: $ALB_NAME"    
+fi
+
+# -------------------------------
+# Delete Target Group
+# -------------------------------
+TG_ARN=$(aws elbv2 describe-target-groups \
+    --names "$TG_NAME" \
+    --query "TargetGroups[0].TargetGroupArn" --output text --region $REGION 2>/dev/null)
+
+if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
+    echo "📌 Deleting Target Group: $TG_NAME"
+    aws elbv2 delete-target-group --target-group-arn "$TG_ARN" --region $REGION
+    echo "✅ Target Group deleted: $TG_NAME"
+else
+    echo "❌ Target Group not found: $TG_NAME"
+fi
+
+# -------------------------------
+# Detach and Terminate ASG Instances, Delete ASG
+# -------------------------------
+INSTANCE_IDS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=$ASG_INSTANCE_NAME_TAG" "Name=instance-state-name,Values=running,stopped" \
+    --query "Reservations[].Instances[].InstanceId" --output text --region $REGION)
+
+if [ -n "$INSTANCE_IDS" ]; then
+    echo "📌 Terminating ASG instances: $INSTANCE_IDS"
+    aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region $REGION
+    echo "✅ ASG instances terminated"
+else
+    echo "❌ No ASG instances found"
+fi
+
+
+ASG_EXISTS=$(aws autoscaling describe-auto-scaling-groups \
+    --auto-scaling-group-names "$ASG_NAME" \
+    --query "AutoScalingGroups[0].AutoScalingGroupName" --output text --region $REGION 2>/dev/null)
+
+if [ -n "$ASG_EXISTS" ] && [ "$ASG_EXISTS" != "None" ]; then
+    echo "📌 Deleting ASG: $ASG_NAME"
+    aws autoscaling delete-auto-scaling-group --auto-scaling-group-name "$ASG_NAME" --force-delete --region $REGION
+    echo "✅ ASG deleted: $ASG_NAME"
+else
+    echo "❌ ASG not found: $ASG_NAME"
+fi
+
+# -------------------------------
+# Revoke ASG → DB rule on port 3306
+# -------------------------------
+DB_SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$DB_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION)
+
+ASG_SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$ASG_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text --region $REGION)
+
+if [ -n "$DB_SG_ID" ] && [ "$DB_SG_ID" != "None" ] && [ -n "$ASG_SG_ID" ] && [ "$ASG_SG_ID" != "None" ]; then
+    echo "📌 Revoking ASG → DB rule (port 3306)"
+    aws ec2 revoke-security-group-ingress \
+        --group-id "$DB_SG_ID" \
+        --protocol tcp \
+        --port 3306 \
+        --source-group "$ASG_SG_ID" \
+        --region $REGION
+    echo "✅ Rule revoked: ASG → DB (port 3306)"
+else
+    echo "⚠️ Could not find ASG or DB SG, skipping rule revocation"
+fi
+
+
+
+# -------------------------------
+# Revoke ALB → ASG rule on port 5000
+# -------------------------------
+if [ -n "$ALB_SG_ID" ] && [ "$ALB_SG_ID" != "None" ] && [ -n "$ASG_SG_ID" ] && [ "$ASG_SG_ID" != "None" ]; then
+    echo "📌 Revoking ALB → ASG rule (port 5000)"
+    aws ec2 revoke-security-group-ingress \
+        --group-id "$ASG_SG_ID" \
+        --protocol tcp \
+        --port 5000 \
+        --source-group "$ALB_SG_ID" \
+        --region $REGION
+    echo "✅ Rule revoked: ALB → ASG (port 5000)"
+else
+    echo "⚠️ Could not find ALB or ASG SG, skipping rule revocation"
+fi
+
+# -------------------------------
+# Delete Security Groups
+# -------------------------------
+for SG_NAME in "$ALB_SG_NAME" "$ASG_SG_NAME"; do
+    SG_ID=$(aws ec2 describe-security-groups \
+        --filters "Name=group-name,Values=$SG_NAME" \
+        --query "SecurityGroups[0].GroupId" --output text --region $REGION 2>/dev/null)
+
+    if [ -n "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+        echo "📌 Deleting Security Group: $SG_NAME ($SG_ID)"
+        aws ec2 delete-security-group --group-id "$SG_ID" --region $REGION
+        echo "✅ Security Group deleted: $SG_NAME"
+    else
+        echo "❌ Security Group not found: $SG_NAME"
+    fi
+done
+
+
+echo "🎯 Cleanup completed. All demo-app resources removed."
+
+```
+
 </details>
 
 ---
