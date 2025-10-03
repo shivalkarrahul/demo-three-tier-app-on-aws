@@ -3650,6 +3650,343 @@ Since the frontend is hosted on S3 and the backend is now behind the ALB:
 > It is intentionally left as an **assignment** for you to explore, complete, and contribute back.
 > Try using AWS CLI to create and configure the resource, and feel free to submit improvements to this repo.
 
+```bash
+# -------------------------------
+# Variables
+# -------------------------------
+EC2_INSTANCE_NAME="demo-app-test-ami-builder"
+AMI_NAME="demo-app-ami"
+LT_NAME="demo-app-launch-template"
+ASG_NAME="demo-app-asg"
+IAM_ROLE="demo-app-s3-dynamo-iam-role"
+KEY_NAME="demo-app-private-key"
+VPC_ID="demo-app-vpc"
+REGION="us-east-1"
+ASG_INSTANCE_NAME_TAG="app-demo-asg-instances"
+
+    check_var() {
+        VAR_NAME=$1
+        if [ -z "${!VAR_NAME}" ]; then
+            echo "⚠️  Environment variable $VAR_NAME is not set."
+            echo "👉 Please set it using: export $VAR_NAME=<value>"
+            echo "💡 Then rerun this block."
+            read -rp "👉 Press Enter to exit the script safely..."
+            return 1
+        fi
+    }
+```
+
+
+```bash
+# -------------------------------
+# Variables
+# -------------------------------
+REGION="us-east-1"
+VPC_NAME="demo-app-vpc"
+TG_NAME="demo-app-tg"
+ALB_NAME="demo-app-alb"
+ALB_SG_NAME="demo-app-lb-sg"
+ASG_NAME="demo-app-asg"
+ASG_SG_NAME="demo-app-lt-asg-sg"
+DB_SG_NAME="demo-app-db-sg"
+FRONTEND_BUCKET="demo-app-frontend-s3-bucket-6789"
+
+# -------------------------------
+# 1️⃣ Get VPC ID
+# -------------------------------
+echo "📌 Fetching VPC ID for: $VPC_NAME"
+VPC_ID=$(aws ec2 describe-vpcs \
+    --filters "Name=tag:Name,Values=$VPC_NAME" \
+    --query "Vpcs[0].VpcId" \
+    --output text --region $REGION)
+
+if [ "$VPC_ID" == "None" ] || [ -z "$VPC_ID" ]; then
+    echo "❌ VPC $VPC_NAME not found."
+    exit 1
+fi
+echo "✅ VPC ID: $VPC_ID"
+
+# -------------------------------
+# 2️⃣ Create Target Group
+# -------------------------------
+echo "📌 Creating Target Group: $TG_NAME"
+TG_ARN=$(aws elbv2 create-target-group \
+    --name "$TG_NAME" \
+    --protocol HTTP \
+    --port 5000 \
+    --vpc-id "$VPC_ID" \
+    --target-type instance \
+    --health-check-protocol HTTP \
+    --health-check-path "/" \
+    --query "TargetGroups[0].TargetGroupArn" \
+    --output text --region $REGION)
+
+echo "✅ Target Group created: $TG_ARN"
+```
+
+
+
+```bash
+# -------------------------------
+# 3️⃣ Create Security Group for ALB
+# -------------------------------
+echo "📌 Creating ALB Security Group: $ALB_SG_NAME"
+
+# Check if SG already exists
+EXISTING_SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=$ALB_SG_NAME" "Name=vpc-id,Values=$VPC_ID" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text 2>/dev/null)
+
+if [ "$EXISTING_SG_ID" != "None" ] && [ -n "$EXISTING_SG_ID" ]; then
+    echo "ℹ️ Security Group already exists: $EXISTING_SG_ID"
+    ALB_SG_ID=$EXISTING_SG_ID
+else
+    # Create new SG
+    ALB_SG_ID=$(aws ec2 create-security-group \
+        --group-name "$ALB_SG_NAME" \
+        --description "$ALB_SG_NAME for public access" \
+        --vpc-id "$VPC_ID" \
+        --query "GroupId" --output text --region $REGION)
+    echo "✅ Created new ALB Security Group: $ALB_SG_ID"
+fi
+
+# Check if ingress rule already exists
+RULE_EXISTS=$(aws ec2 describe-security-groups \
+    --group-ids "$ALB_SG_ID" \
+    --query "SecurityGroups[0].IpPermissions[?FromPort==\`80\` && ToPort==\`80\` && IpProtocol=='tcp']" \
+    --output text --region $REGION)
+
+if [ -z "$RULE_EXISTS" ]; then
+    echo "📌 Adding inbound rule for HTTP:80"
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$ALB_SG_ID" \
+        --protocol tcp --port 80 --cidr 0.0.0.0/0 \
+        --region $REGION
+    echo "✅ Ingress rule added to $ALB_SG_ID"
+else
+    echo "ℹ️ Ingress rule for port 80 already exists in $ALB_SG_ID"
+fi
+
+echo "🎯 Using ALB Security Group: $ALB_SG_ID"
+
+# -------------------------------
+# 4️⃣ Create ALB
+# -------------------------------
+
+EXISTING_ALB_ARN=$(aws elbv2 describe-load-balancers \
+    --names "$ALB_NAME" \
+    --query "LoadBalancers[0].LoadBalancerArn" \
+    --output text --region $REGION 2>/dev/null)
+
+if [ -n "$EXISTING_ALB_ARN" ] && [ "$EXISTING_ALB_ARN" != "None" ]; then
+    echo "⚠️ ALB $ALB_NAME already exists ($EXISTING_ALB_ARN). Deleting..."
+    
+    # Delete associated listeners first
+    LISTENER_ARNS=$(aws elbv2 describe-listeners \
+        --load-balancer-arn "$EXISTING_ALB_ARN" \
+        --query "Listeners[].ListenerArn" --output text --region $REGION)
+    
+    for LARN in $LISTENER_ARNS; do
+        aws elbv2 delete-listener --listener-arn "$LARN" --region $REGION
+        echo "✅ Deleted listener: $LARN"
+    done
+
+    # Delete the ALB
+    aws elbv2 delete-load-balancer \
+        --load-balancer-arn "$EXISTING_ALB_ARN" \
+        --region $REGION
+    echo "✅ ALB $ALB_NAME deleted."
+
+    # Wait until deleted
+    aws elbv2 wait load-balancers-deleted --load-balancer-arns "$EXISTING_ALB_ARN" --region $REGION
+    echo "✅ ALB deletion confirmed."
+else
+    echo "✅ ALB $ALB_NAME does not exist. Proceeding to create."
+fi
+
+echo "📌 Fetching Public Subnet IDs"
+
+SUBNET_IDS=$(aws ec2 describe-subnets \
+    --filters "Name=tag:Name,Values=demo-app-public-subnet-*" \
+    --query "Subnets[].SubnetId" \
+    --output text \
+    --region $REGION)
+
+if [ -z "$SUBNET_IDS" ]; then
+    echo "❌ No public subnets found."
+    exit 1
+else
+    echo "✅ Found Public Subnet IDs: $SUBNET_IDS"
+fi
+
+echo "📌 Creating ALB: $ALB_NAME"
+ALB_ARN=$(aws elbv2 create-load-balancer \
+    --name "$ALB_NAME" \
+    --subnets $SUBNET_IDS \
+    --security-groups "$ALB_SG_ID" \
+    --scheme internet-facing \
+    --type application \
+    --ip-address-type ipv4 \
+    --query "LoadBalancers[0].LoadBalancerArn" \
+    --output text --region $REGION)
+
+echo "✅ ALB created: $ALB_ARN"
+
+echo "⏳ Waiting for ALB $ALB_NAME to become active..."
+aws elbv2 wait load-balancer-available \
+    --load-balancer-arns "$ALB_ARN" \
+    --region $REGION
+echo "✅ ALB is now active: $ALB_NAME"
+
+# -------------------------------
+# 5️⃣ Create Listener
+# -------------------------------
+echo "📌 Creating Listener for ALB → Target Group"
+aws elbv2 create-listener \
+    --load-balancer-arn "$ALB_ARN" \
+    --protocol HTTP --port 80 \
+    --default-actions Type=forward,TargetGroupArn=$TG_ARN \
+    --region $REGION
+
+echo "✅ Listener created and forwarding traffic to TG"
+```
+
+```bash
+# -------------------------------
+# 6️⃣ Attach Target Group to ASG
+# -------------------------------
+echo "📌 Attaching Target Group to ASG: $ASG_NAME"
+aws autoscaling attach-load-balancer-target-groups \
+    --auto-scaling-group-name "$ASG_NAME" \
+    --target-group-arns "$TG_ARN" \
+    --region $REGION
+
+echo "✅ ASG attached to Target Group"
+```
+
+```bash
+# -------------------------------
+# 7️⃣ Fix Security Group Rules
+# -------------------------------
+echo "📌 Updating Security Groups for ASG and DB"
+
+# Get ASG Security Group ID
+ASG_SG_ID=$(aws ec2 describe-security-groups --region $REGION \
+    --filters "Name=group-name,Values=$ASG_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text)
+
+# Get DB Security Group ID
+DB_SG_ID=$(aws ec2 describe-security-groups --region $REGION \
+    --filters "Name=group-name,Values=$DB_SG_NAME" \
+    --query "SecurityGroups[0].GroupId" \
+    --output text)
+
+# -------------------------------
+# Allow ALB → ASG on port 5000
+# -------------------------------
+RULE_EXISTS=$(aws ec2 describe-security-groups \
+    --group-ids "$ASG_SG_ID" \
+    --query "SecurityGroups[0].IpPermissions[?FromPort==\`5000\` && ToPort==\`5000\` && IpProtocol=='tcp' && UserIdGroupPairs[?GroupId=='$ALB_SG_ID']]" \
+    --output text --region $REGION)
+
+if [ -n "$RULE_EXISTS" ]; then
+    echo "ℹ️ Rule already exists: ALB ($ALB_SG_ID) → ASG ($ASG_SG_ID) on port 5000"
+else
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$ASG_SG_ID" \
+        --protocol tcp --port 5000 \
+        --source-group "$ALB_SG_ID" \
+        --region $REGION
+    echo "✅ Added rule: ALB → ASG on port 5000"
+fi
+
+# -------------------------------
+# Allow ASG → DB on port 3306
+# -------------------------------
+RULE_EXISTS=$(aws ec2 describe-security-groups \
+    --group-ids "$DB_SG_ID" \
+    --query "SecurityGroups[0].IpPermissions[?FromPort==\`3306\` && ToPort==\`3306\` && IpProtocol=='tcp' && UserIdGroupPairs[?GroupId=='$ASG_SG_ID']]" \
+    --output text --region $REGION)
+
+if [ -n "$RULE_EXISTS" ]; then
+    echo "ℹ️ Rule already exists: ASG ($ASG_SG_ID) → DB ($DB_SG_ID) on port 3306"
+else
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$DB_SG_ID" \
+        --protocol tcp --port 3306 \
+        --source-group "$ASG_SG_ID" \
+        --region $REGION
+    echo "✅ Added rule: ASG → DB on port 3306"
+fi
+
+echo "✅ Security Groups updated"
+
+```
+
+```bash
+# -------------------------------
+# 8️⃣ Restart ASG Instances
+# -------------------------------
+echo "📌 Terminating old ASG instances (new will launch automatically)"
+INSTANCE_IDS=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=app-demo-asg-instances" "Name=instance-state-name,Values=running" \
+    --query "Reservations[].Instances[].InstanceId" \
+    --output text --region $REGION)
+
+if [ -n "$INSTANCE_IDS" ]; then
+    aws ec2 terminate-instances --instance-ids $INSTANCE_IDS --region $REGION
+    echo "✅ Terminated old ASG instances: $INSTANCE_IDS"
+else
+    echo "⚠️ No running ASG instances found"
+fi
+
+# -------------------------------
+# 9️⃣ Get ALB DNS and Update Frontend
+# -------------------------------
+echo "📌 Fetching ALB DNS Name"
+ALB_DNS=$(aws elbv2 describe-load-balancers \
+    --load-balancer-arns "$ALB_ARN" \
+    --query "LoadBalancers[0].DNSName" \
+    --output text --region $REGION)
+
+echo "✅ ALB DNS: http://$ALB_DNS"
+```
+
+
+```bash
+export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-678901"
+```
+
+# Update index.html with new API_BASE
+
+# 4. Download index.html from Github
+
+if rm -f index.html 2>/dev/null; then
+    echo "🗑️ Removed existing index.html"
+else
+    echo "ℹ️ No existing index.html found, continuing..."
+fi
+echo "⏳ Downloading index.html from Github"
+
+curl -s -L https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/frontend/index.html -o index.html
+
+# 5. Replace placeholder API_BASE with EC2_PUBLIC_IP
+sed -i "s|http://<EC2IP>:5000|http://$ALB_DNS|g" index.html
+
+# 6. Upload index.html to S3
+aws s3 cp index.html s3://"$S3_FRONTEND_BUCKET"/index.html
+
+echo "📌 Updating frontend index.html"
+sed -i "s|const API_BASE = .*|const API_BASE = \"http://$ALB_DNS\";|" index.html
+
+aws s3 cp index.html s3://$S3_FRONTEND_BUCKET/index.html --region $REGION
+
+echo "✅ Frontend updated to use ALB: http://$ALB_DNS"
+echo "✅ Frontend accessible at: http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
+
+
 </details>
 
 ---
