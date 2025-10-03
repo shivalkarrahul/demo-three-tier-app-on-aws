@@ -177,10 +177,6 @@ By forking the repository, you can **experiment safely, make changes, and practi
 
 ---
 
-You can add a short, energetic intro like this:
-
----
-
 ## 🏁 Let’s Get Started!
 
 Time to **get our hands dirty**! In this workshop, we’ll move step by step to deploy a **fully functional three-tier AWS application**. Follow the instructions, experiment with the resources, and watch your architecture come to life.
