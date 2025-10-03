@@ -3998,6 +3998,22 @@ echo "✅ Frontend accessible at: http://$S3_FRONTEND_BUCKET.s3-website-us-east-
 > It is left as an **exercise** for you to practice validating resources manually, or automate yourself.
 > Experiment, check the results, and optionally contribute your solution to the repository.
 
+```bash
+export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
+```
+
+```bash
+# Download the validation script from GitHub
+curl -O https://raw.githubusercontent.com/shivalkarrahul/demo-three-tier-app-on-aws/main/resource-validation-scripts/8-validate-asg-alb.sh
+
+# Make it executable
+chmod +x 8-validate-asg-alb.sh
+
+# Run the script
+./8-validate-asg-alb.sh
+
+```
+
 </details>
 
 ---
