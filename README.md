@@ -130,7 +130,7 @@ This workshop demonstrates a **three-tier architecture on AWS**, designed for sc
 3. **Data Layer (Relational Database & Storage)**
 
    * Stores **persistent data** for the application.
-   * Implemented using **RDS (MySQL/PostgreSQL)** for structured data.
+   * Implemented using **RDS (MySQL)** for structured data.
    * DynamoDB stores **event-driven metadata** extracted from S3 files.
 
 **Key Highlights:**
@@ -146,7 +146,8 @@ This workshop demonstrates a **three-tier architecture on AWS**, designed for sc
 
 ## Fork this Repo to Learn & Experiment
 
-![Scan to visit the repo](artifacts/demo-three-tier-app-on-aws-repo-qr.png)
+<img src="artifacts/demo-three-tier-app-on-aws-repo-qr.png" width="650" height="650" alt="Scan to visit the repo">
+
 or visit directly: [https://github.com/shivalkarrahul/demo-three-tier-app-on-aws](https://github.com/shivalkarrahul/demo-three-tier-app-on-aws)
 
 By forking the repository, you can **experiment safely, make changes, and practice hands-on AWS deployment** without affecting the original project.
@@ -522,10 +523,10 @@ fi
 
 ---
 
-### 6. Create a NAT Gateway
+### 6. Allocate Elastic IP for NAT Gateway
 
 ```bash
-# 1️⃣ Allocate Elastic IP for NAT Gateway
+# Allocate Elastic IP for NAT Gateway
 echo "Allocating Elastic IP for NAT Gateway: demo-app-eip-1"
 EIP_ALLOC_ID=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=demo-app-eip-1" --query "Addresses[0].AllocationId" --output text)
 
@@ -542,8 +543,6 @@ fi
 
 ---
 
-### 7. Create Route Tables for Private Subnets
-
 ```bash
 # Fetch Public Subnet ID
 echo "Fetching Public Subnet ID: demo-app-public-subnet-1"
@@ -558,6 +557,8 @@ else
     echo "✅ Public Subnet ID: $PUBLIC_SUBNET_ID"
 fi
 ```
+
+### 7. Create NAT Gateway
 
 ```bash
 # Create NAT Gateway
@@ -582,6 +583,8 @@ echo "Waiting for NAT Gateway to become available..."
 aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_ID --no-cli-pager
 echo "✅ NAT Gateway is available"
 ```
+
+### 8. Create Route Tables for Private Subnets
 
 ```bash
 echo "Creating Private Route Table: demo-app-private-rt-1"
@@ -5144,4 +5147,4 @@ fi
 - **👤 Name**: Rahul Shivalkar  
 - **🔗 LinkedIn**: [www.linkedin.com/in/rahul-shivalkar](https://www.linkedin.com/in/rahul-shivalkar)
 
-![LinkedInQR](artifacts/my-linkedin-qr.png)
+<img src="artifacts/my-linkedin-qr.png" width="650" height="650" alt="Scan to Connect">

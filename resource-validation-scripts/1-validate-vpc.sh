@@ -12,8 +12,9 @@ NAT_NAME="demo-app-nat-gateway-1"
 EIP_NAME="demo-app-eip-1"
 
 # ---------------------------
-# 1️⃣ Check VPC
+# Check VPC
 # ---------------------------
+echo "🔹 Checking VPC..."
 VPC_ID=$(aws ec2 describe-vpcs \
     --filters "Name=tag:Name,Values=$VPC_NAME" \
     --query "Vpcs[0].VpcId" --output text --no-cli-pager)
@@ -26,7 +27,7 @@ else
 fi
 
 # ---------------------------
-# 2️⃣ Check Subnets
+# Check Subnets
 # ---------------------------
 declare -A PUBLIC_SUBNETS=( ["demo-app-public-subnet-1"]="10.0.1.0/24" ["demo-app-public-subnet-2"]="10.0.2.0/24" ["demo-app-public-subnet-3"]="10.0.3.0/24" )
 declare -A PRIVATE_SUBNETS=( ["demo-app-private-subnet-1"]="10.0.11.0/24" ["demo-app-private-subnet-2"]="10.0.12.0/24" ["demo-app-private-subnet-3"]="10.0.13.0/24" )
@@ -76,8 +77,11 @@ done
 
 
 # ---------------------------
-# 3️⃣ Check Internet Gateway
+# Check Internet Gateway
 # ---------------------------
+echo ""
+echo "🔹 Checking InternetGateways..."
+
 IGW_ID=$(aws ec2 describe-internet-gateways \
     --filters "Name=tag:Name,Values=$IGW_NAME" \
     --query "InternetGateways[0].InternetGatewayId" --output text --no-cli-pager)
@@ -95,9 +99,58 @@ else
     echo "❌ Internet Gateway not found: $IGW_NAME"
 fi
 
+
 # ---------------------------
-# 4️⃣ Check Public Route Table
+# Checking Elastic IP for NAT
+# -
+declare -A EIPS=(
+    ["demo-app-eip-1"]=""
+)
+
+
+echo ""
+echo "🔹 Checking Elastic IP for NAT..."
+for name in "${!EIPS[@]}"; do
+    EIP_INFO=$(aws ec2 describe-addresses \
+        --filters "Name=tag:Name,Values=$name" \
+        --query "Addresses[0].[AllocationId,PublicIp]" --output text --no-cli-pager)
+    
+    ALLOCATION_ID=$(echo "$EIP_INFO" | awk '{print $1}')
+    PUBLIC_IP=$(echo "$EIP_INFO" | awk '{print $2}')
+
+    if [ -n "$ALLOCATION_ID" ] && [ "$ALLOCATION_ID" != "None" ]; then
+        echo "✅ Elastic IP exists: $name ($PUBLIC_IP, $ALLOCATION_ID)"
+    else
+        echo "❌ Elastic IP not found: $name"
+    fi
+done
+
 # ---------------------------
+# Check NAT Gateway
+# ---------------------------
+
+NAT_ID=$(aws ec2 describe-nat-gateways \
+    --filter "Name=tag:Name,Values=$NAT_NAME" \
+    --query "NatGateways[0].NatGatewayId" --output text --no-cli-pager)
+
+if [ -n "$NAT_ID" ] && [ "$NAT_ID" != "None" ]; then
+    NAT_STATE=$(aws ec2 describe-nat-gateways --nat-gateway-ids "$NAT_ID" \
+        --query "NatGateways[0].State" --output text --no-cli-pager)
+    if [ "$NAT_STATE" == "available" ]; then
+        echo "✅ NAT Gateway exists and available: $NAT_NAME ($NAT_ID)"
+    else
+        echo "❌ NAT Gateway exists but not available: $NAT_STATE"
+    fi
+else
+    echo "❌ NAT Gateway not found: $NAT_NAME"
+fi
+
+
+# ---------------------------
+# Check Public Routes
+# ---------------------------
+echo ""
+echo "🔹 Checking Public Routes..."
 PUB_RT_ID=$(aws ec2 describe-route-tables \
     --filters "Name=tag:Name,Values=$PUB_RT_NAME" "Name=vpc-id,Values=$VPC_ID" \
     --query "RouteTables[0].RouteTableId" --output text --no-cli-pager)
@@ -130,48 +183,12 @@ else
     echo "❌ Public Route Table not found: $PUB_RT_NAME"
 fi
 
+
 # ---------------------------
-# 5️⃣ Check NAT Gateway
+# 6️⃣ Check Private Routes
 # ---------------------------
-
-
-NAT_ID=$(aws ec2 describe-nat-gateways \
-    --filter "Name=tag:Name,Values=$NAT_NAME" \
-    --query "NatGateways[0].NatGatewayId" --output text --no-cli-pager)
-
-if [ -n "$NAT_ID" ] && [ "$NAT_ID" != "None" ]; then
-    NAT_STATE=$(aws ec2 describe-nat-gateways --nat-gateway-ids "$NAT_ID" \
-        --query "NatGateways[0].State" --output text --no-cli-pager)
-    if [ "$NAT_STATE" == "available" ]; then
-        echo "✅ NAT Gateway exists and available: $NAT_NAME ($NAT_ID)"
-    else
-        echo "❌ NAT Gateway exists but not available: $NAT_STATE"
-    fi
-else
-    echo "❌ NAT Gateway not found: $NAT_NAME"
-fi
-
 echo ""
-echo "🔹 Checking Elastic IPs..."
-for name in "${!EIPS[@]}"; do
-    EIP_INFO=$(aws ec2 describe-addresses \
-        --filters "Name=tag:Name,Values=$name" \
-        --query "Addresses[0].[AllocationId,PublicIp]" --output text --no-cli-pager)
-    
-    ALLOCATION_ID=$(echo "$EIP_INFO" | awk '{print $1}')
-    PUBLIC_IP=$(echo "$EIP_INFO" | awk '{print $2}')
-
-    if [ -n "$ALLOCATION_ID" ] && [ "$ALLOCATION_ID" != "None" ]; then
-        echo "✅ Elastic IP exists: $name ($PUBLIC_IP, $ALLOCATION_ID)"
-    else
-        echo "❌ Elastic IP not found: $name"
-    fi
-done
-
-
-# ---------------------------
-# 6️⃣ Check Private Route Table
-# ---------------------------
+echo "🔹 Checking Private Routes..."
 PRI_RT_ID=$(aws ec2 describe-route-tables \
     --filters "Name=tag:Name,Values=$PRI_RT_NAME" "Name=vpc-id,Values=$VPC_ID" \
     --query "RouteTables[0].RouteTableId" --output text --no-cli-pager)
