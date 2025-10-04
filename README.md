@@ -902,6 +902,9 @@ else
 fi
 
 ```
+
+✅ **This check will run until the RDS instance is available. Press Ctrl+C to manually stop the wait and proceed to the next section.**
+
 </details>
 
 ---
