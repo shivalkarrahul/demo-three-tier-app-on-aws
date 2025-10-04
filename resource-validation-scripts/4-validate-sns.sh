@@ -25,7 +25,7 @@ if [ "$SNS_TOPIC_ARN" != "None" ] && [ -n "$SNS_TOPIC_ARN" ]; then
 
         case "$SUB_ARN" in
             "PendingConfirmation")
-                STATUS_MSG="⚠️ Subscription pending confirmation"
+                STATUS_MSG="⚠️ Subscription pending confirmation, go to the Inbox and click on Confirm subscription"
                 ;;
             "Deleted")
                 STATUS_MSG="❌ Subscription deleted"

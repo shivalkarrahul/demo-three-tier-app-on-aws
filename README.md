@@ -1228,7 +1228,7 @@ By introducing SNS, we’re moving towards an **event-driven, decoupled architec
 export EMAIL="your-email-id@example.com"
 ```
 
-✅ **Set your backend S3 bucket name for which event notifications will be created for all object uploads. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`. Notifications will be sent to an SNS Topic.**
+✅ **Use the backend S3 bucket name you defined previously in Step 3. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`. Event notifications rule for all object uploads to this bucket will be configured to send messages to an SNS Topic**
 
 ```bash
 export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
@@ -1340,7 +1340,7 @@ echo "✅ S3 bucket configured to send SNS notifications on object upload"
 > After creating resources (either via AWS Console or AWS CLI), validate them using the pre-built script.
 > Run the following in CloudShell:
 
-✅ **Set your backend S3 bucket name exactly as you used when creating the backend bucket. Ensure it matches the name in AWS to avoid any mismatches, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`**
+✅ **Use the backend S3 bucket name you defined previously in Step 3. e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`. Event notifications rule for all object uploads to this bucket will be configured to send messages to an SNS Topic**
 
 ```bash
 export BACKEND_BUCKET_NAME="demo-app-backend-s3-bucket-12345"
