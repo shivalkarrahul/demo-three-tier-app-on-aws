@@ -1,5 +1,8 @@
 # From Hello World to Real World: A Hands-On Journey into Event-Driven Three-Tier Architecture on AWS
 
+![About Me ](artifacts/my-pic.png)
+
+
 **Presenter:** Rahul Shivalkar  
 **Event:** AWS Cloud Club - MIT ADTU & MIT-WPU  
 **Audience:** Students, developers, and cloud enthusiasts looking for hands-on AWS experience.
@@ -1010,7 +1013,7 @@ By using S3 for file storage, you gain a **cost-effective, secure, and highly du
 > Run these AWS CLI commands to quickly create and configure the resource without navigating the Console.
 
 
-✅ **Set a unique backend S3 bucket name. It is recommended to append a random string at the end of the bucket name, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`, to avoid conflicts or confusion**
+✅ **Set a unique backend S3 bucket name. It is recommended to append a random string at the end of the bucket name, e.g., `demo-app-backend-s3-bucket-12345-<some-random-string>`, to avoid conflicts or confusion. This is the main storage location for the files uploaded via the UI of the demo application we are building.**
 
 
 ```bash
@@ -1603,6 +1606,10 @@ fi
 ```
 
 ---
+
+✅ Wait 10 to 15 seconds before proceeding. The Lambda Function creation might fail if the associated IAM Role's policies haven't fully propagated yet.
+
+> Expected Outcome: You should receive a notification email, and DynamoDB must be updated with a new entry.
 
 ### 3. Create a Lambda Function with Code
 
@@ -2431,7 +2438,7 @@ INSTANCE_ID=$(aws ec2 run-instances \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
     --query "Instances[0].InstanceId" --output text)
 
-echo "⏳ Waiting for instance to be running..."
+echo "⏳ Waiting for instance to be running... DO NOT EXIT"
 aws ec2 wait instance-running --instance-ids $INSTANCE_ID
 
 # 6. Get Public IP
@@ -2446,7 +2453,7 @@ echo "🔑 Connect: ssh -i $KEY_NAME.pem ubuntu@$PUBLIC_IP"
 chmod 400 $KEY_NAME.pem
 
 # Wait a bit for EC2 to finish initializing
-echo "⏳ Waiting for EC2 SSH to be ready..."
+echo "⏳ Waiting for EC2 SSH to be ready...DO NOT EXIT"
 sleep 30
 
 # Install dependencies via SSH
@@ -2468,32 +2475,49 @@ echo "✅ Dependencies installed on EC2 instance: $PUBLIC_IP"
 ---
 
 
-
 ✅ **Set the following variables** You can copy all these commands in a text editor, change the values and paste.
+
+
+**1. `RDS_HOST`:** Look up the RDS endpoint by going to **RDS $\rightarrow$ `my-demo-db` $\rightarrow$ Connectivity & security $\rightarrow$ Endpoint & port**, then copy the **Endpoint** and set it here:
+`export RDS_HOST="<YOUR-my-demo-db.ENDPOINT>"`
 
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
 ```
 
+**2. `RDS_USER`:** Do not change this, as it is the default username set during creation:
+`export RDS_USER="admin"`
+
 ```bash
 export RDS_USER="admin"
 ```
+
+**3. `RDS_PASSWORD`:** Set this to the **password you defined** in **Step 2** while creating the RDS instance:
+`export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"`
 
 ```bash
 export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"
 ```
 
+**4. `S3_BACKEND_BUCKET`:** Use the **backend S3 bucket name you defined previously in Step 3**:
+
 ```bash
 export S3_BACKEND_BUCKET="demo-app-backend-s3-bucket-12345"
 ```
+
+**5. `EC2_PUBLIC_IP`:** Look up the public IP by going to **EC2 $\rightarrow$ `demo-app-test-ami-builder` instance** and copying the **Public IPv4 address**:
 
 ```bash
 export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
 ```
 
+**6. `KEY_NAME`:** Do not change this, as the key name must match the key used for the EC2 instance:
+
 ```bash
 export KEY_NAME="demo-app-private-key"
 ```
+
+**7. `S3_FRONTEND_BUCKET`:** **🔑 Define a unique frontend S3 bucket name** which will be used to **host the static UI** for our application. It's recommended to append a random string (e.g., `demo-app-frontend-s3-bucket-67890-<random-string>`) to avoid conflicts:
 
 ```bash
 export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
@@ -2520,6 +2544,7 @@ check_var "RDS_PASSWORD"
 check_var "S3_BACKEND_BUCKET"
 check_var "EC2_PUBLIC_IP"
 check_var "KEY_NAME"
+check_var "S3_FRONTEND_BUCKET"
 
 # 2. Download app.py from GitHub
 if rm -f app.py 2>/dev/null; then
@@ -2799,6 +2824,7 @@ EOF
 
 echo "✅ Flask systemd service setup completed on $EC2_PUBLIC_IP"
 echo "🌐 Access your backend at http://$EC2_PUBLIC_IP:5000"
+echo "🌐 Access your frontend at http://$S3_FRONTEND_BUCKET.s3-website-us-east-1.amazonaws.com"
 
 ```
 </details>
@@ -2814,29 +2840,46 @@ echo "🌐 Access your backend at http://$EC2_PUBLIC_IP:5000"
 ✅ **Set the following variables** You can copy all these commands in a text editor, change the values and paste.
 
  
+**1. `RDS_HOST`:** Look up the RDS endpoint by going to **RDS $\rightarrow$ `my-demo-db` $\rightarrow$ Connectivity & security $\rightarrow$ Endpoint & port**, then copy the **Endpoint** and set it here:
+`export RDS_HOST="<YOUR-my-demo-db.ENDPOINT>"`
+
 ```bash
 export RDS_HOST="<YOUR-my-demo-db.ENDPOINT"
 ```
+
+**2. `RDS_USER`:** Do not change this, as it is the default username set during creation:
+`export RDS_USER="admin"`
 
 ```bash
 export RDS_USER="admin"
 ```
 
+**3. `RDS_PASSWORD`:** Set this to the **password you defined** in **Step 2** while creating the RDS instance:
+`export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"`
+
 ```bash
 export RDS_PASSWORD="<YOUR-my-demo-db.PASSWORD>"
 ```
+
+**4. `S3_BACKEND_BUCKET`:** Use the **backend S3 bucket name you defined previously in Step 3**:
 
 ```bash
 export S3_BACKEND_BUCKET="demo-app-backend-s3-bucket-12345"
 ```
 
+**5. `EC2_PUBLIC_IP`:** Look up the public IP by going to **EC2 $\rightarrow$ `demo-app-test-ami-builder` instance** and copying the **Public IPv4 address**:
+
 ```bash
 export EC2_PUBLIC_IP="<YOU-demo-app-test-ami-builder-EC2-INSTANCE-PUBLIC-IP>"
 ```
 
+**6. `KEY_NAME`:** Do not change this, as the key name must match the key used for the EC2 instance:
+
 ```bash
 export KEY_NAME="demo-app-private-key"
 ```
+
+**7. `S3_FRONTEND_BUCKET`:** **🔑 Define a unique frontend S3 bucket name** which will be used to **host the static UI** for our application. It's recommended to append a random string (e.g., `demo-app-frontend-s3-bucket-67890-<random-string>`) to avoid conflicts:
 
 ```bash
 export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
@@ -3962,7 +4005,7 @@ echo "✅ ALB DNS: http://$ALB_DNS"
 
 
 ```bash
-export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-678901"
+export S3_FRONTEND_BUCKET="demo-app-frontend-s3-bucket-67890"
 ```
 
 ```bash
