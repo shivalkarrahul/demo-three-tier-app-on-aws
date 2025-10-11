@@ -5194,3 +5194,8 @@ fi
 - **🔗 LinkedIn**: [www.linkedin.com/in/rahul-shivalkar](https://www.linkedin.com/in/rahul-shivalkar)
 
 <img src="artifacts/my-linkedin-qr.png" width="650" height="650" alt="Scan to Connect">
+
+
+
+[S3](http://demo-app-frontend-s3-bucket-67890.s3-website-us-east-1.amazonaws.com/)
+[ALB](https://demo-app-alb-856687175.us-east-1.elb.amazonaws.com/)
