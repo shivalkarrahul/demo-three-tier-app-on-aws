@@ -1,10 +1,5 @@
-# From Hello World to Real World: A Hands-On Journey into Event-Driven Three-Tier Architecture on AWS
+# Building an Event-Driven Three-Tier Application on AWS
 
-![About Me ](artifacts/my-pic.png)
-
-
-**Presenter:** Rahul Shivalkar  
-**Event:** AWS Cloud Club - MIT ADTU & MIT-WPU  
 **Audience:** Students, developers, and cloud enthusiasts looking for hands-on AWS experience.
 
 
